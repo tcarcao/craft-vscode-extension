@@ -50,8 +50,16 @@ jobs:
       - name: Update package.json version from tag
         run: |
           VERSION=${GITHUB_REF#refs/tags/v}
-          echo "Updating package.json to version: $VERSION"
-          npm version $VERSION --no-git-tag-version
+          CURRENT_VERSION=$(node -p "require('./package.json').version")
+          echo "Tag version: $VERSION"
+          echo "Current package.json version: $CURRENT_VERSION"
+
+          if [ "$VERSION" != "$CURRENT_VERSION" ]; then
+            echo "Updating package.json to version: $VERSION"
+            npm version $VERSION --no-git-tag-version
+          else
+            echo "Version already matches tag, skipping version bump"
+          fi
       
       - name: Build extension
         run: npm run bundle
@@ -68,11 +76,23 @@ jobs:
       - name: Commit version bump back to repository
         run: |
           VERSION=${GITHUB_REF#refs/tags/v}
-          git config --local user.email "action@github.com"
-          git config --local user.name "GitHub Action"
-          git add package.json
-          git commit -m "chore: bump version to $VERSION [skip ci]" || echo "No changes to commit"
-          git push origin HEAD:main || echo "Failed to push, continuing..."
+          CURRENT_VERSION=$(node -p "require('./package.json').version")
+
+          if [ "$VERSION" != "$CURRENT_VERSION" ]; then
+            echo "Version mismatch detected, this should not happen after version update step"
+            exit 1
+          fi
+
+          if git diff --quiet package.json; then
+            echo "No version changes to commit (version already matched tag)"
+          else
+            echo "Committing version bump to $VERSION"
+            git config --local user.email "action@github.com"
+            git config --local user.name "GitHub Action"
+            git add package.json
+            git commit -m "chore: bump version to $VERSION [skip ci]"
+            git push origin HEAD:main
+          fi
       
       - name: Create Release
         id: create_release
