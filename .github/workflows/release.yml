@@ -1,0 +1,122 @@
+name: Release Extension
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+  packages: write
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+      
+      - name: Install dependencies
+        run: npm ci
+      
+      - name: Lint code
+        run: npm run lint
+      
+      - name: Build extension
+        run: npm run bundle
+
+  create-release:
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+      
+      - name: Install dependencies
+        run: npm ci
+      
+      - name: Update package.json version from tag
+        run: |
+          VERSION=${GITHUB_REF#refs/tags/v}
+          echo "Updating package.json to version: $VERSION"
+          npm version $VERSION --no-git-tag-version
+      
+      - name: Build extension
+        run: npm run bundle
+      
+      - name: Package extension
+        run: npx @vscode/vsce package
+      
+      - name: Get package info
+        id: package
+        run: |
+          echo "name=$(node -p "require('./package.json').name")" >> $GITHUB_OUTPUT
+          echo "version=$(node -p "require('./package.json').version")" >> $GITHUB_OUTPUT
+      
+      - name: Commit version bump back to repository
+        run: |
+          VERSION=${GITHUB_REF#refs/tags/v}
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add package.json
+          git commit -m "chore: bump version to $VERSION [skip ci]" || echo "No changes to commit"
+          git push origin HEAD:main || echo "Failed to push, continuing..."
+      
+      - name: Create Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref }}
+          release_name: Release ${{ github.ref }}
+          body: |
+            ## Craft Language VS Code Extension
+            
+            Release of Craft Language VS Code Extension v${{ steps.package.outputs.version }}
+            
+            ## Installation
+            1. Download the `.vsix` file from the assets below
+            2. Open VS Code
+            3. Press `Ctrl+Shift+P` (or `Cmd+Shift+P` on Mac) to open the command palette
+            4. Type "Extensions: Install from VSIX..." and select it
+            5. Choose the downloaded `.vsix` file
+            
+            Or install from command line:
+            ```bash
+            code --install-extension ${{ steps.package.outputs.name }}-${{ steps.package.outputs.version }}.vsix
+            ```
+            
+            ## Features
+            - 🎨 **Syntax Highlighting**: Rich semantic highlighting for `.craft` files
+            - 🖥️ **Language Server**: Real-time validation and error checking
+            - 🌳 **Domain Manager**: Interactive tree view for managing domains and services
+            - 📊 **Live Diagram Previews**: Generate C4, domain, sequence, and context diagrams
+            - ⌨️ **Keyboard Shortcuts**: Quick access to diagram previews
+            
+            ## Requirements
+            Requires a Craft server running (default on `localhost:8080`, but available to change in settings) for diagram generation.
+          draft: false
+          prerelease: false
+      
+      - name: Upload VSIX to Release
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./${{ steps.package.outputs.name }}-${{ steps.package.outputs.version }}.vsix
+          asset_name: ${{ steps.package.outputs.name }}-${{ steps.package.outputs.version }}.vsix
+          asset_content_type: application/zip
