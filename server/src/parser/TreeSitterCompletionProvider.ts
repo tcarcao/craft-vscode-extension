@@ -1,73 +1,18 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-require-imports */
 import { TextDocument } from 'vscode-languageserver-textdocument';
 import { CompletionItem, CompletionItemKind, Position } from 'vscode-languageserver/node.js';
-import * as path from 'path';
 import { Logger } from '../utils/Logger.js';
-
-
-// Import web-tree-sitter (WASM-based for cross-platform compatibility)
-const TreeSitter = require('web-tree-sitter');
-// Import the WASM file URL for esbuild
-const TreeSitterWasmUrl = require('web-tree-sitter/tree-sitter.wasm');
 
 /**
  * Simple Tree-sitter based completion provider for Craft DSL
  * Only provides root-level completions to avoid interference
  */
 export class TreeSitterCompletionProvider {
-  private parser: any = null;
-  private language: any = null;
-  private initializationPromise: Promise<void>;
-
-  constructor() {
-    this.initializationPromise = this.initializeParser();
-  }
-
-  private async initializeParser(): Promise<void> {
-    try {
-      Logger.info('🔄 Initializing Tree-sitter WASM for Craft completion...');
-
-      const { Parser } = TreeSitter;
-
-      if (typeof Parser.init === 'function') {
-        await Parser.init({
-          locateFile(scriptName: string, _scriptDirectory: string) {
-            if (scriptName === 'tree-sitter.wasm') {
-              // Return absolute path to the bundled WASM file
-              return path.join(__dirname, TreeSitterWasmUrl);
-            }
-            return scriptName;
-          }
-        });
-        Logger.info('✅ Tree-sitter WASM runtime initialized');
-
-        // Load the Craft WASM language from extension resources
-        // For bundled extensions, __dirname points to dist/, so go up to extension root
-        const extensionRoot = path.join(__dirname, '..');
-        const wasmPath = path.join(extensionRoot, 'resources', 'tree-sitter-craft.wasm');
-        Logger.debug(`📁 Loading Craft WASM from: ${wasmPath}`);
-
-        this.language = await TreeSitter.Language.load(wasmPath);
-        Logger.info('✅ Craft language loaded for completion');
-
-        this.parser = new TreeSitter.Parser();
-        this.parser.setLanguage(this.language);
-
-        Logger.info('✅ Tree-sitter Craft completion provider ready (WASM)');
-      } else {
-        throw new Error('Parser.init method not found');
-      }
-
-    } catch (error) {
-      Logger.error('❌ Failed to initialize Tree-sitter completion provider:', error);
-      Logger.warn('Tree-sitter completion will be disabled');
-    }
+  constructor(private parser: any) {
   }
 
   async getCompletions(document: TextDocument, position: Position): Promise<CompletionItem[]> {
-    // Wait for initialization to complete
-    await this.initializationPromise;
-    
+
     if (!this.parser) {
       Logger.warn('Tree-sitter parser not initialized - completion disabled');
       return [];
@@ -79,13 +24,13 @@ export class TreeSitterCompletionProvider {
       const lines = text.split('\n');
       const currentLine = lines[position.line] || '';
       const textBeforeCursor = currentLine.substring(0, position.character);
-      
+
       // Only suggest at document root when line is empty or starts with whitespace
       if (textBeforeCursor.trim().length === 0) {
         Logger.debug('TreeSitter: Providing root-level completions');
         return this.getRootCompletions();
       }
-      
+
       // No completions in other contexts for now
       return [];
     } catch (error) {

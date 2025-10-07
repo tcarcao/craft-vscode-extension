@@ -33,6 +33,7 @@ import { Parser } from './parser/CraftParser.js';
 import { TreeSitterCompletionProvider } from './parser/TreeSitterCompletionProvider.js';
 import { TreeSitterFormatterProvider } from './parser/TreeSitterFormatterProvider.js';
 import { Logger } from './utils/Logger.js';
+import { initializeParser } from './utils/TreeSitterCraft.js'
 
 // Create connection and documents manager
 console.log('SERVER: Starting Craft Language Server...');
@@ -69,19 +70,13 @@ try {
   console.log('SERVER: WorkspaceParser created');
   parser = new Parser();
   console.log('SERVER: Parser created');
-
-  // Tree-sitter providers for language features
-  treeSitterCompletionProvider = new TreeSitterCompletionProvider();
-  console.log('SERVER: TreeSitterCompletionProvider created');
-  treeSitterFormatter = new TreeSitterFormatterProvider();
-  console.log('SERVER: TreeSitterFormatterProvider created');
 } catch (error) {
   console.error('SERVER: Error creating core components:', error);
   process.exit(1);
 }
 
 
-connection.onInitialize((params: InitializeParams) => {
+connection.onInitialize(async (params: InitializeParams) => {
   console.log('SERVER: onInitialize called');
   if (params.workspaceFolders) {
     console.log('SERVER: Setting workspace folders:', params.workspaceFolders.length);
@@ -90,7 +85,10 @@ connection.onInitialize((params: InitializeParams) => {
 
   console.log('SERVER: Creating providers...');
   try {
-    treeSitterDiagnosticProvider = new TreeSitterDiagnosticProvider();
+    const parser = await initializeParser();
+    treeSitterDiagnosticProvider = new TreeSitterDiagnosticProvider(parser);
+    treeSitterCompletionProvider = new TreeSitterCompletionProvider(parser);
+    treeSitterFormatter = new TreeSitterFormatterProvider(parser);
     console.log('SERVER: TreeSitterDiagnosticProvider created');
     domainExtractor = new DomainExtractor();
     console.log('SERVER: DomainExtractor created');

@@ -6,68 +6,12 @@ import {
     Range
 } from 'vscode-languageserver/node.js';
 import { TextDocument } from 'vscode-languageserver-textdocument';
-import * as path from 'path';
-import { Logger } from './utils/Logger.js';
-
-// Import web-tree-sitter (WASM-based for cross-platform compatibility)
-const TreeSitter = require('web-tree-sitter');
-// Import the WASM file URL for esbuild
-const TreeSitterWasmUrl = require('web-tree-sitter/tree-sitter.wasm');
 
 export class TreeSitterDiagnosticProvider {
-    private parser: any = null;
-    private language: any = null;
-    private initializationPromise: Promise<void>;
-
-    constructor() {
-        this.initializationPromise = this.initializeParser();
-    }
-
-    private async initializeParser(): Promise<void> {
-        try {
-            Logger.info('🔄 Initializing Tree-sitter WASM for Craft diagnostics...');
-
-            const { Parser } = TreeSitter;
-
-            if (typeof Parser.init === 'function') {
-                await Parser.init({
-                    locateFile(scriptName: string, _scriptDirectory: string) {
-                        if (scriptName === 'tree-sitter.wasm') {
-                            // Return absolute path to the bundled WASM file
-                            return path.join(__dirname, TreeSitterWasmUrl);
-                        }
-                        return scriptName;
-                    }
-                });
-                Logger.info('✅ Tree-sitter WASM runtime initialized');
-
-                // Load the Craft WASM language from extension resources
-                // For bundled extensions, __dirname points to dist/, so go up to extension root
-                const extensionRoot = path.join(__dirname, '..');
-                const wasmPath = path.join(extensionRoot, 'resources', 'tree-sitter-craft.wasm');
-                Logger.debug(`📁 Loading Craft WASM from: ${wasmPath}`);
-
-                this.language = await TreeSitter.Language.load(wasmPath);
-                Logger.info('✅ Craft language loaded for diagnostics');
-
-                this.parser = new TreeSitter.Parser();
-                this.parser.setLanguage(this.language);
-
-                Logger.info('✅ Tree-sitter Craft diagnostic provider ready (WASM)');
-            } else {
-                throw new Error('Parser.init method not found');
-            }
-
-        } catch (error) {
-            Logger.error('❌ Failed to initialize Tree-sitter diagnostic provider:', error);
-            Logger.error('Stack trace:', error instanceof Error ? error.stack : 'No stack trace');
-        }
+    constructor(private parser: any) {
     }
 
     public async getDiagnostics(document: TextDocument): Promise<Diagnostic[]> {
-        // Ensure parser is initialized
-        await this.initializationPromise;
-        
         if (!this.parser) {
             return [];
         }
@@ -91,7 +35,7 @@ export class TreeSitterDiagnosticProvider {
             );
 
             let message = 'Syntax error';
-            
+
             // Provide context-specific error messages
             if (node.parent) {
                 message = this.getContextualErrorMessage(node);
@@ -132,7 +76,7 @@ export class TreeSitterDiagnosticProvider {
 
     private getContextualErrorMessage(errorNode: any): string {
         const parent = errorNode.parent;
-        
+
         if (!parent) {
             return 'Syntax error';
         }
@@ -140,44 +84,44 @@ export class TreeSitterDiagnosticProvider {
         switch (parent.type) {
             case 'arch_block':
                 return 'Invalid architecture syntax. Expected "presentation:" or "gateway:" section';
-            
+
             case 'use_case_block':
                 return 'Invalid use case syntax. Expected "when" clause';
-            
+
             case 'services_block':
                 return 'Invalid services syntax. Expected service definition';
-            
+
             case 'service_definition':
             case 'service_block':
                 return 'Invalid service property. Expected: domains, language, data-stores, or deployment';
-            
+
             case 'arch_component_list':
                 return 'Invalid component syntax. Expected component name or component flow (with >)';
-            
+
             case 'component_modifiers':
                 return 'Invalid component modifier. Expected format: [key:value, key:value]';
-            
+
             case 'modifier_list':
                 return 'Invalid modifier format. Expected: key:value';
-            
+
             case 'when_clause':
                 return 'Invalid trigger syntax. Expected actor-verb-object or domain listens "event"';
-            
+
             case 'external_trigger':
                 return 'Invalid external trigger. Expected format: Actor verb [object]';
-            
+
             case 'domain_listener':
                 return 'Invalid domain listener. Expected format: Domain listens "Event"';
-            
+
             case 'sync_action':
                 return 'Invalid sync action. Expected format: Domain asks Domain [to] do something';
-            
+
             case 'async_action':
                 return 'Invalid async action. Expected format: Domain notifies "Event"';
-            
+
             case 'internal_action':
                 return 'Invalid internal action. Expected format: Domain verb phrase';
-            
+
             default:
                 return `Syntax error in ${parent.type}`;
         }

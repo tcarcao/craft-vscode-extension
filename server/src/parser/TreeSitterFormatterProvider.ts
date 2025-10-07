@@ -1,86 +1,29 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars, @typescript-eslint/prefer-for-of, @typescript-eslint/no-require-imports */
 import { TextDocument } from 'vscode-languageserver-textdocument';
 import { TextEdit, Range, Position } from 'vscode-languageserver/node.js';
-import * as path from 'path';
 import { Logger } from '../utils/Logger.js';
-
-// Import web-tree-sitter (WASM-based for cross-platform compatibility)
-const TreeSitter = require('web-tree-sitter');
-// Import the WASM file URL for esbuild
-const TreeSitterWasmUrl = require('web-tree-sitter/tree-sitter.wasm');
 
 /**
  * Tree-sitter based formatter for Craft DSL
  * Uses WASM tree-sitter for cross-platform compatibility
  */
 export class TreeSitterFormatterProvider {
-  private parser: any = null;
-  private language: any = null;
-  private initializationPromise: Promise<void>;
-
-  constructor() {
-    this.initializationPromise = this.initializeParser();
-  }
-
-  private async initializeParser(): Promise<void> {
-    try {
-      Logger.info('🔄 Initializing Tree-sitter WASM for Craft formatter...');
-
-      const { Parser } = TreeSitter;
-
-      if (typeof Parser.init === 'function') {
-        await Parser.init({
-          locateFile(scriptName: string, _scriptDirectory: string) {
-            if (scriptName === 'tree-sitter.wasm') {
-              // Return absolute path to the bundled WASM file
-              return path.join(__dirname, TreeSitterWasmUrl);
-            }
-            return scriptName;
-          }
-        });
-        Logger.info('✅ Tree-sitter WASM runtime initialized');
-
-        // Load the Craft WASM language from extension resources
-        // For bundled extensions, __dirname points to dist/, so go up to extension root
-        const extensionRoot = path.join(__dirname, '..');
-        const wasmPath = path.join(extensionRoot, 'resources', 'tree-sitter-craft.wasm');
-        Logger.debug(`📁 Loading Craft WASM from: ${wasmPath}`);
-
-        this.language = await TreeSitter.Language.load(wasmPath);
-        Logger.info('✅ Craft language loaded for formatter');
-
-        // Create parser and set language
-        this.parser = new TreeSitter.Parser();
-        this.parser.setLanguage(this.language);
-
-        Logger.info('✅ Tree-sitter Craft formatter ready (WASM)');
-      } else {
-        throw new Error('Parser.init method not found');
-      }
-
-    } catch (error) {
-      Logger.error('❌ Failed to initialize Tree-sitter formatter:', error);
-      Logger.error('Stack trace:', error instanceof Error ? error.stack : 'No stack trace');
-      Logger.warn('Tree-sitter formatter will be disabled');
-    }
+  constructor(private parser: any) {
   }
 
   async formatDocument(document: TextDocument): Promise<TextEdit[]> {
-    // Wait for initialization to complete
-    await this.initializationPromise;
-    
     if (!this.parser) {
       Logger.warn('Tree-sitter parser not initialized - formatting disabled');
       return [];
     }
-    
+
     const text = document.getText();
     const formatted = this.formatCraftContent(text);
-    
+
     if (formatted === text) {
       return []; // No changes needed
     }
-    
+
     // Return a single edit that replaces the entire document
     return [{
       range: Range.create(
@@ -94,18 +37,18 @@ export class TreeSitterFormatterProvider {
   private formatCraftContent(content: string): string {
     const tree = this.parser.parse(content);
     const rootNode = tree.rootNode;
-    
+
     return this.formatNode(rootNode, content, 0);
   }
 
   private formatNode(node: any, sourceText: string, indentLevel: number): string {
     const indentSize = 4;
-    
+
     if (node.type === 'source_file') {
       // Format top-level items with spacing between them
       const children = node.children;
       const formattedChildren: string[] = [];
-      
+
       for (let i = 0; i < children.length; i++) {
         const child = children[i];
         const formattedChild = this.formatNode(child, sourceText, 0);
@@ -113,34 +56,46 @@ export class TreeSitterFormatterProvider {
           formattedChildren.push(formattedChild);
         }
       }
-      
+
       return formattedChildren.join('\n\n');
     }
-    
+
+    if (node.type === 'actors_block') {
+      return this.formatActorsBlock(node, sourceText, indentLevel);
+    }
+
+    if (node.type === 'actor_definition') {
+      return this.formatActorDefinition(node, sourceText, indentLevel);
+    }
+
     if (node.type === 'services_block') {
       return this.formatServicesBlock(node, sourceText, indentLevel);
     }
-    
+
     if (node.type === 'service_definition') {
       return this.formatServiceDefinition(node, sourceText, indentLevel);
     }
-    
+
     if (node.type === 'arch_block') {
       return this.formatArchBlock(node, sourceText, indentLevel);
     }
-    
+
     if (node.type === 'use_case_block') {
       return this.formatUseCaseBlock(node, sourceText, indentLevel);
     }
-    
+
     if (node.type === 'domain_block') {
       return this.formatDomainBlock(node, sourceText, indentLevel);
     }
-    
+
     if (node.type === 'exposure_block') {
       return this.formatExposureBlock(node, sourceText, indentLevel);
     }
-    
+
+    if (node.type === 'comment') {
+      return this.formatComment(node, sourceText, indentLevel);
+    }
+
     // Default formatting - just extract the text
     return node.text || sourceText.slice(node.startIndex, node.endIndex);
   }
@@ -148,10 +103,10 @@ export class TreeSitterFormatterProvider {
   private formatServicesBlock(node: any, sourceText: string, indentLevel: number): string {
     const indent = ' '.repeat(indentLevel * 4);
     const childIndent = ' '.repeat((indentLevel + 1) * 4);
-    
+
     const result: string[] = [];
     result.push(`${indent}services {`);
-    
+
     // Format each service definition
     for (const child of node.children) {
       if (child.type === 'service_definition') {
@@ -159,16 +114,16 @@ export class TreeSitterFormatterProvider {
         result.push(formattedService);
       }
     }
-    
+
     result.push(`${indent}}`);
     return result.join('\n');
   }
 
   private formatServiceDefinition(node: any, sourceText: string, indentLevel: number): string {
     const indent = ' '.repeat(indentLevel * 4);
-    
+
     const result: string[] = [];
-    
+
     // Get service name - look for identifier node
     let serviceName = 'Service';
     for (const child of node.children) {
@@ -178,7 +133,7 @@ export class TreeSitterFormatterProvider {
       }
     }
     result.push(`${indent}${serviceName} {`);
-    
+
     // Format service properties
     for (let i = 1; i < node.children.length; i++) {
       const child = node.children[i];
@@ -187,32 +142,32 @@ export class TreeSitterFormatterProvider {
         result.push(formattedProperty);
       }
     }
-    
+
     result.push(`${indent}}`);
     return result.join('\n');
   }
 
   private formatServiceProperty(node: any, sourceText: string, indentLevel: number): string {
     const indent = ' '.repeat(indentLevel * 4);
-    
+
     // Extract the property text and clean it up
     const propertyText = node.text || sourceText.slice(node.startIndex, node.endIndex);
-    
+
     // Simple cleanup - ensure proper spacing around colons and commas
     const cleaned = propertyText
       .replace(/\s*:\s*/g, ': ')
       .replace(/\s*,\s*/g, ', ')
       .trim();
-    
+
     return `${indent}${cleaned}`;
   }
 
   private formatArchBlock(node: any, sourceText: string, indentLevel: number): string {
     const indent = ' '.repeat(indentLevel * 4);
     const result: string[] = [];
-    
+
     result.push(`${indent}arch {`);
-    
+
     // Format arch sections - look for arch_section nodes that contain presentation_section or gateway_section
     const archSections: string[] = [];
     for (const child of node.children) {
@@ -226,7 +181,7 @@ export class TreeSitterFormatterProvider {
         }
       }
     }
-    
+
     // Add arch sections with empty lines between them
     for (let i = 0; i < archSections.length; i++) {
       result.push(archSections[i]);
@@ -235,7 +190,7 @@ export class TreeSitterFormatterProvider {
         result.push('');
       }
     }
-    
+
     result.push(`${indent}}`);
     return result.join('\n');
   }
@@ -243,13 +198,13 @@ export class TreeSitterFormatterProvider {
   private formatArchSection(node: any, sourceText: string, indentLevel: number): string {
     const indent = ' '.repeat(indentLevel * 4);
     const componentIndent = ' '.repeat((indentLevel + 1) * 4);
-    
+
     const result: string[] = [];
-    
+
     // Get section name
     const sectionName = node.type === 'presentation_section' ? 'presentation' : 'gateway';
     result.push(`${indent}${sectionName}:`);
-    
+
     // Format arch components
     for (const child of node.children) {
       if (child.type === 'arch_component') {
@@ -257,22 +212,26 @@ export class TreeSitterFormatterProvider {
         result.push(`${componentIndent}${componentText.trim()}`);
       }
     }
-    
+
     return result.join('\n');
   }
 
   private formatUseCaseBlock(node: any, sourceText: string, indentLevel: number): string {
     const indent = ' '.repeat(indentLevel * 4);
     const result: string[] = [];
-    
+
     // Get use case name (should be a string)
     const useCaseName = node.children.find((child: any) => child.type === 'string')?.text || '"Use Case"';
     result.push(`${indent}use_case ${useCaseName} {`);
-    
-    // Format scenarios - look for scenario nodes, then format their when_clause children
+
+    // Format when clauses - they can be direct children or inside scenario nodes
     const whenClauses: string[] = [];
     for (const child of node.children) {
-      if (child.type === 'scenario') {
+      if (child.type === 'when_clause') {
+        // Direct when_clause child
+        const formattedWhenClause = this.formatWhenClause(child, sourceText, indentLevel + 1);
+        whenClauses.push(formattedWhenClause);
+      } else if (child.type === 'scenario') {
         // Scenario contains when_clause nodes
         for (const scenarioChild of child.children) {
           if (scenarioChild.type === 'when_clause') {
@@ -282,7 +241,7 @@ export class TreeSitterFormatterProvider {
         }
       }
     }
-    
+
     // Add when clauses with empty lines between them
     for (let i = 0; i < whenClauses.length; i++) {
       result.push(whenClauses[i]);
@@ -291,7 +250,7 @@ export class TreeSitterFormatterProvider {
         result.push('');
       }
     }
-    
+
     result.push(`${indent}}`);
     return result.join('\n');
   }
@@ -299,49 +258,37 @@ export class TreeSitterFormatterProvider {
   private formatWhenClause(node: any, sourceText: string, indentLevel: number): string {
     const indent = ' '.repeat(indentLevel * 4);
     const actionIndent = ' '.repeat((indentLevel + 1) * 4);
-    
+
     const result: string[] = [];
-    
-    // Build the when line from when + external_trigger
+
+    // Build the when line from when + trigger
     let whenLine = 'when';
-    
+
     for (const child of node.children) {
-      if (child.type === 'external_trigger' || child.type === 'event_trigger' || 
-          child.type === 'domain_listener' || child.type === 'cron_trigger') {
+      if (child.type === 'external_trigger' || child.type === 'event_trigger' ||
+        child.type === 'domain_listener' || child.type === 'cron_trigger') {
         const triggerText = child.text || sourceText.slice(child.startIndex, child.endIndex);
         whenLine += ` ${triggerText.trim()}`;
         break;
       }
     }
-    
-    // For external triggers, we need to handle the case where the trigger line continues
-    // Look for actions and see if the first one starts with text that should be part of the trigger
-    const actions: string[] = [];
+
+    result.push(`${indent}${whenLine}`);
+
+    // Format all actions - handle different action types
     for (const child of node.children) {
-      if (child.type === 'action') {
+      // Handle all types of actions: sync_action, async_action, internal_action, return_action, etc.
+      if (child.type === 'sync_action' || child.type === 'async_action' ||
+          child.type === 'internal_action' || child.type === 'return_action' ||
+          child.type === 'action') {
         const actionText = child.text || sourceText.slice(child.startIndex, child.endIndex);
-        const lines = actionText.split('\n').map((line: string) => line.trim()).filter((line: string) => line);
-        
-        // If first action starts with a continuation of the trigger, add it to when line
-        if (actions.length === 0 && lines.length > 0 && !lines[0].includes(' ')) {
-          whenLine += ` ${lines[0]}`;
-          // Add remaining lines as separate actions
-          lines.slice(1).forEach((line: string) => actions.push(line));
-        } else {
-          lines.forEach((line: string) => actions.push(line));
+        const trimmedAction = actionText.trim();
+        if (trimmedAction) {
+          result.push(`${actionIndent}${trimmedAction}`);
         }
       }
     }
-    
-    result.push(`${indent}${whenLine}`);
-    
-    // Add all actions
-    actions.forEach(action => {
-      if (action.trim()) {
-        result.push(`${actionIndent}${action}`);
-      }
-    });
-    
+
     return result.join('\n');
   }
 
@@ -349,9 +296,9 @@ export class TreeSitterFormatterProvider {
   private formatDomainBlock(node: any, sourceText: string, indentLevel: number): string {
     const indent = ' '.repeat(indentLevel * 4);
     const subdomainIndent = ' '.repeat((indentLevel + 1) * 4);
-    
+
     const result: string[] = [];
-    
+
     // Get domain name - look for identifier after "domain" keyword
     let domainName = 'Domain';
     for (const child of node.children) {
@@ -360,9 +307,9 @@ export class TreeSitterFormatterProvider {
         break;
       }
     }
-    
+
     result.push(`${indent}domain ${domainName} {`);
-    
+
     // Format subdomains
     for (let i = 1; i < node.children.length; i++) {
       const child = node.children[i];
@@ -371,7 +318,7 @@ export class TreeSitterFormatterProvider {
         result.push(`${subdomainIndent}${subdomainText.trim()}`);
       }
     }
-    
+
     result.push(`${indent}}`);
     return result.join('\n');
   }
@@ -379,9 +326,9 @@ export class TreeSitterFormatterProvider {
   private formatExposureBlock(node: any, sourceText: string, indentLevel: number): string {
     const indent = ' '.repeat(indentLevel * 4);
     const propertyIndent = ' '.repeat((indentLevel + 1) * 4);
-    
+
     const result: string[] = [];
-    
+
     // Get exposure name - look for identifier after "exposure" keyword
     let exposureName = 'default';
     for (const child of node.children) {
@@ -391,7 +338,7 @@ export class TreeSitterFormatterProvider {
       }
     }
     result.push(`${indent}exposure ${exposureName} {`);
-    
+
     // Format exposure properties
     for (let i = 1; i < node.children.length; i++) {
       const child = node.children[i];
@@ -400,9 +347,41 @@ export class TreeSitterFormatterProvider {
         result.push(`${propertyIndent}${propertyText.trim()}`);
       }
     }
-    
+
     result.push(`${indent}}`);
     return result.join('\n');
+  }
+
+  private formatActorsBlock(node: any, sourceText: string, indentLevel: number): string {
+    const indent = ' '.repeat(indentLevel * 4);
+    const actorIndent = ' '.repeat((indentLevel + 1) * 4);
+
+    const result: string[] = [];
+    result.push(`${indent}actors {`);
+
+    // Format each actor inside the actors block
+    for (const child of node.children) {
+      if (child.type === 'actor_item') {
+        const actorText = child.text || sourceText.slice(child.startIndex, child.endIndex);
+        result.push(`${actorIndent}${actorText.trim()}`);
+      }
+    }
+
+    result.push(`${indent}}`);
+    return result.join('\n');
+  }
+
+  private formatActorDefinition(node: any, sourceText: string, indentLevel: number): string {
+    const indent = ' '.repeat(indentLevel * 4);
+    // Standalone actor definition (actor user Customer_Support)
+    const actorText = node.text || sourceText.slice(node.startIndex, node.endIndex);
+    return `${indent}${actorText.trim()}`;
+  }
+
+  private formatComment(node: any, sourceText: string, indentLevel: number): string {
+    const indent = ' '.repeat(indentLevel * 4);
+    const commentText = node.text || sourceText.slice(node.startIndex, node.endIndex);
+    return `${indent}${commentText.trim()}`;
   }
 
 }
