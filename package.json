@@ -27,7 +27,7 @@
     "scripts": {
         "vscode:prepublish": "npm run bundle",
         "compile": "npm run copy-tree-sitter && tsc -b && cd client && npm run compile",
-        "copy-tree-sitter": "cp node_modules/tree-sitter-craft/tree-sitter-craft.wasm resources/ && cp -r node_modules/tree-sitter-craft/queries/* resources/queries/",
+        "copy-tree-sitter": "cp node_modules/tree-sitter-craft/tree-sitter-craft.wasm resources/ && cp -r node_modules/tree-sitter-craft/queries resources/queries",
         "watch": "tsc -b -w",
         "lint": "eslint",
         "postinstall": "cd client && npm install && cd ../server && npm install && cd .. && npm run copy-tree-sitter",
