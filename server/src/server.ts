@@ -33,7 +33,7 @@ import { Parser } from './parser/CraftParser.js';
 import { TreeSitterCompletionProvider } from './parser/TreeSitterCompletionProvider.js';
 import { TreeSitterFormatterProvider } from './parser/TreeSitterFormatterProvider.js';
 import { Logger } from './utils/Logger.js';
-import { initializeParser } from './utils/TreeSitterCraft.js'
+import { initializeParser } from './utils/TreeSitterCraft.js';
 
 // Create connection and documents manager
 console.log('SERVER: Starting Craft Language Server...');

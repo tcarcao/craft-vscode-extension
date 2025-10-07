@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-require-imports */
 import { Logger } from './Logger.js';
 import * as path from 'path';
 

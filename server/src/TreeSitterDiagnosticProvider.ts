@@ -1,5 +1,5 @@
 // server/src/TreeSitterDiagnosticProvider.ts
-/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-require-imports */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import {
     Diagnostic,
     DiagnosticSeverity,

@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars, @typescript-eslint/prefer-for-of, @typescript-eslint/no-require-imports */
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars, @typescript-eslint/prefer-for-of */
 import { TextDocument } from 'vscode-languageserver-textdocument';
 import { TextEdit, Range, Position } from 'vscode-languageserver/node.js';
 import { Logger } from '../utils/Logger.js';
