@@ -17,8 +17,6 @@
 		"vscode-uri": "^3.1.0"
 	},
 	"scripts": {
-		"generate": "antlr-ng -Dlanguage=TypeScript ../../antlr-grammar/Craft.g4 -v true -o src/parser/generated --exact-output-dir",
-		"postinstall": "npm run generate",
 		"test": "jest",
 		"test:watch": "jest --watch"
 	},

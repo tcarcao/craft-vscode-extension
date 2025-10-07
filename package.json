@@ -31,6 +31,7 @@
         "watch": "tsc -b -w",
         "lint": "eslint",
         "postinstall": "cd client && npm install && cd ../server && npm install && cd .. && npm run copy-tree-sitter",
+        "update-grammar": "./update-grammar.sh",
         "bundle": "npm run copy-tree-sitter && npm run bundle-client && npm run bundle-server && npm run bundle-webviews && npm run copy-static-assets",
         "bundle-client": "esbuild ./client/src/extension.ts --bundle --outfile=dist/client.js --external:vscode --format=cjs --platform=node --minify --loader:.wasm=file",
         "bundle-webviews": "mkdir -p dist/webview && esbuild ./client/src/webview/DomainsApp.tsx --bundle --outfile=dist/webview/domains.js --format=iife --platform=browser --minify && esbuild ./client/src/webview/ServicesApp.tsx --bundle --outfile=dist/webview/services.js --format=iife --platform=browser --minify",

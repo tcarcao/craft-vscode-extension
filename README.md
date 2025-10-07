@@ -76,11 +76,32 @@ npx @vscode/vsce package
 code --install-extension craft-0.0.1.vsix
 ```
 
+## Grammar Updates
+
+The extension uses pre-generated parser files from the main Craft project. To update to the latest grammar:
+
+```bash
+# Update to latest grammar from main branch
+npm run update-grammar
+
+# Or update to specific version/branch
+./update-grammar.sh v1.2.0
+./update-grammar.sh develop
+```
+
+This script:
+1. Downloads the latest `Craft.g4` grammar file from the main repository
+2. Regenerates TypeScript parser files using ANTLR
+3. Updates the `server/src/parser/generated/` directory
+
+**Note**: Only run this when you want to sync with upstream grammar changes.
+
 ## Build Scripts
 
 - `npm run bundle` - Production build (minified, optimized)
 - `npm run dev` - Development build with watch mode  
 - `npm run debug` - Debug build with sourcemaps
+- `npm run update-grammar` - Update grammar from main Craft repository
 - `npm run bundle-client` - Bundle main extension code
 - `npm run bundle-server` - Bundle language server
 - `npm run bundle-webviews` - Bundle React webview components
