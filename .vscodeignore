@@ -14,10 +14,13 @@
 !readme.md
 
 # Include external dependencies needed by bundled server
-!node_modules/tree-sitter/**
-!node_modules/tree-sitter-craft/**
-!node_modules/node-gyp-build/**
-!node_modules/node-addon-api/**
+!node_modules/web-tree-sitter/**
 
 # Exclude source maps from dist
 dist/**/*.map
+
+# Exclude test files and development artifacts
+**/.vscode-test/**
+**/test/**
+**/.eslintrc
+**/.prettierrc

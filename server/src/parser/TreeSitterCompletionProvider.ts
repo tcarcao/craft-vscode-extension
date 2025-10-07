@@ -1,9 +1,11 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-require-imports */
 import { TextDocument } from 'vscode-languageserver-textdocument';
 import { CompletionItem, CompletionItemKind, Position } from 'vscode-languageserver/node.js';
-import Parser from 'tree-sitter';
-import Craft from 'tree-sitter-craft';
+import * as path from 'path';
 import { Logger } from '../utils/Logger.js';
+
+// Import web-tree-sitter (WASM-based for cross-platform compatibility)
+const TreeSitter = require('web-tree-sitter');
 
 /**
  * Simple Tree-sitter based completion provider for Craft DSL
@@ -11,6 +13,7 @@ import { Logger } from '../utils/Logger.js';
  */
 export class TreeSitterCompletionProvider {
   private parser: any = null;
+  private language: any = null;
   private initializationPromise: Promise<void>;
 
   constructor() {
@@ -19,15 +22,35 @@ export class TreeSitterCompletionProvider {
 
   private async initializeParser(): Promise<void> {
     try {
-      // Use native Node.js tree-sitter with tree-sitter-craft npm package
-      this.parser = new Parser();
-      this.parser.setLanguage(Craft);
-      
-      Logger.info('✅ TreeSitterCompletionProvider Native tree-sitter Craft completion provider ready');
-      Logger.info('✅ TreeSitterCompletionProvider Using native Node.js performance instead of WASM');
-      
+      Logger.info('🔄 Initializing Tree-sitter WASM for Craft completion...');
+
+      const { Parser } = TreeSitter;
+
+      if (typeof Parser.init === 'function') {
+        await Parser.init({
+          locateFile(scriptName: string, _scriptDirectory: string) {
+            if (scriptName === 'tree-sitter.wasm') {
+              return path.join(__dirname, '..', 'node_modules', 'web-tree-sitter', 'tree-sitter.wasm');
+            }
+            return scriptName;
+          }
+        });
+        Logger.info('✅ Tree-sitter WASM runtime initialized');
+
+        const wasmPath = path.join(__dirname, '..', 'resources', 'tree-sitter-craft.wasm');
+        this.language = await TreeSitter.Language.load(wasmPath);
+        Logger.info('✅ Craft language loaded for completion');
+
+        this.parser = new TreeSitter.Parser();
+        this.parser.setLanguage(this.language);
+
+        Logger.info('✅ Tree-sitter Craft completion provider ready (WASM)');
+      } else {
+        throw new Error('Parser.init method not found');
+      }
+
     } catch (error) {
-      Logger.error('Failed to initialize native Tree-sitter completion provider:', error);
+      Logger.error('❌ Failed to initialize Tree-sitter completion provider:', error);
       Logger.warn('Tree-sitter completion will be disabled');
     }
   }

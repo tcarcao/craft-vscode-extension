@@ -1,19 +1,20 @@
 // server/src/TreeSitterDiagnosticProvider.ts
-/* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-require-imports */
 import {
     Diagnostic,
     DiagnosticSeverity,
     Range
 } from 'vscode-languageserver/node.js';
 import { TextDocument } from 'vscode-languageserver-textdocument';
-
-// Import native tree-sitter with tree-sitter-craft npm package
-import Parser from 'tree-sitter';
-import Craft from 'tree-sitter-craft';
+import * as path from 'path';
 import { Logger } from './utils/Logger.js';
+
+// Import web-tree-sitter (WASM-based for cross-platform compatibility)
+const TreeSitter = require('web-tree-sitter');
 
 export class TreeSitterDiagnosticProvider {
     private parser: any = null;
+    private language: any = null;
     private initializationPromise: Promise<void>;
 
     constructor() {
@@ -22,14 +23,36 @@ export class TreeSitterDiagnosticProvider {
 
     private async initializeParser(): Promise<void> {
         try {
-            // Use native Node.js tree-sitter with tree-sitter-craft npm package
-            this.parser = new Parser();
-            this.parser.setLanguage(Craft);
-            
-            Logger.info('Native Tree Sitter diagnostic provider initialized successfully');
-            Logger.info('Using native Node.js performance instead of WASM');
+            Logger.info('🔄 Initializing Tree-sitter WASM for Craft diagnostics...');
+
+            const { Parser } = TreeSitter;
+
+            if (typeof Parser.init === 'function') {
+                await Parser.init({
+                    locateFile(scriptName: string, _scriptDirectory: string) {
+                        if (scriptName === 'tree-sitter.wasm') {
+                            return path.join(__dirname, '..', 'node_modules', 'web-tree-sitter', 'tree-sitter.wasm');
+                        }
+                        return scriptName;
+                    }
+                });
+                Logger.info('✅ Tree-sitter WASM runtime initialized');
+
+                const wasmPath = path.join(__dirname, '..', 'resources', 'tree-sitter-craft.wasm');
+                this.language = await TreeSitter.Language.load(wasmPath);
+                Logger.info('✅ Craft language loaded for diagnostics');
+
+                this.parser = new TreeSitter.Parser();
+                this.parser.setLanguage(this.language);
+
+                Logger.info('✅ Tree-sitter Craft diagnostic provider ready (WASM)');
+            } else {
+                throw new Error('Parser.init method not found');
+            }
+
         } catch (error) {
-            Logger.error('Failed to initialize native Tree Sitter diagnostic provider:', error);
+            Logger.error('❌ Failed to initialize Tree-sitter diagnostic provider:', error);
+            Logger.error('Stack trace:', error instanceof Error ? error.stack : 'No stack trace');
         }
     }
 

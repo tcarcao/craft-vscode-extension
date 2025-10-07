@@ -1,18 +1,19 @@
-/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars, @typescript-eslint/prefer-for-of */
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars, @typescript-eslint/prefer-for-of, @typescript-eslint/no-require-imports */
 import { TextDocument } from 'vscode-languageserver-textdocument';
 import { TextEdit, Range, Position } from 'vscode-languageserver/node.js';
-
-// Import native tree-sitter with tree-sitter-craft npm package
-import Parser from 'tree-sitter';
-import Craft from 'tree-sitter-craft';
+import * as path from 'path';
 import { Logger } from '../utils/Logger.js';
+
+// Import web-tree-sitter (WASM-based for cross-platform compatibility)
+const TreeSitter = require('web-tree-sitter');
 
 /**
  * Tree-sitter based formatter for Craft DSL
- * Uses the native Node.js parser for optimal performance
+ * Uses WASM tree-sitter for cross-platform compatibility
  */
 export class TreeSitterFormatterProvider {
   private parser: any = null;
+  private language: any = null;
   private initializationPromise: Promise<void>;
 
   constructor() {
@@ -21,15 +22,41 @@ export class TreeSitterFormatterProvider {
 
   private async initializeParser(): Promise<void> {
     try {
-      // Use native Node.js tree-sitter with tree-sitter-craft npm package
-      this.parser = new Parser();
-      this.parser.setLanguage(Craft);
-      
-      Logger.info('✅ TreeSitterFormatterProvider Native tree-sitter Craft formatter ready');
-      Logger.info('✅ TreeSitterFormatterProvider Using native Node.js performance instead of WASM');
-      
+      Logger.info('🔄 Initializing Tree-sitter WASM for Craft formatter...');
+
+      const { Parser } = TreeSitter;
+
+      if (typeof Parser.init === 'function') {
+        await Parser.init({
+          locateFile(scriptName: string, _scriptDirectory: string) {
+            if (scriptName === 'tree-sitter.wasm') {
+              // __dirname in bundled server points to dist/
+              return path.join(__dirname, '..', 'node_modules', 'web-tree-sitter', 'tree-sitter.wasm');
+            }
+            return scriptName;
+          }
+        });
+        Logger.info('✅ Tree-sitter WASM runtime initialized');
+
+        // Load the Craft WASM language from extension resources
+        const wasmPath = path.join(__dirname, '..', 'resources', 'tree-sitter-craft.wasm');
+        Logger.debug(`📁 Loading Craft WASM from: ${wasmPath}`);
+
+        this.language = await TreeSitter.Language.load(wasmPath);
+        Logger.info('✅ Craft language loaded for formatter');
+
+        // Create parser and set language
+        this.parser = new TreeSitter.Parser();
+        this.parser.setLanguage(this.language);
+
+        Logger.info('✅ Tree-sitter Craft formatter ready (WASM)');
+      } else {
+        throw new Error('Parser.init method not found');
+      }
+
     } catch (error) {
-      Logger.error('Failed to initialize native Tree-sitter parser:', error);
+      Logger.error('❌ Failed to initialize Tree-sitter formatter:', error);
+      Logger.error('Stack trace:', error instanceof Error ? error.stack : 'No stack trace');
       Logger.warn('Tree-sitter formatter will be disabled');
     }
   }
