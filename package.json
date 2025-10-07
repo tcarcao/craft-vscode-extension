@@ -36,15 +36,15 @@
         "bundle-client": "esbuild ./client/src/extension.ts --bundle --outfile=dist/client.js --external:vscode --format=cjs --platform=node --minify --loader:.wasm=file",
         "bundle-webviews": "mkdir -p dist/webview && esbuild ./client/src/webview/DomainsApp.tsx --bundle --outfile=dist/webview/domains.js --format=iife --platform=browser --minify && esbuild ./client/src/webview/ServicesApp.tsx --bundle --outfile=dist/webview/services.js --format=iife --platform=browser --minify",
         "copy-static-assets": "mkdir -p dist/styles dist/@vscode/codicons/dist dist/node_modules/web-tree-sitter && cp client/src/ui/styles/treeStyles.css dist/styles/ && cp -r client/node_modules/@vscode/codicons/dist/* dist/@vscode/codicons/dist/ && cp node_modules/web-tree-sitter/tree-sitter.wasm dist/node_modules/web-tree-sitter/ && cp node_modules/web-tree-sitter/tree-sitter.js dist/node_modules/web-tree-sitter/",
-        "bundle-server": "esbuild ./server/src/server.ts --bundle --outfile=dist/server.js --external:vscode --external:web-tree-sitter --format=cjs --platform=node",
+        "bundle-server": "esbuild ./server/src/server.ts --bundle --outfile=dist/server.js --external:vscode --format=cjs --platform=node --loader:.wasm=file",
         "dev": "npm run copy-tree-sitter && npm run copy-static-assets && npm run dev-client & npm run dev-server & npm run dev-webviews",
         "dev-client": "esbuild ./client/src/extension.ts --bundle --outfile=dist/client.js --external:vscode --format=cjs --platform=node --sourcemap --watch --loader:.wasm=file",
         "dev-webviews": "mkdir -p dist/webview && esbuild ./client/src/webview/DomainsApp.tsx --bundle --outfile=dist/webview/domains.js --format=iife --platform=browser --sourcemap --watch & esbuild ./client/src/webview/ServicesApp.tsx --bundle --outfile=dist/webview/services.js --format=iife --platform=browser --sourcemap --watch",
-        "dev-server": "esbuild ./server/src/server.ts --bundle --outfile=dist/server.js --external:vscode --external:web-tree-sitter --format=cjs --platform=node --sourcemap --watch",
+        "dev-server": "esbuild ./server/src/server.ts --bundle --outfile=dist/server.js --external:vscode --format=cjs --platform=node --sourcemap --watch --loader:.wasm=file",
         "debug": "npm run copy-tree-sitter && npm run copy-static-assets && npm run debug-webviews && npm run debug-client && npm run debug-server",
         "debug-client": "esbuild ./client/src/extension.ts --bundle --outfile=dist/client.js --external:vscode --format=cjs --platform=node --sourcemap --loader:.wasm=file",
         "debug-webviews": "mkdir -p dist/webview && esbuild ./client/src/webview/DomainsApp.tsx --bundle --outfile=dist/webview/domains.js --format=iife --platform=browser --sourcemap && esbuild ./client/src/webview/ServicesApp.tsx --bundle --outfile=dist/webview/services.js --format=iife --platform=browser --sourcemap",
-        "debug-server": "esbuild ./server/src/server.ts --bundle --outfile=dist/server.js --external:vscode --external:web-tree-sitter --format=cjs --platform=node --sourcemap"
+        "debug-server": "esbuild ./server/src/server.ts --bundle --outfile=dist/server.js --external:vscode --format=cjs --platform=node --sourcemap --loader:.wasm=file"
     },
     "devDependencies": {
         "@eslint/js": "^9.13.0",

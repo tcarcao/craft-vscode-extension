@@ -6,6 +6,8 @@ import { Logger } from '../utils/Logger.js';
 
 // Import web-tree-sitter (WASM-based for cross-platform compatibility)
 const TreeSitter = require('web-tree-sitter');
+// Import the WASM file URL for esbuild
+const TreeSitterWasmUrl = require('web-tree-sitter/tree-sitter.wasm');
 
 /**
  * Tree-sitter based formatter for Craft DSL
@@ -30,8 +32,8 @@ export class TreeSitterFormatterProvider {
         await Parser.init({
           locateFile(scriptName: string, _scriptDirectory: string) {
             if (scriptName === 'tree-sitter.wasm') {
-              // __dirname in bundled server points to dist/
-              return path.join(__dirname, '..', 'node_modules', 'web-tree-sitter', 'tree-sitter.wasm');
+              // Return absolute path to the bundled WASM file
+              return path.join(__dirname, TreeSitterWasmUrl);
             }
             return scriptName;
           }
@@ -39,7 +41,9 @@ export class TreeSitterFormatterProvider {
         Logger.info('✅ Tree-sitter WASM runtime initialized');
 
         // Load the Craft WASM language from extension resources
-        const wasmPath = path.join(__dirname, '..', 'resources', 'tree-sitter-craft.wasm');
+        // For bundled extensions, __dirname points to dist/, so go up to extension root
+        const extensionRoot = path.join(__dirname, '..');
+        const wasmPath = path.join(extensionRoot, 'resources', 'tree-sitter-craft.wasm');
         Logger.debug(`📁 Loading Craft WASM from: ${wasmPath}`);
 
         this.language = await TreeSitter.Language.load(wasmPath);
