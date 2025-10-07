@@ -1,10 +1,10 @@
 import { Uri, WebviewViewProvider, WebviewView, WebviewViewResolveContext, CancellationToken, TextDocument, window, workspace, commands, ExtensionContext } from 'vscode';
 import { DomainsViewService } from '../services/domainsViewService';
 import { DslExtractService } from '../services/dslExtractService';
-import { Domain, DomainTreeState, UseCase, ServiceGroup, Service } from '../types/domain';
+import { Domain, DomainTreeState, UseCase, ServiceGroup } from '../types/domain';
 import { LanguageClient } from 'vscode-languageclient/node';
 import { ServerCommands, BlockRange } from '../../../shared/lib/types/domain-extraction';
-import { WebviewMessages, ProviderMessages, SelectionActions } from '../types/messages';
+import { WebviewMessages, ProviderMessages } from '../types/messages';
 import { Logger } from '../utils/Logger';
 
 export class DomainsViewProvider implements WebviewViewProvider {
@@ -37,7 +37,7 @@ export class DomainsViewProvider implements WebviewViewProvider {
     }
 
     private getWebviewContent(): string {
-        if (!this._view) return '';
+        if (!this._view) {return '';}
 
         const scriptUri = this._view.webview.asWebviewUri(
             Uri.joinPath(this._extensionUri, 'dist', 'webview', 'domains.js')
@@ -248,7 +248,7 @@ export class DomainsViewProvider implements WebviewViewProvider {
 
                 // If validation succeeds, proceed with refresh
                 this.refreshDomains();
-            } catch (error) {
+            } catch {
                 // If validation fails, don't refresh to avoid flickering
                 Logger.warn('Skipping refresh due to invalid DSL content during editing');
             }
@@ -311,7 +311,7 @@ export class DomainsViewProvider implements WebviewViewProvider {
         }
     }
 
-    private async handlePreview(selectedDomains: Domain[], selectedUseCases: UseCase[], diagramMode: string = 'detailed') {       
+    private async handlePreview(selectedDomains: Domain[], selectedUseCases: UseCase[], diagramMode = 'detailed') {       
         // Collect use case block ranges
         const blockRanges = selectedUseCases.map(uc => uc.blockRange);
         
@@ -375,7 +375,7 @@ export class DomainsViewProvider implements WebviewViewProvider {
     }
 
     private sendDataRefresh() {
-        if (!this._view) return;
+        if (!this._view) {return;}
 
         const domains = Array.from(this.getDomainsMap().values());
         const visibleDomains = this._state.viewMode === 'current' 
@@ -395,7 +395,7 @@ export class DomainsViewProvider implements WebviewViewProvider {
     }
 
     public sendSelectionCommand(action: 'selectAll' | 'selectNone' | 'selectCurrentFile') {
-        if (!this._view) return;
+        if (!this._view) {return;}
         this._view.webview.postMessage({
             type: ProviderMessages.SELECTION_COMMAND,
             action: action
@@ -403,14 +403,14 @@ export class DomainsViewProvider implements WebviewViewProvider {
     }
 
     public sendRefreshCommand() {
-        if (!this._view) return;
+        if (!this._view) {return;}
         this._view.webview.postMessage({
             type: ProviderMessages.REFRESH_COMMAND
         });
     }
 
     public sendPreviewCommand() {
-        if (!this._view) return;
+        if (!this._view) {return;}
         this._view.webview.postMessage({
             type: ProviderMessages.PREVIEW_COMMAND
         });
@@ -418,14 +418,14 @@ export class DomainsViewProvider implements WebviewViewProvider {
 
 
     public sendToggleOptionsCommand() {
-        if (!this._view) return;
+        if (!this._view) {return;}
         this._view.webview.postMessage({
             type: ProviderMessages.TOGGLE_OPTIONS_COMMAND
         });
     }
 
     private sendInitialData() {
-        if (!this._view) return;
+        if (!this._view) {return;}
 
         const domains = Array.from(this.getDomainsMap().values());
         const visibleDomains = this._state.viewMode === 'current' 
@@ -445,7 +445,7 @@ export class DomainsViewProvider implements WebviewViewProvider {
     }
 
     private ensureValidDomains(domains: Domain[]): Domain[] {
-        if (!domains) return [];
+        if (!domains) {return [];}
         
         return domains.map(domain => ({
             ...domain,

@@ -20,7 +20,7 @@ export const DomainC = {
     GenerateSubDomainId: generateSubDomainId,
     GenerateUseCaseId: generateUseCaseId,
     GenerateServiceId: generateServiceId,
-}
+};
 
 export interface Domain {
     id: string;
@@ -49,7 +49,7 @@ function emptyDomain() {
         selectedUseCases: 0,
         totalUseCases: 0,
         selectedSubDomains: 0
-    }
+    };
     return emptyDomain;
 }
 

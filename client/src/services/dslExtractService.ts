@@ -5,8 +5,7 @@ import {
     UseCaseInfo,
     FileResult,
     ExtractionResult,
-    ServerCommands,
-    ServiceDefinition
+    ServerCommands
 } from '../../../shared/lib/types/domain-extraction';
 import { Domain, DomainC, DSLDiscoveryOptions, DSLDiscoveryResult, Service, ServiceGroup, SubDomain, UseCase, UseCaseReference } from '../types/domain';
 import { ServicesViewService } from './servicesViewService';

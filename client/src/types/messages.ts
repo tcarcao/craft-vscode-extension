@@ -36,6 +36,7 @@ export const SelectionActions = {
 // Message payload types
 export interface WebviewMessage {
   type: string;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   [key: string]: any;
 }
 

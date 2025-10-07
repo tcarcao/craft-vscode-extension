@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import { CharStream, CommonTokenStream, ParserRuleContext } from "antlr4ng";
 import { CraftLexer } from "./generated/CraftLexer";
 import { CraftParser } from "./generated/CraftParser";
@@ -80,7 +81,7 @@ export class CraftCompletionProvider {
 
   private findRuleStackAtPosition(tree: ParserRuleContext, position: Position, text: string): string[] {
     const lines = text.split('\n');
-    let currentLine = 0;
+    const currentLine = 0;
     let currentChar = 0;
     
     // Convert position to absolute character offset
@@ -96,7 +97,7 @@ export class CraftCompletionProvider {
   }
 
   private traverseTreeForPosition(ctx: ParserRuleContext, targetPos: number, ruleStack: string[]): boolean {
-    if (!ctx) return false;
+    if (!ctx) {return false;}
     
     const start = ctx.start?.start || 0;
     const stop = ctx.stop?.stop || 0;

@@ -11,7 +11,12 @@ import stylistic from '@stylistic/eslint-plugin';
 export default tseslint.config(
 	{
 		ignores: [
-			'**/out'
+			'**/out',
+			'**/dist',
+			'server/src/parser/generated/**',
+			'shared/lib/**',
+			'**/*.config.js',
+			'**/*.config.mjs'
 		]
 	},
 	js.configs.recommended,

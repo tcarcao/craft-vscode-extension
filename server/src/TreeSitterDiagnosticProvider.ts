@@ -1,8 +1,8 @@
 // server/src/TreeSitterDiagnosticProvider.ts
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import {
     Diagnostic,
     DiagnosticSeverity,
-    Position,
     Range
 } from 'vscode-languageserver/node.js';
 import { TextDocument } from 'vscode-languageserver-textdocument';

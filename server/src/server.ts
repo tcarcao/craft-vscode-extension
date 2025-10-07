@@ -42,7 +42,9 @@ console.log('SERVER: process.cwd():', process.cwd());
 console.log('SERVER: Node version:', process.version);
 console.log('SERVER: Process argv:', process.argv.join(' '));
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 let connection: any;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 let documents: any;
 try {
   connection = createConnection(ProposedFeatures.all);
@@ -404,7 +406,7 @@ function combineExtractionResults(results: FileResult[]): Omit<ExtractionResult,
   };
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 async function handleExtractPartialDslFromBlockRanges(args: any[] | undefined, workspaceParser: WorkspaceParser): Promise<string> {
   if (!args || args.length === 0) {
     return '';

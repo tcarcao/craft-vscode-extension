@@ -5,6 +5,7 @@ import { ServicesView } from './components/ServicesView';
 // VS Code webview API
 declare global {
   interface Window {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     acquireVsCodeApi: () => any;
   }
 }

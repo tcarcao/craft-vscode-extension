@@ -3,8 +3,10 @@ import * as path from 'path';
 import { Logger } from './utils/Logger';
 
 // Import web-tree-sitter (WASM-based for distribution)
+// eslint-disable-next-line @typescript-eslint/no-require-imports
 const TreeSitter = require('web-tree-sitter');
 // Import the WASM file URL for esbuild
+// eslint-disable-next-line @typescript-eslint/no-require-imports
 const TreeSitterWasmUrl = require('web-tree-sitter/tree-sitter.wasm');
 
 /**
@@ -12,8 +14,11 @@ const TreeSitterWasmUrl = require('web-tree-sitter/tree-sitter.wasm');
  * Provides semantic highlighting using the parsed AST
  */
 export class TreeSitterHighlightProvider implements DocumentSemanticTokensProvider {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private parser: any = null;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private language: any = null;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private query: any = null;
   private initializationPromise: Promise<void>;
 
@@ -87,7 +92,7 @@ export class TreeSitterHighlightProvider implements DocumentSemanticTokensProvid
       
       if (typeof Parser.init === 'function') {
         await Parser.init({
-          locateFile(scriptName: string, scriptDirectory: string) {
+          locateFile(scriptName: string, _scriptDirectory: string) {
             if (scriptName === 'tree-sitter.wasm') {
               // Return absolute path to the bundled WASM file
               return path.join(__dirname, TreeSitterWasmUrl);
@@ -114,6 +119,7 @@ export class TreeSitterHighlightProvider implements DocumentSemanticTokensProvid
         try {
           const extensionRoot = path.join(__dirname, '..');
           const highlightsPath = path.join(extensionRoot, 'resources/queries/highlights.scm');
+          // eslint-disable-next-line @typescript-eslint/no-require-imports
           const fs = require('fs');
           const highlightsQuery = fs.readFileSync(highlightsPath, 'utf8');
           this.query = new TreeSitter.Query(this.language, highlightsQuery);
@@ -136,7 +142,7 @@ export class TreeSitterHighlightProvider implements DocumentSemanticTokensProvid
 
   async provideDocumentSemanticTokens(
     document: TextDocument,
-    token: CancellationToken
+    _token: CancellationToken
   ): Promise<SemanticTokens> {
     // Wait for initialization to complete
     await this.initializationPromise;
@@ -173,20 +179,21 @@ export class TreeSitterHighlightProvider implements DocumentSemanticTokensProvid
     }
   }
 
-  private extractSemanticTokens(node: any, document: TextDocument): Array<{
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  private extractSemanticTokens(node: any, document: TextDocument): {
     line: number;
     startChar: number;
     length: number;
     tokenType: number;
     tokenModifiers: number;
-  }> {
-    const tokens: Array<{
+  }[] {
+    const tokens: {
       line: number;
       startChar: number;
       length: number;
       tokenType: number;
       tokenModifiers: number;
-    }> = [];
+    }[] = [];
 
     // Use query-based approach only
     if (this.query) {
@@ -202,7 +209,6 @@ export class TreeSitterHighlightProvider implements DocumentSemanticTokensProvid
         const tokenType = this.tokenTypes.indexOf(tokenTypeName);
         if (tokenType !== -1) {
           const startPos = document.positionAt(captureNode.startIndex);
-          const endPos = document.positionAt(captureNode.endIndex);
           const lineText = document.lineAt(startPos.line).text;
           const maxChar = lineText.length;
           const length = Math.min(captureNode.endIndex - captureNode.startIndex, maxChar - startPos.character);
@@ -226,7 +232,7 @@ export class TreeSitterHighlightProvider implements DocumentSemanticTokensProvid
     
     // Sort tokens by position
     tokens.sort((a, b) => {
-      if (a.line !== b.line) return a.line - b.line;
+      if (a.line !== b.line) {return a.line - b.line;}
       return a.startChar - b.startChar;
     });
 
@@ -234,13 +240,13 @@ export class TreeSitterHighlightProvider implements DocumentSemanticTokensProvid
     return this.removeOverlappingTokens(tokens);
   }
 
-  private encodeTokens(tokens: Array<{
+  private encodeTokens(tokens: {
     line: number;
     startChar: number;
     length: number;
     tokenType: number;
     tokenModifiers: number;
-  }>): Uint32Array {
+  }[]): Uint32Array {
     const data: number[] = [];
     let prevLine = 0;
     let prevChar = 0;
@@ -262,20 +268,20 @@ export class TreeSitterHighlightProvider implements DocumentSemanticTokensProvid
     return new Uint32Array(data);
   }
 
-  private removeOverlappingTokens(tokens: Array<{
+  private removeOverlappingTokens(tokens: {
     line: number;
     startChar: number;
     length: number;
     tokenType: number;
     tokenModifiers: number;
-  }>): Array<{
+  }[]): {
     line: number;
     startChar: number;
     length: number;
     tokenType: number;
     tokenModifiers: number;
-  }> {
-    if (tokens.length === 0) return tokens;
+  }[] {
+    if (tokens.length === 0) {return tokens;}
 
     const filtered: typeof tokens = [];
     let lastToken = tokens[0];

@@ -9,7 +9,7 @@ export enum LogLevel {
 
 export class Logger {
     private static currentLevel: LogLevel = LogLevel.WARN;
-    private static prefix: string = '[Craft]';
+    private static prefix = '[Craft]';
 
     public static setLevel(level: string): void {
         switch (level.toLowerCase()) {
@@ -40,30 +40,35 @@ export class Logger {
         return this.currentLevel;
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     public static error(...args: any[]): void {
         if ((this.currentLevel ?? LogLevel.WARN) >= LogLevel.ERROR) {
             console.error(this.prefix, '[ERROR]', ...args);
         }
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     public static warn(...args: any[]): void {
         if ((this.currentLevel ?? LogLevel.WARN) >= LogLevel.WARN) {
             console.warn(this.prefix, '[WARN]', ...args);
         }
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     public static info(...args: any[]): void {
         if ((this.currentLevel ?? LogLevel.WARN) >= LogLevel.INFO) {
             console.info(this.prefix, '[INFO]', ...args);
         }
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     public static debug(...args: any[]): void {
         if ((this.currentLevel ?? LogLevel.WARN) >= LogLevel.DEBUG) {
             console.log(this.prefix, '[DEBUG]', ...args);
         }
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     public static trace(...args: any[]): void {
         if ((this.currentLevel ?? LogLevel.WARN) >= LogLevel.TRACE) {
             console.log(this.prefix, '[TRACE]', ...args);
@@ -71,10 +76,12 @@ export class Logger {
     }
 
     // Convenience methods for common debugging scenarios
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     public static debugExtraction(operation: string, ...args: any[]): void {
         this.debug(`[DSL Extraction] ${operation}:`, ...args);
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     public static traceNodes(operation: string, nodes: any[]): void {
         if ((this.currentLevel ?? LogLevel.WARN) >= LogLevel.TRACE) {
             this.trace(`[AST Nodes] ${operation}:`);
@@ -88,10 +95,12 @@ export class Logger {
         }
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     public static debugServerRequest(method: string, args?: any): void {
         this.debug(`[Server Request] ${method}`, args ? { args } : '');
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     public static debugServerResponse(method: string, result: any, duration?: number): void {
         const timing = duration ? ` (${duration}ms)` : '';
         this.debug(`[Server Response] ${method}${timing}`, typeof result === 'string' ? `${result.length} chars` : result);

@@ -1,3 +1,4 @@
+/* eslint-disable no-case-declarations, @typescript-eslint/no-unused-vars */
 import { ParseTree, ParserRuleContext, TerminalNode, Token } from 'antlr4ng';
 import { BlockRange } from '../../../shared/lib/types/domain-extraction.js';
 
@@ -71,7 +72,7 @@ function findNodesInRanges(node: ParserRuleContext, selectedRanges: BlockRange[]
   const selectedNodes: ParserRuleContext[] = [];
   
   function traverse(currentNode: ParseTree): void {
-    if (!currentNode) return;
+    if (!currentNode) {return;}
     
     if (currentNode instanceof ParserRuleContext && currentNode.start && currentNode.stop) {
       const nodeStartLine = currentNode.start.line;
@@ -161,7 +162,7 @@ function findArchitecturalNodes(rootNode: ParserRuleContext): ParserRuleContext[
   const architecturalNodes: ParserRuleContext[] = [];
   
   function traverse(node: ParseTree): void {
-    if (!node) return;
+    if (!node) {return;}
     
     if (node instanceof ParserRuleContext) {
       const nodeType = node.constructor.name;
@@ -200,17 +201,17 @@ function generateMinimalDSL(
   }
   
   function hasRequiredDescendant(node: ParseTree): boolean {
-    if (node instanceof ParserRuleContext && requiredNodes.has(node)) return true;
+    if (node instanceof ParserRuleContext && requiredNodes.has(node)) {return true;}
     
     for (let i = 0; i < node.getChildCount(); i++) {
       const child = node.getChild(i)!;
-      if (hasRequiredDescendant(child)) return true;
+      if (hasRequiredDescendant(child)) {return true;}
     }
     return false;
   }
   
-  function generateNode(node: ParseTree, depth: number = 0): string {
-    if (!node) return '';
+  function generateNode(node: ParseTree, depth = 0): string {
+    if (!node) {return '';}
     
     const nodeType = node.constructor.name;
     
@@ -269,7 +270,7 @@ function generateMinimalDSL(
   }
   
   function generateServices(node: ParseTree, depth: number): string {
-    if (!hasRequiredDescendant(node)) return '';
+    if (!hasRequiredDescendant(node)) {return '';}
     
     let result = 'services {\n';
     
@@ -434,7 +435,7 @@ function generateMinimalDSL(
   }
   
   function generateUseCase(node: ParseTree, depth: number): string {
-    if (!hasRequiredDescendant(node)) return '';
+    if (!hasRequiredDescendant(node)) {return '';}
     
     // Get use case name
     let stringNode: ParseTree | null = null;
@@ -546,7 +547,7 @@ function generateMinimalDSL(
   }
   
   function getNodeText(node: ParserRuleContext, lines: string[]): string {
-    if (!node || !node.start || !node.stop) return '';
+    if (!node || !node.start || !node.stop) {return '';}
     
     const startLine = node.start.line - 1;
     const startCol = node.start.column;

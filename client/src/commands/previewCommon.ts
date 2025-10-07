@@ -372,6 +372,7 @@ export async function handleDownload(message: DownloadMessage): Promise<void> {
         await handleC4Download(message as C4DownloadMessage);
     } else {
         // This should never happen due to the discriminated union, but TypeScript requires it
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         throw new Error(`Unsupported diagram type: ${(message as any).diagramType}`);
     }
 }

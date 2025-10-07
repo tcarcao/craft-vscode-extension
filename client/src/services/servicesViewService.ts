@@ -92,7 +92,7 @@ export class ServicesViewService {
                     subDomain.selected = false;
                     subDomain.partiallySelected = true;
                 }
-            })
+            });
 
             if (service.subDomains.length === 0) {
                 return;
@@ -128,12 +128,12 @@ export class ServicesViewService {
         }
     }
 
-    toggleServiceGroupSelection(serviceGroup: ServiceGroup, currentFileOnly: boolean = false) {
+    toggleServiceGroupSelection(serviceGroup: ServiceGroup, currentFileOnly = false) {
         const newSelectedState = !serviceGroup.selected && !serviceGroup.partiallySelected;
         this.toggleServiceGroupSelectionWith(serviceGroup, newSelectedState, currentFileOnly);
     }
 
-    toggleServiceGroupSelectionWith(serviceGroup: ServiceGroup, selectedState: boolean, currentFileOnly: boolean = false) {
+    toggleServiceGroupSelectionWith(serviceGroup: ServiceGroup, selectedState: boolean, currentFileOnly = false) {
         const servicesToUpdate = currentFileOnly 
             ? serviceGroup.services.filter(s => s.inCurrentFile)
             : serviceGroup.services;
@@ -146,13 +146,13 @@ export class ServicesViewService {
 
             subDomainsToUpdate.forEach(sd => {
                 sd.selected = selectedState;
-                sd.useCases.forEach(uc => uc.selected = selectedState)
+                sd.useCases.forEach(uc => uc.selected = selectedState);
             });
         });
         this.updateServiceGroupSelectionForCurrentFile(serviceGroup, currentFileOnly);
     }
 
-    toggleServiceSelection(serviceGroup: ServiceGroup, serviceId: string, currentFileOnly: boolean = false) {
+    toggleServiceSelection(serviceGroup: ServiceGroup, serviceId: string, currentFileOnly = false) {
         const service = serviceGroup.services.find(s => s.id === serviceId);
 
         if (service) {
@@ -171,7 +171,7 @@ export class ServicesViewService {
         this.updateServiceGroupSelectionForCurrentFile(serviceGroup, currentFileOnly);  
     }
 
-    toggleSubDomainSelection(serviceGroup: ServiceGroup, service: Service, subDomainId: string, currentFileOnly: boolean = false) {
+    toggleSubDomainSelection(serviceGroup: ServiceGroup, service: Service, subDomainId: string, currentFileOnly = false) {
         const subDomain = service.subDomains.find(sd => sd.id === subDomainId);
 
         if (subDomain) {
@@ -182,7 +182,7 @@ export class ServicesViewService {
         this.updateServiceGroupSelectionForCurrentFile(serviceGroup, currentFileOnly);  
     }
 
-    toggleUseCaseSelection(serviceGroup: ServiceGroup, subDomain: SubDomain, useCaseId: string, currentFileOnly: boolean = false) {
+    toggleUseCaseSelection(serviceGroup: ServiceGroup, subDomain: SubDomain, useCaseId: string, currentFileOnly = false) {
         const useCase = subDomain.useCases.find(uc => uc.id === useCaseId);
 
         if (useCase) {

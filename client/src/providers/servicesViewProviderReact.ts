@@ -53,7 +53,7 @@ export class ServicesViewProviderReact implements WebviewViewProvider {
     }
 
     private getWebviewContent(): string {
-        if (!this._view) return '';
+        if (!this._view) {return '';}
 
         const scriptUri = this._view.webview.asWebviewUri(
             Uri.joinPath(this._extensionUri, 'dist', 'webview', 'services.js')
@@ -91,6 +91,7 @@ export class ServicesViewProviderReact implements WebviewViewProvider {
         return text;
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     private handleMessage(data: any): void {
         switch (data.type) {
             case 'ready':
@@ -149,6 +150,7 @@ export class ServicesViewProviderReact implements WebviewViewProvider {
         }
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     private sendStateUpdate(key: string, value: any): void {
         if (this._view) {
             this._view.webview.postMessage({

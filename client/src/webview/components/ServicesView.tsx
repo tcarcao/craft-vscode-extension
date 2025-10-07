@@ -3,6 +3,7 @@ import { ServiceGroup, Service, SubDomain, UseCase } from '../../types/domain';
 import { WebviewMessages, ProviderMessages, SelectionActions } from '../../types/messages';
 
 interface ServicesViewProps {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   vscode: any;
 }
 
@@ -479,9 +480,11 @@ export const ServicesView: React.FC<ServicesViewProps> = ({ vscode }) => {
     vscode.postMessage({ type: WebviewMessages.REFRESH });
   };
 
-  const previewWithState = (currentState: ViewState) => {    
+  const previewWithState = (currentState: ViewState) => {
     // Extract services and use cases for the preview
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const selectedServices: any[] = [];
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const selectedUseCases: any[] = [];
     const focusInfo = {
       boundariesMode: currentState.boundariesMode,

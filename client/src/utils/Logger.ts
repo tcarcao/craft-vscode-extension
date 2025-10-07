@@ -10,7 +10,7 @@ export enum LogLevel {
 }
 
 export class Logger {
-    private static prefix: string = '[Craft Client]';
+    private static prefix = '[Craft Client]';
 
     public static getCurrentLevel(): LogLevel {
         const level = workspace.getConfiguration('craft').get('logging.level', 'warn');
@@ -25,30 +25,35 @@ export class Logger {
         }
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     public static error(...args: any[]): void {
         if (this.getCurrentLevel() >= LogLevel.ERROR) {
             console.error(this.prefix, '[ERROR]', ...args);
         }
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     public static warn(...args: any[]): void {
         if (this.getCurrentLevel() >= LogLevel.WARN) {
             console.warn(this.prefix, '[WARN]', ...args);
         }
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     public static info(...args: any[]): void {
         if (this.getCurrentLevel() >= LogLevel.INFO) {
             console.info(this.prefix, '[INFO]', ...args);
         }
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     public static debug(...args: any[]): void {
         if (this.getCurrentLevel() >= LogLevel.DEBUG) {
             console.log(this.prefix, '[DEBUG]', ...args);
         }
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     public static trace(...args: any[]): void {
         if (this.getCurrentLevel() >= LogLevel.TRACE) {
             console.log(this.prefix, '[TRACE]', ...args);

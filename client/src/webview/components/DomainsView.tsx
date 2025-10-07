@@ -3,6 +3,7 @@ import { Domain, SubDomain, UseCase, UseCaseReference } from '../../types/domain
 import { WebviewMessages, ProviderMessages, SelectionActions } from '../../types/messages';
 
 interface DomainsViewProps {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   vscode: any;
 }
 

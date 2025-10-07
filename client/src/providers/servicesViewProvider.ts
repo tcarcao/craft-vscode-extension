@@ -1,10 +1,10 @@
 import { Uri, WebviewViewProvider, WebviewView, WebviewViewResolveContext, CancellationToken, TextDocument, window, workspace, commands, ExtensionContext } from 'vscode';
 import { ServicesViewService } from '../services/servicesViewService';
 import { DslExtractService } from '../services/dslExtractService';
-import { ServiceTreeState, ServiceGroup, Service, UseCase, SubDomain } from '../types/domain';
+import { ServiceTreeState, ServiceGroup } from '../types/domain';
 import { LanguageClient } from 'vscode-languageclient/node';
 import { ServerCommands } from '../../../shared/lib/types/domain-extraction';
-import { WebviewMessages, ProviderMessages, SelectionActions } from '../types/messages';
+import { WebviewMessages, ProviderMessages } from '../types/messages';
 import { Logger } from '../utils/Logger';
 
 export class ServicesViewProvider implements WebviewViewProvider {
@@ -37,7 +37,7 @@ export class ServicesViewProvider implements WebviewViewProvider {
     }
 
     private getWebviewContent(): string {
-        if (!this._view) return '';
+        if (!this._view) {return '';}
 
         const scriptUri = this._view.webview.asWebviewUri(
             Uri.joinPath(this._extensionUri, 'dist', 'webview', 'services.js')
@@ -251,7 +251,7 @@ export class ServicesViewProvider implements WebviewViewProvider {
 
                 // If validation succeeds, proceed with refresh
                 this.refreshServices();
-            } catch (error) {
+            } catch {
                 // If validation fails, don't refresh to avoid flickering
                 Logger.warn('Skipping refresh due to invalid DSL content during editing');
             }
@@ -312,6 +312,7 @@ export class ServicesViewProvider implements WebviewViewProvider {
     }
 
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     private async handlePreview(selectedServices: any[], selectedUseCases: any[], focusInfo: any) {
         const blockRanges = [];
         selectedServices.forEach(s => blockRanges.push(s.blockRange));
@@ -340,7 +341,7 @@ export class ServicesViewProvider implements WebviewViewProvider {
 
 
     private sendDataRefresh() {
-        if (!this._view) return;
+        if (!this._view) {return;}
 
         const serviceGroups = Array.from(this.getServiceGroupsMap().values());
         const visibleGroups = this._state.viewMode === 'current' 
@@ -360,7 +361,7 @@ export class ServicesViewProvider implements WebviewViewProvider {
     }
 
     public sendSelectionCommand(action: 'selectAll' | 'selectNone') {
-        if (!this._view) return;
+        if (!this._view) {return;}
         this._view.webview.postMessage({
             type: ProviderMessages.SELECTION_COMMAND,
             action: action
@@ -368,14 +369,14 @@ export class ServicesViewProvider implements WebviewViewProvider {
     }
 
     public sendRefreshCommand() {
-        if (!this._view) return;
+        if (!this._view) {return;}
         this._view.webview.postMessage({
             type: ProviderMessages.REFRESH_COMMAND
         });
     }
 
     public sendPreviewCommand() {
-        if (!this._view) return;
+        if (!this._view) {return;}
         this._view.webview.postMessage({
             type: ProviderMessages.PREVIEW_COMMAND
         });
@@ -383,14 +384,14 @@ export class ServicesViewProvider implements WebviewViewProvider {
 
 
     public sendToggleOptionsCommand() {
-        if (!this._view) return;
+        if (!this._view) {return;}
         this._view.webview.postMessage({
             type: ProviderMessages.TOGGLE_OPTIONS_COMMAND
         });
     }
 
     private sendInitialData() {
-        if (!this._view) return;
+        if (!this._view) {return;}
 
         const serviceGroups = Array.from(this.getServiceGroupsMap().values());
         const visibleGroups = this._state.viewMode === 'current' 

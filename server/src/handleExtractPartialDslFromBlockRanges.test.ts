@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import { BlockRange } from '../../shared/lib/types/domain-extraction.js';
 import { Parser } from './parser/CraftParser.js';
 
