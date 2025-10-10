@@ -17,7 +17,7 @@
         "antlr4ng": "^3.0.16",
         "axios": "^1.0.0",
         "glob": "^11.0.3",
-        "tree-sitter-craft": "^0.1.4",
+        "tree-sitter-craft": "^0.1.5",
         "vscode-languageclient": "^9.0.1",
         "vscode-languageserver": "^9.0.1",
         "vscode-languageserver-textdocument": "^1.0.12",
@@ -27,9 +27,11 @@
     "scripts": {
         "vscode:prepublish": "npm run bundle",
         "compile": "npm run copy-tree-sitter && tsc -b && cd client && npm run compile",
-        "copy-tree-sitter": "cp node_modules/tree-sitter-craft/tree-sitter-craft.wasm resources/ && cp -r node_modules/tree-sitter-craft/queries resources/queries",
+        "copy-tree-sitter": "cp node_modules/tree-sitter-craft/tree-sitter-craft.wasm resources/ && cp -r node_modules/tree-sitter-craft/queries resources",
         "watch": "tsc -b -w",
         "lint": "eslint",
+        "test": "jest",
+        "test:formatter": "tsx server/src/parser/TreeSitterFormatterProvider.manual.test.ts",
         "postinstall": "cd client && npm install && cd ../server && npm install && cd .. && npm run copy-tree-sitter",
         "update-grammar": "./update-grammar.sh",
         "bundle": "npm run copy-tree-sitter && npm run bundle-client && npm run bundle-server && npm run bundle-webviews && npm run copy-static-assets",
@@ -49,12 +51,14 @@
     "devDependencies": {
         "@eslint/js": "^9.13.0",
         "@stylistic/eslint-plugin": "^2.9.0",
-        "@types/mocha": "^10.0.6",
+        "@types/jest": "^30.0.0",
         "@types/node": "^20",
         "@vscode/vsce": "^3.6.2",
         "esbuild": "^0.25.10",
         "eslint": "^9.13.0",
-        "mocha": "^10.3.0",
+        "jest": "^30.2.0",
+        "ts-jest": "^29.4.4",
+        "tsx": "^4.20.6",
         "typescript": "^5.6.2",
         "typescript-eslint": "^8.11.0"
     },
@@ -158,6 +162,10 @@
                 "description": "Data stores property keyword"
             },
             {
+                "id": "craft-deployment-property",
+                "description": "Deployment property keyword"
+            },
+            {
                 "id": "craft-to-property",
                 "description": "To property keyword"
             },
@@ -250,6 +258,14 @@
                 "description": "Modifier values"
             },
             {
+                "id": "craft-deployment-type",
+                "description": "Deployment type"
+            },
+            {
+                "id": "craft-deployment-target",
+                "description": "Deplyment target"
+            },
+            {
                 "id": "craft-flow-arrow",
                 "description": "Flow arrows"
             },
@@ -280,6 +296,18 @@
             {
                 "id": "craft-comma",
                 "description": "Commas"
+            },
+            {
+                "id": "craft-percentage",
+                "description": "Percentage"
+            },
+            {
+                "id": "craft-parenthesis",
+                "description": "Parenthesis"
+            },
+            {
+                "id": "craft-deployment-arrow",
+                "description": "Deployment Arrow"
             }
         ],
         "semanticTokenModifiers": [
@@ -336,6 +364,9 @@
                     ],
                     "craft-data-stores-property": [
                         "keyword.other.property.data-stores.craft"
+                    ],
+                    "craft-deployment-property": [
+                        "keyword.other.property.deployment.craft"
                     ],
                     "craft-to-property": [
                         "keyword.other.property.to.craft"
@@ -394,6 +425,12 @@
                     "craft-regular-verb": [
                         "entity.name.function.verb.craft"
                     ],
+                    "craft-deployment-type": [
+                        "entity.name.type.deployment.type.craft"
+                    ],
+                    "craft-deployment-target": [
+                        "entity.name.type.deployment.target.craft"
+                    ],
                     "craft-phrase-word": [
                         "entity.name.variable.phrase.craft"
                     ],
@@ -429,6 +466,15 @@
                     ],
                     "craft-comma": [
                         "punctuation.separator.comma.craft"
+                    ],
+                    "craft-percentage": [
+                        "punctuation.percentage.craft"
+                    ],
+                    "craft-parenthesis": [
+                        "punctuation.separator.parenthesis.craft"
+                    ],
+                    "deployment-arrow": [
+                        "punctuation.separator.deployment.arrow.craft"
                     ]
                 }
             }
@@ -475,6 +521,10 @@
                     },
                     "craft-data-stores-property": {
                         "foreground": "#d73a49",
+                        "bold": true
+                    },
+                    "craft-deployment-property": {
+                        "foreground": "#22863a",
                         "bold": true
                     },
                     "craft-to-property": {
@@ -559,6 +609,14 @@
                         "foreground": "#6f42c1",
                         "bold": true
                     },
+                    "craft-deployment-type": {
+                        "foreground": "#0070C1",
+                        "bold": true
+                    },
+                    "craft-deployment-target": {
+                        "foreground": "#6f42c1",
+                        "italic": true
+                    },
                     "craft-phrase-word": {
                         "foreground": "#a31515",
                         "italic": true
@@ -580,6 +638,18 @@
                     "craft-comment": {
                         "foreground": "#008000",
                         "italic": true
+                    },
+                    "craft-percentage": {
+                        "foreground": "#008000",
+                        "italic": true
+                    },
+                    "craft-parenthesis": {
+                        "foreground": "#b8860b",
+                        "bold": true
+                    },
+                    "craft-deployment-arrow": {
+                        "foreground": "#cf222e",
+                        "bold": true
                     }
                 }
             }

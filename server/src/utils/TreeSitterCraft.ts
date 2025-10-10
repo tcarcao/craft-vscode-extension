@@ -10,7 +10,8 @@ const TreeSitterWasmUrl = require('web-tree-sitter/tree-sitter.wasm');
 // Import the Craft language WASM file for esbuild bundling
 const CraftWasmUrl = require('tree-sitter-craft/tree-sitter-craft.wasm');
 
-export async function initializeParser(): Promise<typeof Parser> {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export async function initializeParser(): Promise<any> {
 	try {
 		Logger.info('🔄 Initializing Tree-sitter WASM for Craft...');
 
@@ -36,7 +37,7 @@ export async function initializeParser(): Promise<typeof Parser> {
 		parser.setLanguage(language);
 
 		Logger.info('✅ Tree-sitter Craft ready (WASM)');
-		return parser;
+		return [parser, language];
 	} catch (error) {
 		Logger.error('❌ Failed to initialize Tree-sitter:', error);
 		Logger.error('Stack trace:', error instanceof Error ? error.stack : 'No stack trace');

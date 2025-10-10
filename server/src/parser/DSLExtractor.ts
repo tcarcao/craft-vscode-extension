@@ -310,7 +310,7 @@ function generateMinimalDSL(
     requiredServices.forEach((service, index) => {
       result += generateServiceBlock(service, depth);
       if (index < requiredServices.length - 1) {
-        result += ',\n';
+        result += '\n';
       }
     });
     

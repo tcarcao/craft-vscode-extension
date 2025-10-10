@@ -1,30 +1,53 @@
-/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars, @typescript-eslint/prefer-for-of */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { TextDocument } from 'vscode-languageserver-textdocument';
 import { TextEdit, Range, Position } from 'vscode-languageserver/node.js';
 import { Logger } from '../utils/Logger.js';
 
 /**
- * Tree-sitter based formatter for Craft DSL
- * Uses WASM tree-sitter for cross-platform compatibility
+ * Pure query-driven Tree-sitter formatter for Craft DSL
+ * NO hardcoded node.type checks - everything driven by format.scm queries
  */
 export class TreeSitterFormatterProvider {
-  constructor(private parser: any) {
+  private query: any = null;
+
+  constructor(private parser: any, private language: any) {
+    this.initializeQuery();
+  }
+
+  private initializeQuery(): void {
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
+      const path = require('path');
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
+      const fs = require('fs');
+
+      const queryPath = path.join(__dirname, '../resources/queries/format.scm');
+      const querySource = fs.readFileSync(queryPath, 'utf8');
+
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
+      const TreeSitter = require('web-tree-sitter');
+      this.query = new TreeSitter.Query(this.language, querySource);
+
+      Logger.info('✅ Formatting query loaded');
+    } catch (error) {
+      Logger.warn('⚠️ Could not load formatting query:', error);
+    }
   }
 
   async formatDocument(document: TextDocument): Promise<TextEdit[]> {
-    if (!this.parser) {
-      Logger.warn('Tree-sitter parser not initialized - formatting disabled');
+    if (!this.parser || !this.query) {
+      Logger.warn('Tree-sitter parser/query not initialized - formatting disabled');
       return [];
     }
 
     const text = document.getText();
-    const formatted = this.formatCraftContent(text);
+    const tree = this.parser.parse(text);
+    const formatted = this.formatWithQuery(tree.rootNode, text);
 
     if (formatted === text) {
-      return []; // No changes needed
+      return [];
     }
 
-    // Return a single edit that replaces the entire document
     return [{
       range: Range.create(
         Position.create(0, 0),
@@ -34,354 +57,601 @@ export class TreeSitterFormatterProvider {
     }];
   }
 
-  private formatCraftContent(content: string): string {
-    const tree = this.parser.parse(content);
-    const rootNode = tree.rootNode;
-
-    return this.formatNode(rootNode, content, 0);
+  private formatWithQuery(rootNode: any, sourceText: string): string {
+    const captures = this.query.captures(rootNode);
+    const context = new FormattingContext(sourceText, captures);
+    return this.formatNode(rootNode, context, 0);
   }
 
-  private formatNode(node: any, sourceText: string, indentLevel: number): string {
-    const indentSize = 4;
+  private formatNode(node: any, ctx: FormattingContext, indent: number): string {
+    const roles = ctx.getRoles(node);
 
-    if (node.type === 'source_file') {
-      // Format top-level items with spacing between them
-      const children = node.children;
-      const formattedChildren: string[] = [];
+    if (roles.has('identifier') || roles.has('string') ||
+      roles.has('number') || roles.has('number.percentage') ||
+      roles.has('boolean')) {
+      return ctx.getText(node);
+    }
 
-      for (let i = 0; i < children.length; i++) {
-        const child = children[i];
-        const formattedChild = this.formatNode(child, sourceText, 0);
-        if (formattedChild.trim()) {
-          formattedChildren.push(formattedChild);
-        }
+    if (roles.has('comment')) {
+      return this.formatComment(node, ctx, indent);
+    }
+
+    if (roles.has('brace.open') || roles.has('brace.close')) {
+      return ''; // Handled by block formatters
+    }
+
+    if (roles.has('token.colon')) {
+      return ':';
+    }
+
+    if (roles.has('token.arrow')) {
+      return ctx.getText(node); // Could be '>' or '->'
+    }
+
+    if (roles.has('token.paren.open') || roles.has('token.paren.close')) {
+      return ctx.getText(node); // '(' or ')'
+    }
+
+    if (roles.has('token.comma')) {
+      return ',';
+    }
+
+    if (this.hasRoleStartingWith(roles, 'keyword.')) {
+      return ctx.getText(node); // to, asks, etc.
+    }
+
+    if (ctx.hasRole(node, "content.actor-type")) {
+      return ctx.getText(node);
+    }
+
+    if (ctx.hasRole(node, "content.connector-word")) {
+      return ctx.getText(node);
+    }
+
+    if (roles.has('arch.section')) {
+      return this.formatArchSection(node, ctx);
+    }
+
+    if (roles.has('content.when-clause')) {
+      return this.formatWhenClause(node, ctx);
+    }
+
+    if (roles.has('content.identifier-list')) {
+      return this.formatIdentifierList(node, ctx);
+    }
+
+    if (roles.has('content.component')) {
+      return this.formatArchComponent(node, ctx);
+    }
+
+    if (roles.has('content.component-list')) {
+      return this.formatComponentList(node, ctx);
+    }
+
+    if (roles.has('content.component-flow')) {
+      return this.formatComponentFlow(node, ctx);
+    }
+
+    if (roles.has('content.component-with-modifiers')) {
+      return this.formatComponent(node, ctx);
+    }
+
+    if (roles.has('content.component-modifiers')) {
+      return this.formatComponentModifiers(node, ctx);
+    }
+
+    if (roles.has('content.modifier')) {
+      return this.formatComponentModifier(node, ctx);
+    }
+
+    if (roles.has('content.exposure-to-property')) {
+      return `${' '.repeat(indent * 4)}to: ${this.unwrapAndFormat(node, ctx, 0)}`;
+    }
+
+    if (roles.has('content.exposure-through-property')) {
+      return `${' '.repeat(indent * 4)}through: ${this.unwrapAndFormat(node, ctx, 0)}`;
+    }
+
+    if (roles.has('content.exposure-of-property')) {
+      return `${' '.repeat(indent * 4)}of: ${this.unwrapAndFormat(node, ctx, 0)}`;
+    }
+
+    if (roles.has('content.domains-property')) {
+      return `${' '.repeat(indent * 4)}domains: ${this.unwrapAndFormat(node, ctx, 0)}`; 
+    }
+
+    if (roles.has('content.language-property')) {
+      return `${' '.repeat(indent * 4)}language: ${this.unwrapAndFormat(node, ctx, 0)}`; 
+    }
+
+    if (roles.has('content.data-stores-property')) {
+      return `${' '.repeat(indent * 4)}data-stores: ${this.unwrapAndFormat(node, ctx, 0)}`; 
+    }
+
+    if (roles.has('content.deployment-property')) {
+      return `${' '.repeat(indent * 4)}deployment: ${this.unwrapAndFormat(node, ctx, 0)}`; 
+    }
+
+    if (roles.has('content.deployment-type')) {
+      return ctx.getText(node);
+    }
+
+    if (roles.has('content.deployment-rules')) {
+      return this.formatDeploymentRules(node, ctx);
+    }
+
+    if (roles.has('content.deployment-rule')) {
+      return this.formatDeploymentRule(node, ctx);
+    }
+
+    if (roles.has('content.action')) {
+      const ind = 2;
+      return `${' '.repeat(ind * 4)}${this.unwrapAndFormat(node, ctx, 0)}`; 
+    }
+
+    if (this.hasRoleStartingWith(roles, 'content.')) {
+      return this.formatContentNode(node, ctx, indent);
+    }
+
+    if (ctx.hasRole(node, 'block.actor')) {
+      return this.formatBlockActor(node, ctx);
+    }
+
+    if (ctx.hasTopLevelRole(node) || this.hasRoleStartingWith(roles, 'block.')) {
+      return this.formatBlock(node, ctx, indent);
+    }
+
+    if (node.children && node.children.length > 0) {
+      return this.unwrapAndFormat(node, ctx, indent);
+    }
+
+    return '';
+  }
+
+  private hasRoleStartingWith(roles: Set<string>, prefix: string): boolean {
+    for (const role of roles) {
+      if (role.startsWith(prefix)) {
+        return true;
       }
-
-      return formattedChildren.join('\n\n');
     }
-
-    if (node.type === 'actors_block') {
-      return this.formatActorsBlock(node, sourceText, indentLevel);
-    }
-
-    if (node.type === 'actor_definition') {
-      return this.formatActorDefinition(node, sourceText, indentLevel);
-    }
-
-    if (node.type === 'services_block') {
-      return this.formatServicesBlock(node, sourceText, indentLevel);
-    }
-
-    if (node.type === 'service_definition') {
-      return this.formatServiceDefinition(node, sourceText, indentLevel);
-    }
-
-    if (node.type === 'arch_block') {
-      return this.formatArchBlock(node, sourceText, indentLevel);
-    }
-
-    if (node.type === 'use_case_block') {
-      return this.formatUseCaseBlock(node, sourceText, indentLevel);
-    }
-
-    if (node.type === 'domain_block') {
-      return this.formatDomainBlock(node, sourceText, indentLevel);
-    }
-
-    if (node.type === 'exposure_block') {
-      return this.formatExposureBlock(node, sourceText, indentLevel);
-    }
-
-    if (node.type === 'comment') {
-      return this.formatComment(node, sourceText, indentLevel);
-    }
-
-    // Default formatting - just extract the text
-    return node.text || sourceText.slice(node.startIndex, node.endIndex);
+    return false;
   }
 
-  private formatServicesBlock(node: any, sourceText: string, indentLevel: number): string {
-    const indent = ' '.repeat(indentLevel * 4);
-    const childIndent = ' '.repeat((indentLevel + 1) * 4);
+  private unwrapAndFormat(node: any, ctx: FormattingContext, indent: number): string {
+    // Special case: root level (no parent)
+    if (!node.parent) {
+      const topLevelBlocks = node.children
+        .filter((child: any) => ctx.hasTopLevelRole(child))
+        .map((child: any) => this.formatNode(child, ctx, 0))
+        .filter((text: string) => text.trim().length > 0);
 
-    const result: string[] = [];
-    result.push(`${indent}services {`);
+      return topLevelBlocks.join('\n\n') + '\n';
+    }
 
-    // Format each service definition
+    // Unknown container - unwrap by recursively formatting children
+    const children = node.children
+      .map((child: any) => this.formatNode(child, ctx, indent))
+      .filter((text: string) => text.trim().length > 0);
+
+    return children.join('');
+  }
+
+  private isStructuralToken(node: any, ctx: FormattingContext): boolean {
+    const roles = ctx.getRoles(node);
+    if (roles.has('brace.open') || roles.has('brace.close')) {
+      return true;
+    }
+
+    const text = ctx.getText(node);
+    return text === '{' || text === '}' || text === '' || text.trim() === '';
+  }
+
+  private formatBlockActor(node: any, ctx: FormattingContext) {
+    const components = [];
     for (const child of node.children) {
-      if (child.type === 'service_definition') {
-        const formattedService = this.formatServiceDefinition(child, sourceText, indentLevel + 1);
-        result.push(formattedService);
+      const formatted = this.formatNode(child, ctx, 2);
+      if (formatted.trim()) {
+        components.push(formatted);
       }
     }
-
-    result.push(`${indent}}`);
-    return result.join('\n');
+    return "actor " + components.join(" ");
   }
 
-  private formatServiceDefinition(node: any, sourceText: string, indentLevel: number): string {
-    const indent = ' '.repeat(indentLevel * 4);
+  private formatBlock(node: any, ctx: FormattingContext, indent: number): string {
+    const ind = ' '.repeat(indent * 4);
+    const lines: string[] = [];
 
-    const result: string[] = [];
+    // Build block header
+    const header = this.buildBlockHeader(node, ctx);
 
-    // Get service name - look for identifier node
-    let serviceName = 'Service';
-    for (const child of node.children) {
-      if (child.type === 'identifier') {
-        serviceName = child.text || sourceText.slice(child.startIndex, child.endIndex);
-        break;
-      }
-    }
-    result.push(`${indent}${serviceName} {`);
+    // Get block content (everything between braces)
+    const blockContent = this.getBlockContent(node, ctx);
 
-    // Format service properties
-    for (let i = 1; i < node.children.length; i++) {
-      const child = node.children[i];
-      if (child.type === 'service_property') {
-        const formattedProperty = this.formatServiceProperty(child, sourceText, indentLevel + 1);
-        result.push(formattedProperty);
-      }
-    }
+    // Check if this is a special block type
+    const roles = ctx.getRoles(node);
 
-    result.push(`${indent}}`);
-    return result.join('\n');
-  }
-
-  private formatServiceProperty(node: any, sourceText: string, indentLevel: number): string {
-    const indent = ' '.repeat(indentLevel * 4);
-
-    // Extract the property text and clean it up
-    const propertyText = node.text || sourceText.slice(node.startIndex, node.endIndex);
-
-    // Simple cleanup - ensure proper spacing around colons and commas
-    const cleaned = propertyText
-      .replace(/\s*:\s*/g, ': ')
-      .replace(/\s*,\s*/g, ', ')
-      .trim();
-
-    return `${indent}${cleaned}`;
-  }
-
-  private formatArchBlock(node: any, sourceText: string, indentLevel: number): string {
-    const indent = ' '.repeat(indentLevel * 4);
-    const result: string[] = [];
-
-    result.push(`${indent}arch {`);
-
-    // Format arch sections - look for arch_section nodes that contain presentation_section or gateway_section
-    const archSections: string[] = [];
-    for (const child of node.children) {
-      if (child.type === 'arch_section') {
-        // arch_section contains presentation_section or gateway_section
-        for (const sectionChild of child.children) {
-          if (sectionChild.type === 'presentation_section' || sectionChild.type === 'gateway_section') {
-            const formattedSection = this.formatArchSection(sectionChild, sourceText, indentLevel + 1);
-            archSections.push(formattedSection);
+    if (roles.has('block.arch')) {
+      // Arch block: format in order, sections get special formatting
+      for (const child of blockContent) {
+        const childRoles = ctx.getRoles(child);
+        const formatted = this.formatNode(child, ctx, indent + 1);
+        if (formatted.trim()) {
+          lines.push(formatted);
+          // Add blank line after sections
+          if (childRoles.has('arch.section')) {
+            lines.push('');
           }
         }
       }
-    }
-
-    // Add arch sections with empty lines between them
-    for (let i = 0; i < archSections.length; i++) {
-      result.push(archSections[i]);
-      // Add empty line after each arch section except the last one
-      if (i < archSections.length - 1) {
-        result.push('');
+      // Remove trailing blank line if present
+      if (lines[lines.length - 1] === '') {
+        lines.pop();
       }
-    }
-
-    result.push(`${indent}}`);
-    return result.join('\n');
-  }
-
-  private formatArchSection(node: any, sourceText: string, indentLevel: number): string {
-    const indent = ' '.repeat(indentLevel * 4);
-    const componentIndent = ' '.repeat((indentLevel + 1) * 4);
-
-    const result: string[] = [];
-
-    // Get section name
-    const sectionName = node.type === 'presentation_section' ? 'presentation' : 'gateway';
-    result.push(`${indent}${sectionName}:`);
-
-    // Format arch components
-    for (const child of node.children) {
-      if (child.type === 'arch_component') {
-        const componentText = child.text || sourceText.slice(child.startIndex, child.endIndex);
-        result.push(`${componentIndent}${componentText.trim()}`);
+    } else if (roles.has('block.usecase')) {
+      // Use case block: format in order, when clauses get special formatting
+      for (const child of blockContent) {
+        const formatted = this.formatNode(child, ctx, indent + 1);
+        if (formatted.trim()) {
+          lines.push(formatted);
+        }
       }
-    }
-
-    return result.join('\n');
-  }
-
-  private formatUseCaseBlock(node: any, sourceText: string, indentLevel: number): string {
-    const indent = ' '.repeat(indentLevel * 4);
-    const result: string[] = [];
-
-    // Get use case name (should be a string)
-    const useCaseName = node.children.find((child: any) => child.type === 'string')?.text || '"Use Case"';
-    result.push(`${indent}use_case ${useCaseName} {`);
-
-    // Format when clauses - they can be direct children or inside scenario nodes
-    const whenClauses: string[] = [];
-    for (const child of node.children) {
-      if (child.type === 'when_clause') {
-        // Direct when_clause child
-        const formattedWhenClause = this.formatWhenClause(child, sourceText, indentLevel + 1);
-        whenClauses.push(formattedWhenClause);
-      } else if (child.type === 'scenario') {
-        // Scenario contains when_clause nodes
-        for (const scenarioChild of child.children) {
-          if (scenarioChild.type === 'when_clause') {
-            const formattedWhenClause = this.formatWhenClause(scenarioChild, sourceText, indentLevel + 1);
-            whenClauses.push(formattedWhenClause);
-          }
+    } else {
+      // Regular block: format all content items
+      for (const child of blockContent) {
+        const formatted = this.formatNode(child, ctx, indent + 1);
+        if (formatted.trim()) {
+          lines.push(formatted);
         }
       }
     }
 
-    // Add when clauses with empty lines between them
-    for (let i = 0; i < whenClauses.length; i++) {
-      result.push(whenClauses[i]);
-      // Add empty line after each when clause except the last one
-      if (i < whenClauses.length - 1) {
-        result.push('');
-      }
+    let content = lines.join('\n');
+
+    if (!content.startsWith("\n")) {
+      content = "\n" + content;
     }
 
-    result.push(`${indent}}`);
-    return result.join('\n');
+    // ensure always single \n in the end
+    content = content.replace(/\n*$/, '\n');
+
+    return `${ind}${header} {${content}${ind}}`;
   }
 
-  private formatWhenClause(node: any, sourceText: string, indentLevel: number): string {
-    const indent = ' '.repeat(indentLevel * 4);
-    const actionIndent = ' '.repeat((indentLevel + 1) * 4);
-
-    const result: string[] = [];
-
-    // Build the when line from when + trigger
-    let whenLine = 'when';
+  private buildBlockHeader(node: any, ctx: FormattingContext): string {
+    const parts: string[] = [];
 
     for (const child of node.children) {
-      if (child.type === 'external_trigger' || child.type === 'event_trigger' ||
-        child.type === 'domain_listener' || child.type === 'cron_trigger') {
-        const triggerText = child.text || sourceText.slice(child.startIndex, child.endIndex);
-        whenLine += ` ${triggerText.trim()}`;
+      const roles = ctx.getRoles(child);
+
+      // Stop at opening brace
+      if (roles.has('brace.open')) {
         break;
       }
-    }
 
-    result.push(`${indent}${whenLine}`);
+      // Skip structural tokens
+      if (this.isStructuralToken(child, ctx)) {
+        continue;
+      }
 
-    // Format all actions - handle different action types
-    for (const child of node.children) {
-      // Handle all types of actions: sync_action, async_action, internal_action, return_action, etc.
-      if (child.type === 'sync_action' || child.type === 'async_action' ||
-          child.type === 'internal_action' || child.type === 'return_action' ||
-          child.type === 'action') {
-        const actionText = child.text || sourceText.slice(child.startIndex, child.endIndex);
-        const trimmedAction = actionText.trim();
-        if (trimmedAction) {
-          result.push(`${actionIndent}${trimmedAction}`);
+      // Include identifiers, strings, keywords
+      if (roles.has('identifier') || roles.has('string') ||
+        roles.size === 0) {
+        const text = ctx.getText(child).trim();
+        if (text && text !== '{') {
+          parts.push(text);
         }
       }
     }
 
-    return result.join('\n');
+    return parts.join(' ');
   }
 
+  private getBlockContent(node: any, ctx: FormattingContext): any[] {
+    const content: any[] = [];
+    let insideBlock = false;
 
-  private formatDomainBlock(node: any, sourceText: string, indentLevel: number): string {
-    const indent = ' '.repeat(indentLevel * 4);
-    const subdomainIndent = ' '.repeat((indentLevel + 1) * 4);
-
-    const result: string[] = [];
-
-    // Get domain name - look for identifier after "domain" keyword
-    let domainName = 'Domain';
     for (const child of node.children) {
-      if (child.type === 'identifier') {
-        domainName = child.text || sourceText.slice(child.startIndex, child.endIndex);
+      const roles = ctx.getRoles(child);
+
+      if (roles.has('brace.open')) {
+        insideBlock = true;
+        continue;
+      }
+
+      if (roles.has('brace.close')) {
         break;
       }
-    }
 
-    result.push(`${indent}domain ${domainName} {`);
-
-    // Format subdomains
-    for (let i = 1; i < node.children.length; i++) {
-      const child = node.children[i];
-      if (child.type === 'subdomain') {
-        const subdomainText = child.text || sourceText.slice(child.startIndex, child.endIndex);
-        result.push(`${subdomainIndent}${subdomainText.trim()}`);
+      if (insideBlock && !this.isStructuralToken(child, ctx)) {
+        content.push(child);
       }
     }
 
-    result.push(`${indent}}`);
-    return result.join('\n');
+    return content;
   }
 
-  private formatExposureBlock(node: any, sourceText: string, indentLevel: number): string {
-    const indent = ' '.repeat(indentLevel * 4);
-    const propertyIndent = ' '.repeat((indentLevel + 1) * 4);
+  /**
+   * ARCH SECTION: Format as "header:\n    children"
+   * Rule: Section header followed by colon, children indented
+   * Delegates child formatting to formatNode
+   */
+  private formatArchSection(node: any, ctx: FormattingContext): string {
+    const indent = 1;
+    const ind = ' '.repeat(indent * 4);
+    const lines: string[] = [];
 
-    const result: string[] = [];
+    // Find the first identifier (header) and collect other children
+    let foundHeader = false;
+    const childrenToFormat: any[] = [];
 
-    // Get exposure name - look for identifier after "exposure" keyword
-    let exposureName = 'default';
     for (const child of node.children) {
-      if (child.type === 'identifier') {
-        exposureName = child.text || sourceText.slice(child.startIndex, child.endIndex);
-        break;
+      const roles = ctx.getRoles(child);
+
+      // First identifier is the header
+      if (!foundHeader && (roles.has('arch.presentation-section') || roles.has('arch.gateway-section'))) {
+        const header = ctx.getText(child).trim();
+        lines.push(`${ind}${header}:`);
+        foundHeader = true;
+      }
+      // Skip colons - we add them ourselves
+      else if (ctx.getText(child).trim() === ':') {
+        continue;
+      }
+      // Everything else is a child to format
+      else if (!this.isStructuralToken(child, ctx)) {
+        childrenToFormat.push(child);
       }
     }
-    result.push(`${indent}exposure ${exposureName} {`);
 
-    // Format exposure properties
-    for (let i = 1; i < node.children.length; i++) {
-      const child = node.children[i];
-      if (child.type === 'exposure_property') {
-        const propertyText = child.text || sourceText.slice(child.startIndex, child.endIndex);
-        result.push(`${propertyIndent}${propertyText.trim()}`);
+    // Format children with increased indent - delegate to formatNode
+    for (const child of childrenToFormat) {
+      const formatted = this.formatNode(child, ctx, 0);
+      if (formatted.trim()) {
+        lines.push(formatted);
       }
     }
 
-    result.push(`${indent}}`);
-    return result.join('\n');
+    return "\n" + lines.join('\n');
   }
 
-  private formatActorsBlock(node: any, sourceText: string, indentLevel: number): string {
-    const indent = ' '.repeat(indentLevel * 4);
-    const actorIndent = ' '.repeat((indentLevel + 1) * 4);
+  /**
+   * WHEN CLAUSE: Format as "when trigger\n    actions"
+   * Rule: "when" keyword + trigger on first line, actions indented
+   * Delegates child formatting to formatNode
+   */
+  private formatWhenClause(node: any, ctx: FormattingContext): string {
+    const indent = 1;
+    const ind = ' '.repeat(indent * 4);
 
-    const result: string[] = [];
-    result.push(`${indent}actors {`);
+    // Build "when trigger" line
+    const whenParts: string[] = [];
+    const childrenToFormat: any[] = [];
 
-    // Format each actor inside the actors block
     for (const child of node.children) {
-      if (child.type === 'actor_item') {
-        const actorText = child.text || sourceText.slice(child.startIndex, child.endIndex);
-        result.push(`${actorIndent}${actorText.trim()}`);
+      const roles = ctx.getRoles(child);
+
+      if (roles.has('content.trigger')) {
+        const trigger = this.formatNode(child, ctx, 0);
+        whenParts.push(trigger);
+      } else if (!this.isStructuralToken(child, ctx)) {
+        childrenToFormat.push(child);
       }
     }
 
-    result.push(`${indent}}`);
-    return result.join('\n');
+    const whenClause = `${ind}when ${whenParts.join(' ')}\n`;
+
+    // Format actions with increased indent - delegate to formatNode
+    const lines: string[] = [];
+    for (const child of childrenToFormat) {
+      const formatted = this.formatNode(child, ctx, indent + 1);
+      if (formatted.trim()) {
+        lines.push(formatted);
+      }
+    }
+
+    return whenClause + lines.join('\n') + '\n\n';
   }
 
-  private formatActorDefinition(node: any, sourceText: string, indentLevel: number): string {
-    const indent = ' '.repeat(indentLevel * 4);
-    // Standalone actor definition (actor user Customer_Support)
-    const actorText = node.text || sourceText.slice(node.startIndex, node.endIndex);
-    return `${indent}${actorText.trim()}`;
+  private formatArchComponent(node: any, ctx: FormattingContext): string {
+    const indent = 2;
+    const ind = ' '.repeat(indent * 4);
+    const components = [];
+    for (const child of node.children) {
+      const formatted = this.formatNode(child, ctx, 0);
+      if (formatted.trim()) {
+        components.push(formatted);
+      }
+    }
+    return ind + components.join("\n");
   }
 
-  private formatComment(node: any, sourceText: string, indentLevel: number): string {
-    const indent = ' '.repeat(indentLevel * 4);
-    const commentText = node.text || sourceText.slice(node.startIndex, node.endIndex);
-    return `${indent}${commentText.trim()}`;
+  private formatIdentifierList(node: any, ctx: FormattingContext): string {
+    const identifiers = [];
+    for (const child of node.children) {
+      const formatted = this.formatNode(child, ctx, 0);
+      if (formatted.trim()) {
+        identifiers.push(formatted);
+      }
+    }
+    return identifiers.join(", ");
   }
 
+  private formatComponentList(node: any, ctx: FormattingContext): string {
+    const components = [];
+    for (const child of node.children) {
+      const formatted = this.formatNode(child, ctx, 2);
+      if (formatted.trim()) {
+        components.push(formatted);
+      }
+    }
+    return components.join("\n");
+  }
+
+  private formatComponentFlow(node: any, ctx: FormattingContext): string {
+    const components = [];
+    for (const child of node.children) {
+      const formatted = this.formatNode(child, ctx, 0);
+      if (formatted.trim()) {
+        components.push(formatted);
+      }
+    }
+    return components.join(" > ");
+  }
+
+  private formatComponent(node: any, ctx: FormattingContext): string {
+    const component = [];
+    for (const child of node.children) {
+      const formatted = this.formatNode(child, ctx, 0);
+      if (formatted.trim()) {
+        component.push(formatted);
+      }
+    }
+    return component.join("");
+  }
+
+  private formatComponentModifiers(node: any, ctx: FormattingContext): string {
+    if (node.children && node.children.length > 0) {
+      const parts = node.children
+        .map((child: any) => this.formatNode(child, ctx, 0))
+        .filter((text: string) => text.trim().length > 0);
+      return `[${parts.join(', ')}]`;
+    }
+    return "[]";
+  }
+
+  private formatComponentModifier(node: any, ctx: FormattingContext): string {
+    let key = null, value = null;
+
+    for (const child of node.children) {
+      const roles = ctx.getRoles(child);
+
+      if (roles.has('content.modifier-key')) {
+        key = ctx.getText(child).trim();
+      } else if (roles.has('content.modifier-value')) {
+        value = ctx.getText(child).trim();
+      }
+    }
+
+    if (!key && !value) {
+      return "";
+    }
+
+    if (!value) {
+      return key!;
+    }
+    return `${key}:${value}`;
+  }
+
+  private formatContentNode(node: any, ctx: FormattingContext, indent: number): string {
+    const ind = ' '.repeat(indent * 4);
+
+    // If node has children, format them inline (space-separated)
+    if (node.children && node.children.length > 0) {
+      const parts = node.children
+        .filter((child: any) => !this.isStructuralToken(child, ctx))
+        .map((child: any) => this.formatNode(child, ctx, 0))
+        .filter((text: string) => text.trim().length > 0);
+
+      return `${ind}${parts.join(' ')}`;
+    }
+
+    // Leaf content node - just return indented text
+    return `${ind}${ctx.getText(node).trim()}`;
+  }
+
+  private formatDeploymentRules(node: any, ctx: FormattingContext): string {
+    if (node.children && node.children.length > 0) {
+      const parts = node.children
+        .map((child: any) => this.formatNode(child, ctx, 0))
+        .filter((text: string) => text.trim().length > 0);
+      return `(${parts.join(', ')})`;
+    }
+    return "()";
+  }
+
+  private formatDeploymentRule(node: any, ctx: FormattingContext): string {
+    let percentage = null, label = null;
+
+    for (const child of node.children) {
+      const roles = ctx.getRoles(child);
+
+      if (roles.has('number.percentage')) {
+        percentage = ctx.getText(child).trim();
+      } else if (roles.has('identifier')) {
+        label = ctx.getText(child).trim();
+      }
+    }
+
+    if (!percentage && !label) {
+      return "";
+    }
+
+    if (!label) {
+      return percentage!;
+    }
+    return `${percentage} -> ${label}`;
+  }
+
+  private formatComment(node: any, ctx: FormattingContext, indent: number): string {
+    const ind = ' '.repeat(indent * 4);
+    return `${ind}${ctx.getText(node).trim()}`;
+  }
+}
+
+/**
+ * Formatting context - maps nodes to their roles from queries
+ */
+class FormattingContext {
+  private nodeRoles = new Map<number, Set<string>>();
+
+  constructor(
+    private sourceText: string,
+    captures: any[]
+  ) {
+    // Map each node to ALL its roles
+    for (const capture of captures) {
+      const nodeId = capture.node.id;
+      const role = capture.name;
+
+      if (!this.nodeRoles.has(nodeId)) {
+        this.nodeRoles.set(nodeId, new Set());
+      }
+      this.nodeRoles.get(nodeId)!.add(role);
+    }
+  }
+
+  getText(node: any): string {
+    return node.text || this.sourceText.slice(node.startIndex, node.endIndex);
+  }
+
+  getRoles(node: any): Set<string> {
+    return this.nodeRoles.get(node.id) || new Set();
+  }
+
+  hasTopLevelRole(node: any): boolean {
+    const roles = this.getRoles(node);
+    if (roles.has("comment")) {
+      return true;
+    }
+
+    return roles.has('top-level.block')
+      || roles.has('block.services')
+      || roles.has('block.service')
+      || roles.has('block.arch')
+      || roles.has('block.usecase')
+      || roles.has('block.domains')
+      || roles.has('block.domain')
+      || roles.has('block.exposure')
+      || roles.has('block.actors')
+      || roles.has('block.actor')
+      ;
+  }
+
+  hasRole(node: any, role: string): boolean {
+    const roles = this.getRoles(node);
+    if (roles.has("comment")) {
+      return true;
+    }
+    return roles.has(role);
+  }
 }

@@ -85,10 +85,10 @@ connection.onInitialize(async (params: InitializeParams) => {
 
   console.log('SERVER: Creating providers...');
   try {
-    const parser = await initializeParser();
+    const [parser, language] = await initializeParser();
     treeSitterDiagnosticProvider = new TreeSitterDiagnosticProvider(parser);
     treeSitterCompletionProvider = new TreeSitterCompletionProvider(parser);
-    treeSitterFormatter = new TreeSitterFormatterProvider(parser);
+    treeSitterFormatter = new TreeSitterFormatterProvider(parser, language);
     console.log('SERVER: TreeSitterDiagnosticProvider created');
     domainExtractor = new DomainExtractor();
     console.log('SERVER: DomainExtractor created');

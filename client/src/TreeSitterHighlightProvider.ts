@@ -35,6 +35,7 @@ export class TreeSitterHighlightProvider implements DocumentSemanticTokensProvid
     'craft-domains-property',
     'craft-language-property',
     'craft-data-stores-property',
+    'craft-deployment-property',
     'craft-to-property',
     'craft-through-property',
     'craft-presentation-section',
@@ -60,12 +61,17 @@ export class TreeSitterHighlightProvider implements DocumentSemanticTokensProvid
     'craft-domain-list',
     'craft-data-store-name',
     'craft-actor-name',
+    'craft-deployment-type',
+    'craft-deployment-target',
     'craft-language-value',
     'craft-phrase-word',
     'craft-braces',
     'craft-colon',
     'craft-comma',
-    'craft-flow-arrow'
+    'craft-flow-arrow',
+    'craft-percentage',
+    'craft-parenthesis',
+    'craft-deployment-arrow'
   ];
 
   private readonly tokenModifiers = [
