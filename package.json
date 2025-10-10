@@ -2,7 +2,7 @@
     "name": "craft",
     "displayName": "Craft Language",
     "description": "Syntax highlighting for Craft architecture language",
-    "version": "0.0.3",
+    "version": "0.0.4",
     "publisher": "tcarcao",
     "repository": {
         "type": "git",
