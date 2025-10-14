@@ -114,9 +114,8 @@ connection.onInitialize(async (params: InitializeParams) => {
       },
       documentFormattingProvider: true,
       completionProvider: {
-        triggerCharacters: [' ', ':', '{', '\n'],
+        triggerCharacters: ['.'],
         resolveProvider: true,
-        allCommitCharacters: ['{', '}', ' ', '\n']
       }
       // Enable other capabilities as needed
     }
