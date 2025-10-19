@@ -2,7 +2,7 @@
     "name": "craft",
     "displayName": "Craft Language",
     "description": "Syntax highlighting, language server, and visual diagram generation for the Craft architecture modeling language",
-    "version": "0.0.5",
+    "version": "0.0.6",
     "publisher": "tcarcao",
     "icon": "resources/craft_icon.png",
     "repository": {

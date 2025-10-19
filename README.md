@@ -55,7 +55,7 @@ code --install-extension tcarcao.craft
 
 Or install from command line:
 ```bash
-code --install-extension craft-0.0.4.vsix
+code --install-extension craft-0.0.6.vsix
 ```
 
 ### For Developers - Building from Source
@@ -85,7 +85,7 @@ npm run bundle
 npx @vscode/vsce package
 
 # Install locally
-code --install-extension craft-0.0.1.vsix
+code --install-extension craft-0.0.6.vsix
 ```
 
 ## Grammar Updates
