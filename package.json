@@ -1,6 +1,6 @@
 {
-    "name": "craft",
-    "displayName": "Craft Language",
+    "name": "craft-arch-diagrams",
+    "displayName": "Craft Arch Diagrams",
     "description": "Syntax highlighting, language server, and visual diagram generation for the Craft architecture modeling language",
     "version": "0.0.6",
     "publisher": "tcarcao",

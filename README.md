@@ -36,12 +36,12 @@ A powerful VS Code extension providing syntax highlighting, language server supp
 
 1. Open VS Code
 2. Press `Ctrl+Shift+X` (or `Cmd+Shift+X` on Mac) to open the Extensions view
-3. Search for "Craft Language"
+3. Search for "Craft Arch Diagrams"
 4. Click "Install"
 
 Or install via command line:
 ```bash
-code --install-extension tcarcao.craft
+code --install-extension tcarcao.craft-arch-diagrams
 ```
 
 ### From GitHub Releases
@@ -55,7 +55,7 @@ code --install-extension tcarcao.craft
 
 Or install from command line:
 ```bash
-code --install-extension craft-0.0.6.vsix
+code --install-extension craft-arch-diagrams-0.0.6.vsix
 ```
 
 ### For Developers - Building from Source

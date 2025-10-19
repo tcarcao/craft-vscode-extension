@@ -59,7 +59,7 @@ jobs:
             npm version $VERSION --no-git-tag-version
 
             echo "Updating README.md with version: $VERSION"
-            sed -i.bak "s/craft-[0-9]\+\.[0-9]\+\.[0-9]\+\.vsix/craft-$VERSION.vsix/g" README.md
+            sed -i.bak "s/craft-arch-diagrams-[0-9]\+\.[0-9]\+\.[0-9]\+\.vsix/craft-arch-diagrams-$VERSION.vsix/g" README.md
             rm README.md.bak
           else
             echo "Version already matches tag, skipping version bump"
