@@ -57,6 +57,10 @@ jobs:
           if [ "$VERSION" != "$CURRENT_VERSION" ]; then
             echo "Updating package.json to version: $VERSION"
             npm version $VERSION --no-git-tag-version
+
+            echo "Updating README.md with version: $VERSION"
+            sed -i.bak "s/craft-[0-9]\+\.[0-9]\+\.[0-9]\+\.vsix/craft-$VERSION.vsix/g" README.md
+            rm README.md.bak
           else
             echo "Version already matches tag, skipping version bump"
           fi
@@ -83,13 +87,13 @@ jobs:
             exit 1
           fi
 
-          if git diff --quiet package.json; then
+          if git diff --quiet package.json README.md; then
             echo "No version changes to commit (version already matched tag)"
           else
             echo "Committing version bump to $VERSION"
             git config --local user.email "action@github.com"
             git config --local user.name "GitHub Action"
-            git add package.json
+            git add package.json README.md
             git commit -m "chore: bump version to $VERSION [skip ci]"
             git push origin HEAD:main
           fi
@@ -140,3 +144,8 @@ jobs:
           asset_path: ./${{ steps.package.outputs.name }}-${{ steps.package.outputs.version }}.vsix
           asset_name: ${{ steps.package.outputs.name }}-${{ steps.package.outputs.version }}.vsix
           asset_content_type: application/zip
+
+      - name: Publish to VS Code Marketplace
+        run: npx @vscode/vsce publish -p ${{ secrets.DEV_AZURE_PERSONAL_TOKEN }}
+        env:
+          VSCE_PAT: ${{ secrets.DEV_AZURE_PERSONAL_TOKEN }}

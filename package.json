@@ -1,14 +1,29 @@
 {
     "name": "craft",
     "displayName": "Craft Language",
-    "description": "Syntax highlighting for Craft architecture language",
+    "description": "Syntax highlighting, language server, and visual diagram generation for the Craft architecture modeling language",
     "version": "0.0.5",
     "publisher": "tcarcao",
+    "icon": "resources/craft_icon.png",
     "repository": {
         "type": "git",
         "url": "https://github.com/tcarcao/craft-vscode-extension.git"
     },
+    "bugs": {
+        "url": "https://github.com/tcarcao/craft-vscode-extension/issues"
+    },
+    "homepage": "https://github.com/tcarcao/craft-vscode-extension#readme",
     "license": "MIT",
+    "keywords": [
+        "craft",
+        "architecture",
+        "modeling",
+        "dsl",
+        "c4",
+        "diagrams",
+        "domain-driven-design",
+        "ddd"
+    ],
     "main": "./dist/client.js",
     "engines": {
         "vscode": "^1.75.0"

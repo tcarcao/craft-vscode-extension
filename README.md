@@ -32,7 +32,19 @@ A powerful VS Code extension providing syntax highlighting, language server supp
 
 ## Installation
 
-### From GitHub Releases (Recommended)
+### From VS Code Marketplace (Recommended)
+
+1. Open VS Code
+2. Press `Ctrl+Shift+X` (or `Cmd+Shift+X` on Mac) to open the Extensions view
+3. Search for "Craft Language"
+4. Click "Install"
+
+Or install via command line:
+```bash
+code --install-extension tcarcao.craft
+```
+
+### From GitHub Releases
 
 1. Go to the [Releases](https://github.com/tcarcao/craft-vscode-extension/releases) page
 2. Download the latest `.vsix` file
@@ -41,9 +53,9 @@ A powerful VS Code extension providing syntax highlighting, language server supp
 5. Type "Extensions: Install from VSIX..." and select it
 6. Choose the downloaded `.vsix` file
 
-### From Command Line
+Or install from command line:
 ```bash
-code --install-extension craft-0.0.1.vsix
+code --install-extension craft-0.0.4.vsix
 ```
 
 ### For Developers - Building from Source
