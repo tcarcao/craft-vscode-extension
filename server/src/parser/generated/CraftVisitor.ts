@@ -66,6 +66,7 @@ import { Async_actionContext } from "./CraftParser.js";
 import { Internal_actionContext } from "./CraftParser.js";
 import { Return_actionContext } from "./CraftParser.js";
 import { PhraseContext } from "./CraftParser.js";
+import { Phrase_wordContext } from "./CraftParser.js";
 import { Connector_wordContext } from "./CraftParser.js";
 import { ActorContext } from "./CraftParser.js";
 import { DomainContext } from "./CraftParser.js";
@@ -467,6 +468,12 @@ export class CraftVisitor<Result> extends AbstractParseTreeVisitor<Result> {
      * @return the visitor result
      */
     visitPhrase?: (ctx: PhraseContext) => Result;
+    /**
+     * Visit a parse tree produced by `CraftParser.phrase_word`.
+     * @param ctx the parse tree
+     * @return the visitor result
+     */
+    visitPhrase_word?: (ctx: Phrase_wordContext) => Result;
     /**
      * Visit a parse tree produced by `CraftParser.connector_word`.
      * @param ctx the parse tree

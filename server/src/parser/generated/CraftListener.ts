@@ -66,6 +66,7 @@ import { Async_actionContext } from "./CraftParser.js";
 import { Internal_actionContext } from "./CraftParser.js";
 import { Return_actionContext } from "./CraftParser.js";
 import { PhraseContext } from "./CraftParser.js";
+import { Phrase_wordContext } from "./CraftParser.js";
 import { Connector_wordContext } from "./CraftParser.js";
 import { ActorContext } from "./CraftParser.js";
 import { DomainContext } from "./CraftParser.js";
@@ -720,6 +721,16 @@ export class CraftListener implements ParseTreeListener {
      * @param ctx the parse tree
      */
     exitPhrase?: (ctx: PhraseContext) => void;
+    /**
+     * Enter a parse tree produced by `CraftParser.phrase_word`.
+     * @param ctx the parse tree
+     */
+    enterPhrase_word?: (ctx: Phrase_wordContext) => void;
+    /**
+     * Exit a parse tree produced by `CraftParser.phrase_word`.
+     * @param ctx the parse tree
+     */
+    exitPhrase_word?: (ctx: Phrase_wordContext) => void;
     /**
      * Enter a parse tree produced by `CraftParser.connector_word`.
      * @param ctx the parse tree

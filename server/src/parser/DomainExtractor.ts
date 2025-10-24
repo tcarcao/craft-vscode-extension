@@ -23,7 +23,7 @@ export class DomainExtractor {
         const result = this.parser.parse(text);
 
         if (!result.success || !result.tree) {
-            Logger.warn('Parse failed, returning empty result');
+            Logger.warn('Parse failed, returning empty result', result);
             return {
                 domains: [],
                 useCases: [],
