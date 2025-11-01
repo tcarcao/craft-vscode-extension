@@ -425,6 +425,63 @@ export const ServicesView: React.FC<ServicesViewProps> = ({ vscode }) => {
     setState(prev => ({ ...prev, showInfrastructure: show }));
   };
 
+  const toggleServiceFocus = (groupId: string, serviceId: string) => {
+    setState(prev => ({
+      ...prev,
+      serviceGroups: prev.serviceGroups.map(group => {
+        if (group.name === groupId) {
+          return {
+            ...group,
+            services: group.services.map(service => {
+              if (service.id === serviceId) {
+                const newFocused = !service.focused;
+                return {
+                  ...service,
+                  focused: newFocused,
+                  // When toggling service focus, cascade to all subdomains
+                  subDomains: service.subDomains.map(subDomain => ({
+                    ...subDomain,
+                    focused: newFocused
+                  }))
+                };
+              }
+              return service;
+            })
+          };
+        }
+        return group;
+      })
+    }));
+  };
+
+  const toggleSubDomainFocus = (groupId: string, serviceId: string, subDomainId: string) => {
+    setState(prev => ({
+      ...prev,
+      serviceGroups: prev.serviceGroups.map(group => {
+        if (group.name === groupId) {
+          return {
+            ...group,
+            services: group.services.map(service => {
+              if (service.id === serviceId) {
+                return {
+                  ...service,
+                  subDomains: service.subDomains.map(subDomain => {
+                    if (subDomain.id === subDomainId) {
+                      return { ...subDomain, focused: !subDomain.focused };
+                    }
+                    return subDomain;
+                  })
+                };
+              }
+              return service;
+            })
+          };
+        }
+        return group;
+      })
+    }));
+  };
+
   const selectAll = () => {
     setState(prev => ({
       ...prev,
@@ -679,21 +736,25 @@ export const ServicesView: React.FC<ServicesViewProps> = ({ vscode }) => {
       ) : (
         <div className="tree-container">
           {state.serviceGroups.map(group => (
-            <ServiceGroupNode 
-              key={group.name} 
-              group={group} 
+            <ServiceGroupNode
+              key={group.name}
+              group={group}
               viewMode={state.viewMode}
               onToggleGroup={() => toggleServiceGroup(group.name)}
               onToggleService={(serviceId: string) => toggleService(group.name, serviceId)}
-              onToggleSubDomain={(serviceId: string, subDomainId: string) => 
+              onToggleSubDomain={(serviceId: string, subDomainId: string) =>
                 toggleSubDomain(group.name, serviceId, subDomainId)}
-              onToggleUseCase={(serviceId: string, subDomainId: string, useCaseId: string) => 
+              onToggleUseCase={(serviceId: string, subDomainId: string, useCaseId: string) =>
                 toggleUseCase(group.name, serviceId, subDomainId, useCaseId)}
-              onToggleServiceExpansion={(serviceId: string) => 
+              onToggleServiceExpansion={(serviceId: string) =>
                 toggleServiceExpansion(group.name, serviceId)}
-              onToggleSubDomainExpansion={(serviceId: string, subDomainId: string) => 
+              onToggleSubDomainExpansion={(serviceId: string, subDomainId: string) =>
                 toggleSubDomainExpansion(group.name, serviceId, subDomainId)}
               onToggleGroupExpansion={() => toggleGroupExpansion(group.name)}
+              onToggleServiceFocus={(serviceId: string) =>
+                toggleServiceFocus(group.name, serviceId)}
+              onToggleSubDomainFocus={(serviceId: string, subDomainId: string) =>
+                toggleSubDomainFocus(group.name, serviceId, subDomainId)}
             />
           ))}
         </div>
@@ -715,10 +776,12 @@ interface ServiceGroupNodeProps {
   onToggleServiceExpansion: (serviceId: string) => void;
   onToggleSubDomainExpansion: (serviceId: string, subDomainId: string) => void;
   onToggleGroupExpansion: () => void;
+  onToggleServiceFocus: (serviceId: string) => void;
+  onToggleSubDomainFocus: (serviceId: string, subDomainId: string) => void;
 }
 
-const ServiceGroupNode: React.FC<ServiceGroupNodeProps> = ({ 
-  group, 
+const ServiceGroupNode: React.FC<ServiceGroupNodeProps> = ({
+  group,
   viewMode,
   onToggleGroup,
   onToggleService,
@@ -726,7 +789,9 @@ const ServiceGroupNode: React.FC<ServiceGroupNodeProps> = ({
   onToggleUseCase,
   onToggleServiceExpansion,
   onToggleSubDomainExpansion,
-  onToggleGroupExpansion
+  onToggleGroupExpansion,
+  onToggleServiceFocus,
+  onToggleSubDomainFocus
 }) => {
   const selectedServices = group.services.filter(s => s.selected).length;
   const totalServices = group.services.length;
@@ -770,18 +835,21 @@ const ServiceGroupNode: React.FC<ServiceGroupNodeProps> = ({
       
       <div className="node-children" style={{ display: group.expanded ? 'block' : 'none' }}>
         {group.expanded && group.services.map(service => (
-          <ServiceNode 
+          <ServiceNode
             key={service.id}
             service={service}
             group={group}
             viewMode={viewMode}
             onToggleService={() => onToggleService(service.id)}
             onToggleSubDomain={(subDomainId: string) => onToggleSubDomain(service.id, subDomainId)}
-            onToggleUseCase={(subDomainId: string, useCaseId: string) => 
+            onToggleUseCase={(subDomainId: string, useCaseId: string) =>
               onToggleUseCase(service.id, subDomainId, useCaseId)}
             onToggleServiceExpansion={() => onToggleServiceExpansion(service.id)}
-            onToggleSubDomainExpansion={(subDomainId: string) => 
+            onToggleSubDomainExpansion={(subDomainId: string) =>
               onToggleSubDomainExpansion(service.id, subDomainId)}
+            onToggleServiceFocus={() => onToggleServiceFocus(service.id)}
+            onToggleSubDomainFocus={(subDomainId: string) =>
+              onToggleSubDomainFocus(service.id, subDomainId)}
           />
         ))}
       </div>
@@ -798,17 +866,21 @@ interface ServiceNodeProps {
   onToggleUseCase: (subDomainId: string, useCaseId: string) => void;
   onToggleServiceExpansion: () => void;
   onToggleSubDomainExpansion: (subDomainId: string) => void;
+  onToggleServiceFocus: () => void;
+  onToggleSubDomainFocus: (subDomainId: string) => void;
 }
 
-const ServiceNode: React.FC<ServiceNodeProps> = ({ 
-  service, 
-  group, 
+const ServiceNode: React.FC<ServiceNodeProps> = ({
+  service,
+  group,
   viewMode,
   onToggleService,
   onToggleSubDomain,
   onToggleUseCase,
   onToggleServiceExpansion,
-  onToggleSubDomainExpansion
+  onToggleSubDomainExpansion,
+  onToggleServiceFocus,
+  onToggleSubDomainFocus
 }) => {
   const isEmpty = service.subDomains.length === 0;
   const selectedCount = service.subDomains.filter(sd => sd.selected).length;
@@ -845,9 +917,9 @@ const ServiceNode: React.FC<ServiceNodeProps> = ({
           <div className="node-header">
             <span className="node-name">{service.name}</span>
             <div className="node-actions">
-              <button 
+              <button
                 className={`focus-btn ${service.focused ? 'focused' : 'unfocused'}`}
-                onClick={(e) => { e.stopPropagation(); /* toggle focus logic */ }}
+                onClick={(e) => { e.stopPropagation(); onToggleServiceFocus(); }}
                 title={`${service.focused ? 'Remove focus (treat as external)' : 'Add focus (include in diagram)'}`}
               >
                 {service.focused ? '◉' : '◎'}
@@ -869,13 +941,14 @@ const ServiceNode: React.FC<ServiceNodeProps> = ({
             {service.subDomains.length > 0 ? (
               <div className="entry-point-usecases">
                 {service.subDomains.map(subDomain => (
-                  <SubDomainNode 
+                  <SubDomainNode
                     key={subDomain.id}
                     subDomain={subDomain}
                     viewMode={viewMode}
                     onToggleSubDomain={() => onToggleSubDomain(subDomain.id)}
                     onToggleUseCase={(useCaseId: string) => onToggleUseCase(subDomain.id, useCaseId)}
                     onToggleSubDomainExpansion={() => onToggleSubDomainExpansion(subDomain.id)}
+                    onToggleSubDomainFocus={() => onToggleSubDomainFocus(subDomain.id)}
                   />
                 ))}
               </div>
@@ -895,14 +968,16 @@ interface SubDomainNodeProps {
   onToggleSubDomain: () => void;
   onToggleUseCase: (useCaseId: string) => void;
   onToggleSubDomainExpansion: () => void;
+  onToggleSubDomainFocus: () => void;
 }
 
-const SubDomainNode: React.FC<SubDomainNodeProps> = ({ 
-  subDomain, 
+const SubDomainNode: React.FC<SubDomainNodeProps> = ({
+  subDomain,
   viewMode,
   onToggleSubDomain,
   onToggleUseCase,
-  onToggleSubDomainExpansion
+  onToggleSubDomainExpansion,
+  onToggleSubDomainFocus
 }) => {
   const isEmpty = subDomain.useCases.length === 0;
   const selectedCount = subDomain.useCases.filter(uc => uc.selected).length;
@@ -939,9 +1014,9 @@ const SubDomainNode: React.FC<SubDomainNodeProps> = ({
           <div className="node-header">
             <span className="node-name">{subDomain.name}</span>
             <div className="node-actions">
-              <button 
+              <button
                 className={`focus-btn ${subDomain.focused ? 'focused' : 'unfocused'}`}
-                onClick={(e) => { e.stopPropagation(); /* toggle focus logic */ }}
+                onClick={(e) => { e.stopPropagation(); onToggleSubDomainFocus(); }}
                 title={`${subDomain.focused ? 'Click to unfocus (show as external in C4)' : 'Click to focus (show as internal in C4)'}`}
               >
                 {subDomain.focused ? '◉' : '◎'}
