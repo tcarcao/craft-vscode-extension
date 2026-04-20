@@ -423,7 +423,7 @@ export class ServicesViewProvider implements WebviewViewProvider {
                 .filter(service => service.inCurrentFile)
                 .map(service => ({
                     ...service,
-                    subDomains: service.subDomains.filter(subDomain => subDomain.inCurrentFile)
+                    boundedContexts: service.boundedContexts.filter(boundedContext => boundedContext.inCurrentFile)
                 }))
         }));
     }
@@ -437,11 +437,11 @@ export class ServicesViewProvider implements WebviewViewProvider {
             const existingService = existingServiceGroup.services.find(s => s.id === service.id);
             if (existingService) {
                 service.expanded = existingService.expanded;
-                
-                service.subDomains.forEach(subDomain => {
-                    const existingSubDomain = existingService.subDomains.find(sd => sd.id === subDomain.id);
-                    if (existingSubDomain) {
-                        subDomain.expanded = existingSubDomain.expanded;
+
+                service.boundedContexts.forEach(boundedContext => {
+                    const existingContext = existingService.boundedContexts.find(bc => bc.id === boundedContext.id);
+                    if (existingContext) {
+                        boundedContext.expanded = existingContext.expanded;
                     }
                 });
             }
@@ -463,10 +463,10 @@ export class ServicesViewProvider implements WebviewViewProvider {
             services: serviceGroup.services.filter(service => inCurrentFileFilter === true ? service.inCurrentFile : true).map(service => ({
                 ...service,
                 domain: { ...service.domain },
-                subDomains: service.subDomains.map(subDomain => ({
-                    ...subDomain,
-                    useCases: subDomain.useCases.map(useCase => ({ ...useCase })),
-                    referencedIn: subDomain.referencedIn.map(ref => ({ ...ref }))
+                boundedContexts: service.boundedContexts.map(boundedContext => ({
+                    ...boundedContext,
+                    useCases: boundedContext.useCases.map(useCase => ({ ...useCase })),
+                    referencedIn: boundedContext.referencedIn.map(ref => ({ ...ref }))
                 }))
             }))
         };

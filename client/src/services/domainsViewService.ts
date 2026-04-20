@@ -5,50 +5,50 @@ export class DomainsViewService {
     constructor() { }
 
     /**
-     * Update domain counts and selection states based on subdomain/usecase selections
+     * Update domain counts and selection states based on bounded context/usecase selections
      */
     updateDomainCounts(domain: Domain): void {
         let totalUseCases = 0;
         let selectedUseCases = 0;
-        let selectedSubDomains = 0;
+        let selectedBoundedContexts = 0;
 
-        domain.subDomains.forEach(subDomain => {
-            totalUseCases += subDomain.useCases.length;
-            
-            const selectedInSubDomain = subDomain.useCases.filter(uc => uc.selected).length;
-            selectedUseCases += selectedInSubDomain;
+        domain.boundedContexts.forEach(boundedContext => {
+            totalUseCases += boundedContext.useCases.length;
 
-            // Update subdomain selection state
-            if (subDomain.useCases.length === 0) {
-                // Empty subdomain - not selectable
-                subDomain.selected = false;
-                subDomain.partiallySelected = false;
-            } else if (selectedInSubDomain === 0) {
-                subDomain.selected = false;
-                subDomain.partiallySelected = false;
-            } else if (selectedInSubDomain === subDomain.useCases.length) {
-                subDomain.selected = true;
-                subDomain.partiallySelected = false;
-                selectedSubDomains++;
+            const selectedInContext = boundedContext.useCases.filter(uc => uc.selected).length;
+            selectedUseCases += selectedInContext;
+
+            // Update bounded context selection state
+            if (boundedContext.useCases.length === 0) {
+                // Empty bounded context - not selectable
+                boundedContext.selected = false;
+                boundedContext.partiallySelected = false;
+            } else if (selectedInContext === 0) {
+                boundedContext.selected = false;
+                boundedContext.partiallySelected = false;
+            } else if (selectedInContext === boundedContext.useCases.length) {
+                boundedContext.selected = true;
+                boundedContext.partiallySelected = false;
+                selectedBoundedContexts++;
             } else {
-                subDomain.selected = false;
-                subDomain.partiallySelected = true;
+                boundedContext.selected = false;
+                boundedContext.partiallySelected = true;
             }
         });
 
         domain.totalUseCases = totalUseCases;
         domain.selectedUseCases = selectedUseCases;
-        domain.selectedSubDomains = selectedSubDomains;
+        domain.selectedBoundedContexts = selectedBoundedContexts;
 
         // Update domain selection state
-        const nonEmptySubDomains = domain.subDomains.filter(sd => sd.useCases.length > 0);
-        const selectedNonEmptySubDomains = nonEmptySubDomains.filter(sd => sd.selected).length;
-        const partiallySelectedNonEmptySubDomains = nonEmptySubDomains.filter(sd => sd.partiallySelected).length;
+        const nonEmptyBoundedContexts = domain.boundedContexts.filter(bc => bc.useCases.length > 0);
+        const selectedNonEmptyContexts = nonEmptyBoundedContexts.filter(bc => bc.selected).length;
+        const partiallySelectedNonEmptyContexts = nonEmptyBoundedContexts.filter(bc => bc.partiallySelected).length;
 
-        if (selectedNonEmptySubDomains === nonEmptySubDomains.length && nonEmptySubDomains.length > 0) {
+        if (selectedNonEmptyContexts === nonEmptyBoundedContexts.length && nonEmptyBoundedContexts.length > 0) {
             domain.selected = true;
             domain.partiallySelected = false;
-        } else if (selectedNonEmptySubDomains > 0 || partiallySelectedNonEmptySubDomains > 0) {
+        } else if (selectedNonEmptyContexts > 0 || partiallySelectedNonEmptyContexts > 0) {
             domain.selected = false;
             domain.partiallySelected = true;
         } else {
@@ -58,30 +58,30 @@ export class DomainsViewService {
     }
 
     public toggleDomainSelection(domain: Domain, selected: boolean): void {
-        domain.subDomains.forEach(subDomain => {
-            subDomain.selected = selected;
-            subDomain.useCases.forEach(useCase => {
+        domain.boundedContexts.forEach(boundedContext => {
+            boundedContext.selected = selected;
+            boundedContext.useCases.forEach(useCase => {
                 useCase.selected = selected;
             });
         });
         this.updateDomainCounts(domain);
     }
 
-    public toggleSubDomainSelection(domain: Domain, subDomainId: string, selected: boolean): void {
-        const subDomain = domain.subDomains.find(sd => sd.id === subDomainId);
-        if (subDomain && subDomain.useCases.length > 0) {
-            subDomain.selected = selected;
-            subDomain.useCases.forEach(useCase => {
+    public toggleContextSelection(domain: Domain, contextId: string, selected: boolean): void {
+        const boundedContext = domain.boundedContexts.find(bc => bc.id === contextId);
+        if (boundedContext && boundedContext.useCases.length > 0) {
+            boundedContext.selected = selected;
+            boundedContext.useCases.forEach(useCase => {
                 useCase.selected = selected;
                 this.updateDomainCounts(domain);
             });
         }
     }
 
-    public toggleUseCaseSelection(domain: Domain, subDomainId: string, useCaseId: string): void {
-        const subDomain = domain.subDomains.find(sd => sd.id === subDomainId);
-        if (subDomain) {
-            const useCase = subDomain.useCases.find(uc => uc.id === useCaseId);
+    public toggleUseCaseSelection(domain: Domain, contextId: string, useCaseId: string): void {
+        const boundedContext = domain.boundedContexts.find(bc => bc.id === contextId);
+        if (boundedContext) {
+            const useCase = boundedContext.useCases.find(uc => uc.id === useCaseId);
             if (useCase) {
                 useCase.selected = !useCase.selected;
                 this.updateDomainCounts(domain);

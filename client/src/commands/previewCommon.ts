@@ -67,12 +67,12 @@ export async function previewC4Diagram(
         dsl: text
     };
     
-    if (options && (options.hasFocusedServices || options.hasFocusedSubDomains)) {
+    if (options && (options.hasFocusedServices || options.hasFocusedContexts)) {
         requestBody.focusInfo = {
             focusedServiceNames: options.focusedServiceNames,
-            focusedSubDomainNames: options.focusedSubDomainNames,
+            focusedContextNames: options.focusedContextNames,
             hasFocusedServices: options.hasFocusedServices,
-            hasFocusedSubDomains: options.hasFocusedSubDomains
+            hasFocusedContexts: options.hasFocusedContexts
         };
     }
     
@@ -264,12 +264,12 @@ export async function downloadC4Diagram(
         filename: options.filename
     };
     
-    if (options.hasFocusedServices || options.hasFocusedSubDomains) {
+    if (options.hasFocusedServices || options.hasFocusedContexts) {
         requestBody.focusInfo = {
             focusedServiceNames: options.focusedServiceNames,
-            focusedSubDomainNames: options.focusedSubDomainNames,
+            focusedContextNames: options.focusedContextNames,
             hasFocusedServices: options.hasFocusedServices,
-            hasFocusedSubDomains: options.hasFocusedSubDomains
+            hasFocusedContexts: options.hasFocusedContexts
         };
     }
     
@@ -358,9 +358,9 @@ export async function handleC4Download(message: C4DownloadMessage): Promise<void
         const options: C4DownloadOptions = {
             format: message.format,
             focusedServiceNames: message.focusInfo?.focusedServiceNames || [],
-            focusedSubDomainNames: message.focusInfo?.focusedSubDomainNames || [],
+            focusedContextNames: message.focusInfo?.focusedContextNames || [],
             hasFocusedServices: message.focusInfo?.hasFocusedServices || false,
-            hasFocusedSubDomains: message.focusInfo?.hasFocusedSubDomains || false,
+            hasFocusedContexts: message.focusInfo?.hasFocusedContexts || false,
             // Now we have access to these properties!
             boundariesMode: message.boundariesMode,
             showDatabases: message.showDatabases

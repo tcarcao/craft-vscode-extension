@@ -7,7 +7,7 @@ import {
     ExtractionResult,
     ServerCommands
 } from '../../../shared/lib/types/domain-extraction';
-import { Domain, DomainC, DSLDiscoveryOptions, DSLDiscoveryResult, Service, ServiceGroup, SubDomain, UseCase, UseCaseReference } from '../types/domain';
+import { Domain, DomainC, DSLDiscoveryOptions, DSLDiscoveryResult, Service, ServiceGroup, BoundedContext, UseCase, UseCaseReference } from '../types/domain';
 import { ServicesViewService } from './servicesViewService';
 import { Logger } from '../utils/Logger';
 
@@ -56,25 +56,25 @@ export class DslExtractService {
             throw new Error(workspaceResult.error);
         }
 
-        // Group sub-domains by their parent domain
+        // Group bounded contexts by their parent domain
         const domainGroups = new Map<string, string[]>();
         const currentFileUriSet = currentFileResult ? new Set(currentFileResult.domains || []) : new Set();
 
-        // Process each discovered domain as a sub-domain
-        workspaceResult.domains.forEach((subDomainName: string) => {
+        // Process each discovered domain as a bounded context
+        workspaceResult.domains.forEach((contextName: string) => {
             // Get parent domain from parsing results, fallback to Unknown
-            const parentDomain = this.getParentDomainFromResults(workspaceResult, subDomainName);
+            const parentDomain = this.getParentDomainFromResults(workspaceResult, contextName);
 
             if (!domainGroups.has(parentDomain)) {
                 domainGroups.set(parentDomain, []);
             }
-            domainGroups.get(parentDomain)!.push(subDomainName);
+            domainGroups.get(parentDomain)!.push(contextName);
         });
 
         const domains: Domain[] = [];
 
         // Create a top-level domain for each group
-        domainGroups.forEach((subDomainNames, parentDomainName) => {
+        domainGroups.forEach((contextNames, parentDomainName) => {
             const domain: Domain = {
                 id: DomainC.GenerateDomainId(parentDomainName),
                 name: parentDomainName,
@@ -82,55 +82,55 @@ export class DslExtractService {
                 expanded: parentDomainName === DomainC.DefaultDomain, // Auto-expand Unknown
                 selected: true,
                 partiallySelected: false,
-                inCurrentFile: subDomainNames.some(name => currentFileUriSet.has(name)),
-                subDomains: [],
+                inCurrentFile: contextNames.some(name => currentFileUriSet.has(name)),
+                boundedContexts: [],
                 selectedUseCases: 0,
                 totalUseCases: 0,
-                selectedSubDomains: 0,
+                selectedBoundedContexts: 0,
             };
 
-            // Create sub-domains (parsed domains become sub-domains)
-            subDomainNames.forEach((subDomainName: string) => {
-                const subDomain: SubDomain = {
-                    id: DomainC.GenerateSubDomainId(parentDomainName, subDomainName),
-                    name: subDomainName,
-                    description: `Sub-domain: ${subDomainName}`,
+            // Create bounded contexts (parsed domains become bounded contexts)
+            contextNames.forEach((contextName: string) => {
+                const boundedContext: BoundedContext = {
+                    id: DomainC.GenerateContextId(parentDomainName, contextName),
+                    name: contextName,
+                    description: `Bounded Context: ${contextName}`,
                     expanded: false,
                     showReferences: false,
                     selected: true,
                     partiallySelected: false,
                     focused: true, // Default to focused (show as internal in C4)
-                    inCurrentFile: currentFileUriSet.has(subDomainName),
+                    inCurrentFile: currentFileUriSet.has(contextName),
                     useCases: [],
                     selectedUseCases: 0,
                     referencedIn: [],
                     totalUseCases: 0,
                 };
 
-                // Get all use cases for this sub-domain from all files
-                const useCasesForSubDomain = this.getUseCasesForSubDomain(workspaceResult, parentDomainName, subDomainName);
+                // Get all use cases for this bounded context from all files
+                const useCasesForContext = this.getUseCasesForContext(workspaceResult, parentDomainName, contextName);
 
-                useCasesForSubDomain.forEach(useCase => {
-                    subDomain.useCases.push(useCase);
+                useCasesForContext.forEach(useCase => {
+                    boundedContext.useCases.push(useCase);
                 });
 
-                const useCasesWhereSubDomainIsInvolved = this.getUseCasesWhereSubDomainIsInvolved(workspaceResult, parentDomainName, subDomainName);
+                const useCasesWhereContextIsInvolved = this.getUseCasesWhereContextIsInvolved(workspaceResult, parentDomainName, contextName);
 
-                useCasesWhereSubDomainIsInvolved.forEach(useCase => {
-                    subDomain.referencedIn.push(useCase);
+                useCasesWhereContextIsInvolved.forEach(useCase => {
+                    boundedContext.referencedIn.push(useCase);
                 });
 
-                // Update subdomain counters
-                subDomain.totalUseCases = subDomain.useCases.length;
-                subDomain.selectedUseCases = subDomain.useCases.filter(uc => uc.selected).length;
+                // Update bounded context counters
+                boundedContext.totalUseCases = boundedContext.useCases.length;
+                boundedContext.selectedUseCases = boundedContext.useCases.filter(uc => uc.selected).length;
 
-                domain.subDomains.push(subDomain);
+                domain.boundedContexts.push(boundedContext);
             });
 
-            // Update domain counters after all subdomains are processed
-            domain.totalUseCases = domain.subDomains.reduce((total, sd) => total + sd.totalUseCases, 0);
-            domain.selectedUseCases = domain.subDomains.reduce((total, sd) => total + sd.selectedUseCases, 0);
-            domain.selectedSubDomains = domain.subDomains.filter(sd => sd.selected).length;
+            // Update domain counters after all bounded contexts are processed
+            domain.totalUseCases = domain.boundedContexts.reduce((total, bc) => total + bc.totalUseCases, 0);
+            domain.selectedUseCases = domain.boundedContexts.reduce((total, bc) => total + bc.selectedUseCases, 0);
+            domain.selectedBoundedContexts = domain.boundedContexts.filter(bc => bc.selected).length;
 
             domains.push(domain);
         });
@@ -145,12 +145,12 @@ export class DslExtractService {
 
     private getParentDomainFromResults(
         workspaceResult: ExtractionResult,
-        subDomainName: string
+        contextName: string
     ): string {
         // FIRST PRIORITY: Check domain definitions - this is the new functionality
         if (workspaceResult.domainDefinitions) {
             for (const domainDef of workspaceResult.domainDefinitions) {
-                if (domainDef.subDomains.includes(subDomainName)) {
+                if (domainDef.subDomains.includes(contextName)) {
                     return domainDef.name;
                 }
             }
@@ -161,7 +161,7 @@ export class DslExtractService {
             for (const fileResult of workspaceResult.fileResults) {
                 if (fileResult.domainDefinitions) {
                     for (const domainDef of fileResult.domainDefinitions) {
-                        if (domainDef.subDomains.includes(subDomainName)) {
+                        if (domainDef.subDomains.includes(contextName)) {
                             return domainDef.name;
                         }
                     }
@@ -173,10 +173,10 @@ export class DslExtractService {
         return DomainC.DefaultDomain;
     }
 
-    private getUseCasesForSubDomain(
+    private getUseCasesForContext(
         workspaceResult: ExtractionResult,
         parentDomainName: string,
-        subDomainName: string
+        contextName: string
     ): UseCase[] {
         const useCases: UseCase[] = [];
 
@@ -184,18 +184,18 @@ export class DslExtractService {
             workspaceResult.fileResults.forEach((fileResult: FileResult) => {
                 if (fileResult.useCases) {
                     fileResult.useCases.forEach((useCaseInfo: UseCaseInfo) => {
-                        // Include use case if this sub-domain is the primary domain or involved
-                        if (useCaseInfo.entryPointSubDomain === subDomainName) {
+                        // Include use case if this bounded context is the primary context or involved
+                        if (useCaseInfo.entryPointSubDomain === contextName) {
                             useCases.push({
-                                id: DomainC.GenerateUseCaseId(parentDomainName, subDomainName, useCaseInfo.name),
+                                id: DomainC.GenerateUseCaseId(parentDomainName, contextName, useCaseInfo.name),
                                 name: useCaseInfo.name,
                                 description: this.generateUseCaseDescription(useCaseInfo, fileResult.fileName),
                                 selected: true,
                                 fileName: fileResult.fileName,
                                 blockRange: useCaseInfo.blockRange,
                                 scenarios: useCaseInfo.scenarios || [],
-                                involvedSubDomains: useCaseInfo.allDomains || [subDomainName],
-                                entryPointSubDomain: subDomainName
+                                involvedContexts: useCaseInfo.allDomains || [contextName],
+                                entryPointContext: contextName
                             });
                         }
                     });
@@ -206,8 +206,8 @@ export class DslExtractService {
         return useCases;
     }
 
-    private getUseCasesWhereSubDomainIsInvolved(
-        workspaceResult: ExtractionResult, parentDomainName: string, subDomainName: string): UseCaseReference[] {
+    private getUseCasesWhereContextIsInvolved(
+        workspaceResult: ExtractionResult, parentDomainName: string, contextName: string): UseCaseReference[] {
         const useCases: UseCaseReference[] = [];
 
         if (workspaceResult.fileResults) {
@@ -215,10 +215,10 @@ export class DslExtractService {
                 if (fileResult.useCases) {
                     fileResult.useCases.forEach((useCaseInfo: UseCaseInfo) => {
 
-                        if (useCaseInfo.entryPointSubDomain !== subDomainName && useCaseInfo.allDomains && useCaseInfo.allDomains.includes(subDomainName)) {
+                        if (useCaseInfo.entryPointSubDomain !== contextName && useCaseInfo.allDomains && useCaseInfo.allDomains.includes(contextName)) {
 
                             useCases.push({
-                                useCaseId: DomainC.GenerateUseCaseId(parentDomainName, subDomainName, useCaseInfo.name),
+                                useCaseId: DomainC.GenerateUseCaseId(parentDomainName, contextName, useCaseInfo.name),
                                 useCaseName: useCaseInfo.name,
                                 domainName: useCaseInfo.entryPointSubDomain,
                                 blockRange: useCaseInfo.blockRange,
@@ -269,7 +269,7 @@ workspaceResult: ExtractionResult, currentFileResult: ExtractionResult | null, d
             }
             const groupName = parentDomain;
             const domain = domains.find(d => d.name === parentDomain) || DomainC.EmptyDomain;
-            const subDomains = domain.subDomains.filter(sd => service.domains.some(otherSd => otherSd === sd.name));
+            const boundedContexts = domain.boundedContexts.filter(bc => service.domains.some(otherBc => otherBc === bc.name));
 
             if (!groups[groupName]) {
                 groups[groupName] = [];
@@ -279,7 +279,7 @@ workspaceResult: ExtractionResult, currentFileResult: ExtractionResult | null, d
                 id: DomainC.GenerateServiceId(groupName, service.domains[0] || "", service.name),
                 name: service.name,
                 domain: domain,
-                subDomains: subDomains,
+                boundedContexts: boundedContexts,
                 // dataStores: service.dataStores,
                 // language: service.language,
                 dependencies: [],

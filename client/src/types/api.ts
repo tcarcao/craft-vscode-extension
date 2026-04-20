@@ -3,9 +3,9 @@
 // Matches the server's FocusInfo struct exactly
 export interface FocusInfo {
     focusedServiceNames: string[];
-    focusedSubDomainNames: string[];
+    focusedContextNames: string[];
     hasFocusedServices: boolean;
-    hasFocusedSubDomains: boolean;
+    hasFocusedContexts: boolean;
 }
 
 // Client-side composite types that combine focus info with additional options

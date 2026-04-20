@@ -17,7 +17,7 @@ export const DomainC = {
     DefaultDomain: defaultDomain,
     EmptyDomain: emptyDomain(),
     GenerateDomainId: generateDomainId,
-    GenerateSubDomainId: generateSubDomainId,
+    GenerateContextId: generateContextId,
     GenerateUseCaseId: generateUseCaseId,
     GenerateServiceId: generateServiceId,
 };
@@ -30,10 +30,10 @@ export interface Domain {
     selected: boolean;
     partiallySelected: boolean;
     inCurrentFile: boolean;
-    subDomains: SubDomain[];
+    boundedContexts: BoundedContext[];
     selectedUseCases: number;
     totalUseCases: number;
-    selectedSubDomains: number;
+    selectedBoundedContexts: number;
 }
 
 function emptyDomain() {
@@ -45,10 +45,10 @@ function emptyDomain() {
         selected: false,
         partiallySelected: false,
         inCurrentFile: false,
-        subDomains: [],
+        boundedContexts: [],
         selectedUseCases: 0,
         totalUseCases: 0,
-        selectedSubDomains: 0
+        selectedBoundedContexts: 0
     };
     return emptyDomain;
 }
@@ -57,7 +57,7 @@ function generateDomainId(domainName: string): string {
     return `domain-${domainName.toLowerCase().replace(/[^a-z0-9]/g, '-')}`;
 }
 
-export interface SubDomain {
+export interface BoundedContext {
     id: string;
     name: string;
     description: string;
@@ -73,9 +73,9 @@ export interface SubDomain {
     totalUseCases: number;
 }
 
-function generateSubDomainId(domainName: string, subDomainName: string): string {
-    const cleanSubDomainName = subDomainName.toLowerCase().replace(/[^a-z0-9]/g, '-');
-    return `${generateDomainId(domainName)}-subdomain-${cleanSubDomainName}`;
+function generateContextId(domainName: string, contextName: string): string {
+    const cleanContextName = contextName.toLowerCase().replace(/[^a-z0-9]/g, '-');
+    return `${generateDomainId(domainName)}-context-${cleanContextName}`;
 }
 
 export interface UseCaseReference {
@@ -94,13 +94,13 @@ export interface UseCase {
     fileName: string;
     blockRange: BlockRange;
     scenarios: string[];
-    entryPointSubDomain: string;
-    involvedSubDomains: string[];
+    entryPointContext: string;
+    involvedContexts: string[];
 }
 
-function generateUseCaseId(domainName: string, subDomainName: string, useCaseName: string): string {
+function generateUseCaseId(domainName: string, contextName: string, useCaseName: string): string {
     const cleanUseCaseName = useCaseName.toLowerCase().replace(/[^a-z0-9]/g, '-');
-    return `${generateSubDomainId(domainName, subDomainName)}-uc-${cleanUseCaseName}`;
+    return `${generateContextId(domainName, contextName)}-uc-${cleanUseCaseName}`;
 }
 
 export interface DomainTreeState {
@@ -118,7 +118,7 @@ export interface Service {
     name: string;
     description?: string;
     domain: Domain;
-    subDomains: SubDomain[];
+    boundedContexts: BoundedContext[];
     dependencies: string[];
     tags?: string[];
     selected: boolean;
@@ -129,9 +129,9 @@ export interface Service {
     blockRange: BlockRange;
 }
 
-function generateServiceId(domainName: string, subDomainName: string, serviceName: string): string {
+function generateServiceId(domainName: string, contextName: string, serviceName: string): string {
     const cleanServiceName = serviceName.toLowerCase().replace(/[^a-z0-9]/g, '-');
-    return `${generateSubDomainId(domainName, subDomainName)}-s-${cleanServiceName}`;
+    return `${generateContextId(domainName, contextName)}-s-${cleanServiceName}`;
 }
 
 export interface ServiceGroup {
