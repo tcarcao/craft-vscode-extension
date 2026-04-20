@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ServiceGroup, Service, SubDomain, UseCase } from '../../types/domain';
+import { ServiceGroup, Service, BoundedContext, UseCase } from '../../types/domain';
 import { WebviewMessages, ProviderMessages, SelectionActions } from '../../types/messages';
 
 interface ServicesViewProps {
@@ -54,19 +54,19 @@ export const ServicesView: React.FC<ServicesViewProps> = ({ vscode }) => {
             selected: existingService.selected !== undefined ? existingService.selected : newService.selected,
             partiallySelected: existingService.partiallySelected !== undefined ? existingService.partiallySelected : newService.partiallySelected,
             expanded: existingService.expanded !== undefined ? existingService.expanded : newService.expanded,
-            subDomains: newService.subDomains.map(newSubDomain => {
-              const existingSubDomain = existingService.subDomains.find(sd => sd.id === newSubDomain.id);
-              if (!existingSubDomain) {
-                return newSubDomain; // New subdomain, use as-is
+            boundedContexts: newService.boundedContexts.map(newBoundedContext => {
+              const existingContext = existingService.boundedContexts.find(bc => bc.id === newBoundedContext.id);
+              if (!existingContext) {
+                return newBoundedContext; // New bounded context, use as-is
               }
 
               return {
-                ...newSubDomain,
-                selected: existingSubDomain.selected !== undefined ? existingSubDomain.selected : newSubDomain.selected,
-                partiallySelected: existingSubDomain.partiallySelected !== undefined ? existingSubDomain.partiallySelected : newSubDomain.partiallySelected,
-                expanded: existingSubDomain.expanded !== undefined ? existingSubDomain.expanded : newSubDomain.expanded,
-                useCases: newSubDomain.useCases.map(newUseCase => {
-                  const existingUseCase = existingSubDomain.useCases.find(uc => uc.id === newUseCase.id);
+                ...newBoundedContext,
+                selected: existingContext.selected !== undefined ? existingContext.selected : newBoundedContext.selected,
+                partiallySelected: existingContext.partiallySelected !== undefined ? existingContext.partiallySelected : newBoundedContext.partiallySelected,
+                expanded: existingContext.expanded !== undefined ? existingContext.expanded : newBoundedContext.expanded,
+                useCases: newBoundedContext.useCases.map(newUseCase => {
+                  const existingUseCase = existingContext.useCases.find(uc => uc.id === newUseCase.id);
                   return {
                     ...newUseCase,
                     selected: existingUseCase?.selected !== undefined ? existingUseCase.selected : newUseCase.selected
@@ -165,11 +165,11 @@ export const ServicesView: React.FC<ServicesViewProps> = ({ vscode }) => {
               ...service,
               selected: newSelected,
               partiallySelected: false,
-              subDomains: service.subDomains.map(subDomain => ({
-                ...subDomain,
+                boundedContexts: service.boundedContexts.map(boundedContext => ({
+                ...boundedContext,
                 selected: newSelected,
                 partiallySelected: false,
-                useCases: subDomain.useCases.map(useCase => ({
+                useCases: boundedContext.useCases.map(useCase => ({
                   ...useCase,
                   selected: newSelected
                 }))
@@ -194,11 +194,11 @@ export const ServicesView: React.FC<ServicesViewProps> = ({ vscode }) => {
                 ...service,
                 selected: newSelected,
                 partiallySelected: false,
-                subDomains: service.subDomains.map(subDomain => ({
-                  ...subDomain,
+                boundedContexts: service.boundedContexts.map(boundedContext => ({
+                  ...boundedContext,
                   selected: newSelected,
                   partiallySelected: false,
-                  useCases: subDomain.useCases.map(useCase => ({
+                  useCases: boundedContext.useCases.map(useCase => ({
                     ...useCase,
                     selected: newSelected
                   }))
@@ -224,48 +224,48 @@ export const ServicesView: React.FC<ServicesViewProps> = ({ vscode }) => {
     }));
   };
 
-  const toggleSubDomain = (groupId: string, serviceId: string, subDomainId: string) => {
+  const toggleBoundedContext = (groupId: string, serviceId: string, contextId: string) => {
     setState(prev => ({
       ...prev,
       serviceGroups: prev.serviceGroups.map(group => {
         if (group.name === groupId) {
           const updatedServices = group.services.map(service => {
             if (service.id === serviceId) {
-              const updatedSubDomains = service.subDomains.map(subDomain => {
-                if (subDomain.id === subDomainId) {
-                  const newSelected = !subDomain.selected && !subDomain.partiallySelected;
+              const updatedContexts = service.boundedContexts.map(boundedContext => {
+                if (boundedContext.id === contextId) {
+                  const newSelected = !boundedContext.selected && !boundedContext.partiallySelected;
                   return {
-                    ...subDomain,
+                    ...boundedContext,
                     selected: newSelected,
                     partiallySelected: false,
-                    useCases: subDomain.useCases.map(useCase => ({
+                    useCases: boundedContext.useCases.map(useCase => ({
                       ...useCase,
                       selected: newSelected
                     }))
                   };
                 }
-                return subDomain;
+                return boundedContext;
               });
-              
-              // Update service selection state based on subdomains
-              const selectedSubDomains = updatedSubDomains.filter(sd => sd.selected).length;
-              const totalSubDomains = updatedSubDomains.length;
-              
+
+              // Update service selection state based on bounded contexts
+              const selectedContexts = updatedContexts.filter(bc => bc.selected).length;
+              const totalContexts = updatedContexts.length;
+
               return {
                 ...service,
-                subDomains: updatedSubDomains,
-                selected: selectedSubDomains === totalSubDomains,
-                partiallySelected: selectedSubDomains > 0 && selectedSubDomains < totalSubDomains
+                boundedContexts: updatedContexts,
+                selected: selectedContexts === totalContexts,
+                partiallySelected: selectedContexts > 0 && selectedContexts < totalContexts
               };
             }
             return service;
           });
-          
+
           // Update group selection state
           const selectedServices = updatedServices.filter(s => s.selected).length;
           const partialServices = updatedServices.filter(s => s.partiallySelected).length;
           const totalServices = updatedServices.length;
-          
+
           return {
             ...group,
             services: updatedServices,
@@ -278,56 +278,56 @@ export const ServicesView: React.FC<ServicesViewProps> = ({ vscode }) => {
     }));
   };
 
-  const toggleUseCase = (groupId: string, serviceId: string, subDomainId: string, useCaseId: string) => {
+  const toggleUseCase = (groupId: string, serviceId: string, contextId: string, useCaseId: string) => {
     setState(prev => ({
       ...prev,
       serviceGroups: prev.serviceGroups.map(group => {
         if (group.name === groupId) {
           const updatedServices = group.services.map(service => {
             if (service.id === serviceId) {
-              const updatedSubDomains = service.subDomains.map(subDomain => {
-                if (subDomain.id === subDomainId) {
-                  const updatedUseCases = subDomain.useCases.map(useCase => {
+              const updatedContexts = service.boundedContexts.map(boundedContext => {
+                if (boundedContext.id === contextId) {
+                  const updatedUseCases = boundedContext.useCases.map(useCase => {
                     if (useCase.id === useCaseId) {
                       return { ...useCase, selected: !useCase.selected };
                     }
                     return useCase;
                   });
-                  
-                  // Update subdomain selection state based on use cases
+
+                  // Update bounded context selection state based on use cases
                   const selectedUseCases = updatedUseCases.filter(uc => uc.selected).length;
                   const totalUseCases = updatedUseCases.length;
-                  
+
                   return {
-                    ...subDomain,
+                    ...boundedContext,
                     useCases: updatedUseCases,
                     selected: selectedUseCases === totalUseCases,
                     partiallySelected: selectedUseCases > 0 && selectedUseCases < totalUseCases
                   };
                 }
-                return subDomain;
+                return boundedContext;
               });
-              
+
               // Update service selection state
-              const selectedSubDomains = updatedSubDomains.filter(sd => sd.selected).length;
-              const partialSubDomains = updatedSubDomains.filter(sd => sd.partiallySelected).length;
-              const totalSubDomains = updatedSubDomains.length;
-              
+              const selectedContexts = updatedContexts.filter(bc => bc.selected).length;
+              const partialContexts = updatedContexts.filter(bc => bc.partiallySelected).length;
+              const totalContexts = updatedContexts.length;
+
               return {
                 ...service,
-                subDomains: updatedSubDomains,
-                selected: selectedSubDomains === totalSubDomains,
-                partiallySelected: (selectedSubDomains + partialSubDomains) > 0 && selectedSubDomains < totalSubDomains
+                boundedContexts: updatedContexts,
+                selected: selectedContexts === totalContexts,
+                partiallySelected: (selectedContexts + partialContexts) > 0 && selectedContexts < totalContexts
               };
             }
             return service;
           });
-          
+
           // Update group selection state
           const selectedServices = updatedServices.filter(s => s.selected).length;
           const partialServices = updatedServices.filter(s => s.partiallySelected).length;
           const totalServices = updatedServices.length;
-          
+
           return {
             ...group,
             services: updatedServices,
@@ -360,7 +360,7 @@ export const ServicesView: React.FC<ServicesViewProps> = ({ vscode }) => {
     }));
   };
 
-  const toggleSubDomainExpansion = (groupId: string, serviceId: string, subDomainId: string) => {
+  const toggleContextExpansion = (groupId: string, serviceId: string, contextId: string) => {
     setState(prev => ({
       ...prev,
       serviceGroups: prev.serviceGroups.map(group => {
@@ -371,11 +371,11 @@ export const ServicesView: React.FC<ServicesViewProps> = ({ vscode }) => {
               if (service.id === serviceId) {
                 return {
                   ...service,
-                  subDomains: service.subDomains.map(subDomain => {
-                    if (subDomain.id === subDomainId) {
-                      return { ...subDomain, expanded: !subDomain.expanded };
+                  boundedContexts: service.boundedContexts.map(boundedContext => {
+                    if (boundedContext.id === contextId) {
+                      return { ...boundedContext, expanded: !boundedContext.expanded };
                     }
-                    return subDomain;
+                    return boundedContext;
                   })
                 };
               }
@@ -438,9 +438,9 @@ export const ServicesView: React.FC<ServicesViewProps> = ({ vscode }) => {
                 return {
                   ...service,
                   focused: newFocused,
-                  // When toggling service focus, cascade to all subdomains
-                  subDomains: service.subDomains.map(subDomain => ({
-                    ...subDomain,
+                  // When toggling service focus, cascade to all bounded contexts
+                  boundedContexts: service.boundedContexts.map(boundedContext => ({
+                    ...boundedContext,
                     focused: newFocused
                   }))
                 };
@@ -454,7 +454,7 @@ export const ServicesView: React.FC<ServicesViewProps> = ({ vscode }) => {
     }));
   };
 
-  const toggleSubDomainFocus = (groupId: string, serviceId: string, subDomainId: string) => {
+  const toggleContextFocus = (groupId: string, serviceId: string, contextId: string) => {
     setState(prev => ({
       ...prev,
       serviceGroups: prev.serviceGroups.map(group => {
@@ -465,11 +465,11 @@ export const ServicesView: React.FC<ServicesViewProps> = ({ vscode }) => {
               if (service.id === serviceId) {
                 return {
                   ...service,
-                  subDomains: service.subDomains.map(subDomain => {
-                    if (subDomain.id === subDomainId) {
-                      return { ...subDomain, focused: !subDomain.focused };
+                  boundedContexts: service.boundedContexts.map(boundedContext => {
+                    if (boundedContext.id === contextId) {
+                      return { ...boundedContext, focused: !boundedContext.focused };
                     }
-                    return subDomain;
+                    return boundedContext;
                   })
                 };
               }
@@ -493,11 +493,11 @@ export const ServicesView: React.FC<ServicesViewProps> = ({ vscode }) => {
           ...service,
           selected: true,
           partiallySelected: false,
-          subDomains: service.subDomains.map(subDomain => ({
-            ...subDomain,
+          boundedContexts: service.boundedContexts.map(boundedContext => ({
+            ...boundedContext,
             selected: true,
             partiallySelected: false,
-            useCases: subDomain.useCases.map(useCase => ({
+            useCases: boundedContext.useCases.map(useCase => ({
               ...useCase,
               selected: true
             }))
@@ -518,11 +518,11 @@ export const ServicesView: React.FC<ServicesViewProps> = ({ vscode }) => {
           ...service,
           selected: false,
           partiallySelected: false,
-          subDomains: service.subDomains.map(subDomain => ({
-            ...subDomain,
+          boundedContexts: service.boundedContexts.map(boundedContext => ({
+            ...boundedContext,
             selected: false,
             partiallySelected: false,
-            useCases: subDomain.useCases.map(useCase => ({
+            useCases: boundedContext.useCases.map(useCase => ({
               ...useCase,
               selected: false
             }))
@@ -553,8 +553,8 @@ export const ServicesView: React.FC<ServicesViewProps> = ({ vscode }) => {
         if (service.selected || service.partiallySelected) {
           selectedServices.push(service);
         }
-        service.subDomains.forEach(subDomain => {
-          subDomain.useCases.forEach(useCase => {
+        service.boundedContexts.forEach(boundedContext => {
+          boundedContext.useCases.forEach(useCase => {
             if (useCase.selected) {
               selectedUseCases.push(useCase);
             }
@@ -742,19 +742,19 @@ export const ServicesView: React.FC<ServicesViewProps> = ({ vscode }) => {
               viewMode={state.viewMode}
               onToggleGroup={() => toggleServiceGroup(group.name)}
               onToggleService={(serviceId: string) => toggleService(group.name, serviceId)}
-              onToggleSubDomain={(serviceId: string, subDomainId: string) =>
-                toggleSubDomain(group.name, serviceId, subDomainId)}
-              onToggleUseCase={(serviceId: string, subDomainId: string, useCaseId: string) =>
-                toggleUseCase(group.name, serviceId, subDomainId, useCaseId)}
+              onToggleBoundedContext={(serviceId: string, contextId: string) =>
+                toggleBoundedContext(group.name, serviceId, contextId)}
+              onToggleUseCase={(serviceId: string, contextId: string, useCaseId: string) =>
+                toggleUseCase(group.name, serviceId, contextId, useCaseId)}
               onToggleServiceExpansion={(serviceId: string) =>
                 toggleServiceExpansion(group.name, serviceId)}
-              onToggleSubDomainExpansion={(serviceId: string, subDomainId: string) =>
-                toggleSubDomainExpansion(group.name, serviceId, subDomainId)}
+              onToggleContextExpansion={(serviceId: string, contextId: string) =>
+                toggleContextExpansion(group.name, serviceId, contextId)}
               onToggleGroupExpansion={() => toggleGroupExpansion(group.name)}
               onToggleServiceFocus={(serviceId: string) =>
                 toggleServiceFocus(group.name, serviceId)}
-              onToggleSubDomainFocus={(serviceId: string, subDomainId: string) =>
-                toggleSubDomainFocus(group.name, serviceId, subDomainId)}
+              onToggleContextFocus={(serviceId: string, contextId: string) =>
+                toggleContextFocus(group.name, serviceId, contextId)}
             />
           ))}
         </div>
@@ -771,13 +771,13 @@ interface ServiceGroupNodeProps {
   viewMode: 'current' | 'workspace';
   onToggleGroup: () => void;
   onToggleService: (serviceId: string) => void;
-  onToggleSubDomain: (serviceId: string, subDomainId: string) => void;
-  onToggleUseCase: (serviceId: string, subDomainId: string, useCaseId: string) => void;
+  onToggleBoundedContext: (serviceId: string, contextId: string) => void;
+  onToggleUseCase: (serviceId: string, contextId: string, useCaseId: string) => void;
   onToggleServiceExpansion: (serviceId: string) => void;
-  onToggleSubDomainExpansion: (serviceId: string, subDomainId: string) => void;
+  onToggleContextExpansion: (serviceId: string, contextId: string) => void;
   onToggleGroupExpansion: () => void;
   onToggleServiceFocus: (serviceId: string) => void;
-  onToggleSubDomainFocus: (serviceId: string, subDomainId: string) => void;
+  onToggleContextFocus: (serviceId: string, contextId: string) => void;
 }
 
 const ServiceGroupNode: React.FC<ServiceGroupNodeProps> = ({
@@ -785,13 +785,13 @@ const ServiceGroupNode: React.FC<ServiceGroupNodeProps> = ({
   viewMode,
   onToggleGroup,
   onToggleService,
-  onToggleSubDomain,
+  onToggleBoundedContext,
   onToggleUseCase,
   onToggleServiceExpansion,
-  onToggleSubDomainExpansion,
+  onToggleContextExpansion,
   onToggleGroupExpansion,
   onToggleServiceFocus,
-  onToggleSubDomainFocus
+  onToggleContextFocus
 }) => {
   const selectedServices = group.services.filter(s => s.selected).length;
   const totalServices = group.services.length;
@@ -841,15 +841,15 @@ const ServiceGroupNode: React.FC<ServiceGroupNodeProps> = ({
             group={group}
             viewMode={viewMode}
             onToggleService={() => onToggleService(service.id)}
-            onToggleSubDomain={(subDomainId: string) => onToggleSubDomain(service.id, subDomainId)}
-            onToggleUseCase={(subDomainId: string, useCaseId: string) =>
-              onToggleUseCase(service.id, subDomainId, useCaseId)}
+            onToggleBoundedContext={(contextId: string) => onToggleBoundedContext(service.id, contextId)}
+            onToggleUseCase={(contextId: string, useCaseId: string) =>
+              onToggleUseCase(service.id, contextId, useCaseId)}
             onToggleServiceExpansion={() => onToggleServiceExpansion(service.id)}
-            onToggleSubDomainExpansion={(subDomainId: string) =>
-              onToggleSubDomainExpansion(service.id, subDomainId)}
+            onToggleContextExpansion={(contextId: string) =>
+              onToggleContextExpansion(service.id, contextId)}
             onToggleServiceFocus={() => onToggleServiceFocus(service.id)}
-            onToggleSubDomainFocus={(subDomainId: string) =>
-              onToggleSubDomainFocus(service.id, subDomainId)}
+            onToggleContextFocus={(contextId: string) =>
+              onToggleContextFocus(service.id, contextId)}
           />
         ))}
       </div>
@@ -862,12 +862,12 @@ interface ServiceNodeProps {
   group: ServiceGroup;
   viewMode: 'current' | 'workspace';
   onToggleService: () => void;
-  onToggleSubDomain: (subDomainId: string) => void;
-  onToggleUseCase: (subDomainId: string, useCaseId: string) => void;
+  onToggleBoundedContext: (contextId: string) => void;
+  onToggleUseCase: (contextId: string, useCaseId: string) => void;
   onToggleServiceExpansion: () => void;
-  onToggleSubDomainExpansion: (subDomainId: string) => void;
+  onToggleContextExpansion: (contextId: string) => void;
   onToggleServiceFocus: () => void;
-  onToggleSubDomainFocus: (subDomainId: string) => void;
+  onToggleContextFocus: (contextId: string) => void;
 }
 
 const ServiceNode: React.FC<ServiceNodeProps> = ({
@@ -875,15 +875,15 @@ const ServiceNode: React.FC<ServiceNodeProps> = ({
   group,
   viewMode,
   onToggleService,
-  onToggleSubDomain,
+  onToggleBoundedContext,
   onToggleUseCase,
   onToggleServiceExpansion,
-  onToggleSubDomainExpansion,
+  onToggleContextExpansion,
   onToggleServiceFocus,
-  onToggleSubDomainFocus
+  onToggleContextFocus
 }) => {
-  const isEmpty = service.subDomains.length === 0;
-  const selectedCount = service.subDomains.filter(sd => sd.selected).length;
+  const isEmpty = service.boundedContexts.length === 0;
+  const selectedCount = service.boundedContexts.filter(bc => bc.selected).length;
   const serviceGreyClass = viewMode === 'workspace' && !group.inCurrentFile ? 'non-current-file' : '';
 
   return (
@@ -924,11 +924,11 @@ const ServiceNode: React.FC<ServiceNodeProps> = ({
               >
                 {service.focused ? '◉' : '◎'}
               </button>
-              <span 
+              <span
                 className={`use-case-badge ${!isEmpty ? '' : 'empty'}`}
-                title={`${!isEmpty ? `${selectedCount} of ${service.subDomains.length} use cases selected` : 'No sub domains'}`}
+                title={`${!isEmpty ? `${selectedCount} of ${service.boundedContexts.length} contexts selected` : 'No bounded contexts'}`}
               >
-                {!isEmpty ? `${selectedCount}/${service.subDomains.length}` : '0'}
+                {!isEmpty ? `${selectedCount}/${service.boundedContexts.length}` : '0'}
               </span>
             </div>
           </div>
@@ -938,22 +938,22 @@ const ServiceNode: React.FC<ServiceNodeProps> = ({
       <div className="node-children" style={{ display: service.expanded ? 'block' : 'none' }}>
         {service.expanded && (
           <>
-            {service.subDomains.length > 0 ? (
+            {service.boundedContexts.length > 0 ? (
               <div className="entry-point-usecases">
-                {service.subDomains.map(subDomain => (
-                  <SubDomainNode
-                    key={subDomain.id}
-                    subDomain={subDomain}
+                {service.boundedContexts.map(boundedContext => (
+                  <BoundedContextNode
+                    key={boundedContext.id}
+                    boundedContext={boundedContext}
                     viewMode={viewMode}
-                    onToggleSubDomain={() => onToggleSubDomain(subDomain.id)}
-                    onToggleUseCase={(useCaseId: string) => onToggleUseCase(subDomain.id, useCaseId)}
-                    onToggleSubDomainExpansion={() => onToggleSubDomainExpansion(subDomain.id)}
-                    onToggleSubDomainFocus={() => onToggleSubDomainFocus(subDomain.id)}
+                    onToggleBoundedContext={() => onToggleBoundedContext(boundedContext.id)}
+                    onToggleUseCase={(useCaseId: string) => onToggleUseCase(boundedContext.id, useCaseId)}
+                    onToggleContextExpansion={() => onToggleContextExpansion(boundedContext.id)}
+                    onToggleContextFocus={() => onToggleContextFocus(boundedContext.id)}
                   />
                 ))}
               </div>
             ) : (
-              <div className="empty-subdomain">No sub-domains defined</div>
+              <div className="empty-subdomain">No bounded contexts defined</div>
             )}
           </>
         )}
@@ -962,83 +962,83 @@ const ServiceNode: React.FC<ServiceNodeProps> = ({
   );
 };
 
-interface SubDomainNodeProps {
-  subDomain: SubDomain;
+interface BoundedContextNodeProps {
+  boundedContext: BoundedContext;
   viewMode: 'current' | 'workspace';
-  onToggleSubDomain: () => void;
+  onToggleBoundedContext: () => void;
   onToggleUseCase: (useCaseId: string) => void;
-  onToggleSubDomainExpansion: () => void;
-  onToggleSubDomainFocus: () => void;
+  onToggleContextExpansion: () => void;
+  onToggleContextFocus: () => void;
 }
 
-const SubDomainNode: React.FC<SubDomainNodeProps> = ({
-  subDomain,
+const BoundedContextNode: React.FC<BoundedContextNodeProps> = ({
+  boundedContext,
   viewMode,
-  onToggleSubDomain,
+  onToggleBoundedContext,
   onToggleUseCase,
-  onToggleSubDomainExpansion,
-  onToggleSubDomainFocus
+  onToggleContextExpansion,
+  onToggleContextFocus
 }) => {
-  const isEmpty = subDomain.useCases.length === 0;
-  const selectedCount = subDomain.useCases.filter(uc => uc.selected).length;
-  const subDomainGreyClass = viewMode === 'workspace' && !subDomain.inCurrentFile ? 'non-current-file' : '';
+  const isEmpty = boundedContext.useCases.length === 0;
+  const selectedCount = boundedContext.useCases.filter(uc => uc.selected).length;
+  const contextGreyClass = viewMode === 'workspace' && !boundedContext.inCurrentFile ? 'non-current-file' : '';
 
   return (
-    <div className={`tree-node subdomain-node ${subDomainGreyClass}`}>
-      <div className="node-content" onClick={onToggleSubDomain}>
+    <div className={`tree-node subdomain-node ${contextGreyClass}`}>
+      <div className="node-content" onClick={onToggleBoundedContext}>
         {!isEmpty ? (
-          <span 
-            className="expander" 
-            onClick={(e) => { e.stopPropagation(); onToggleSubDomainExpansion(); }}
+          <span
+            className="expander"
+            onClick={(e) => { e.stopPropagation(); onToggleContextExpansion(); }}
           >
-            {subDomain.expanded ? '▼' : '▶'}
+            {boundedContext.expanded ? '▼' : '▶'}
           </span>
         ) : (
           <span className="expander-placeholder"></span>
         )}
-        
+
         <div className="checkbox-container">
-          <div 
-            className={`custom-checkbox ${subDomain.selected ? 'checked' : subDomain.partiallySelected ? 'indeterminate' : ''}`}
-            title="Select/deselect subdomain"
+          <div
+            className={`custom-checkbox ${boundedContext.selected ? 'checked' : boundedContext.partiallySelected ? 'indeterminate' : ''}`}
+            title="Select/deselect bounded context"
             role="checkbox"
-            aria-checked={subDomain.selected ? 'true' : subDomain.partiallySelected ? 'mixed' : 'false'}
+            aria-checked={boundedContext.selected ? 'true' : boundedContext.partiallySelected ? 'mixed' : 'false'}
           >
             <span className="checkbox-symbol">
-              {subDomain.selected ? '✓' : subDomain.partiallySelected ? '▣' : '○'}
+              {boundedContext.selected ? '✓' : boundedContext.partiallySelected ? '▣' : '○'}
             </span>
           </div>
         </div>
-        
+
         <div className="node-info">
           <div className="node-header">
-            <span className="node-name">{subDomain.name}</span>
+            <span className="node-name">{boundedContext.name}</span>
             <div className="node-actions">
               <button
-                className={`focus-btn ${subDomain.focused ? 'focused' : 'unfocused'}`}
-                onClick={(e) => { e.stopPropagation(); onToggleSubDomainFocus(); }}
-                title={`${subDomain.focused ? 'Click to unfocus (show as external in C4)' : 'Click to focus (show as internal in C4)'}`}
+                className={`focus-btn ${boundedContext.focused ? 'focused' : 'unfocused'}`}
+                onClick={(e) => { e.stopPropagation(); onToggleContextFocus(); }}
+                title={`${boundedContext.focused ? 'Click to unfocus (show as external in C4)' : 'Click to focus (show as internal in C4)'}`}
               >
-                {subDomain.focused ? '◉' : '◎'}
+                {boundedContext.focused ? '◉' : '◎'}
               </button>
-              <span 
+              <span
                 className="use-case-badge"
-                title={`${isEmpty ? 'No use cases' : `${selectedCount} of ${subDomain.useCases.length} use cases selected`}`}
+                title={`${isEmpty ? 'No use cases' : `${selectedCount} of ${boundedContext.useCases.length} use cases selected`}`}
               >
-                {isEmpty ? `${subDomain.selected ? '1/1' : '0/1'}` : `${selectedCount}/${subDomain.useCases.length}`}
+                {isEmpty ? `${boundedContext.selected ? '1/1' : '0/1'}` : `${selectedCount}/${boundedContext.useCases.length}`}
               </span>
             </div>
           </div>
         </div>
       </div>
-      
-      <div className="node-children" style={{ display: subDomain.expanded ? 'block' : 'none' }}>
-        {subDomain.expanded && (
+
+      <div className="node-children" style={{ display: boundedContext.expanded ? 'block' : 'none' }}>
+        {boundedContext.expanded && (
           <>
             {!isEmpty ? (
               <div className="entry-point-usecases">
-                {subDomain.useCases.map(useCase => (
-                  <UseCaseNode 
+                {boundedContext.useCases.map(useCase => (
+                  <UseCaseNode
                     key={useCase.id}
                     useCase={useCase}
                     onToggleUseCase={() => onToggleUseCase(useCase.id)}

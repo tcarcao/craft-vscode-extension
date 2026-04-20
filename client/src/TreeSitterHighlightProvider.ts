@@ -56,7 +56,7 @@ export class TreeSitterHighlightProvider implements DocumentSemanticTokensProvid
     'craft-service-name',
     'craft-domain-name',
     'craft-exposure-name',
-    'craft-subdomain-name',
+    'craft-context-name',
     'craft-actor-definition',
     'craft-domain-list',
     'craft-data-store-name',

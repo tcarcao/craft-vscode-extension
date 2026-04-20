@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Domain, SubDomain, UseCase, UseCaseReference } from '../../types/domain';
+import { Domain, BoundedContext, UseCase, UseCaseReference } from '../../types/domain';
 import { WebviewMessages, ProviderMessages, SelectionActions } from '../../types/messages';
 
 interface DomainsViewProps {
@@ -39,19 +39,19 @@ export const DomainsView: React.FC<DomainsViewProps> = ({ vscode }) => {
         selected: existingDomain.selected !== undefined ? existingDomain.selected : newDomain.selected,
         partiallySelected: existingDomain.partiallySelected !== undefined ? existingDomain.partiallySelected : newDomain.partiallySelected,
         expanded: existingDomain.expanded !== undefined ? existingDomain.expanded : newDomain.expanded,
-        subDomains: newDomain.subDomains.map(newSubDomain => {
-          const existingSubDomain = existingDomain.subDomains.find(sd => sd.id === newSubDomain.id);
-          if (!existingSubDomain) {
-            return newSubDomain; // New subdomain, use as-is
+        boundedContexts: newDomain.boundedContexts.map(newBoundedContext => {
+          const existingContext = existingDomain.boundedContexts.find(bc => bc.id === newBoundedContext.id);
+          if (!existingContext) {
+            return newBoundedContext; // New bounded context, use as-is
           }
 
           return {
-            ...newSubDomain,
-            selected: existingSubDomain.selected !== undefined ? existingSubDomain.selected : newSubDomain.selected,
-            partiallySelected: existingSubDomain.partiallySelected !== undefined ? existingSubDomain.partiallySelected : newSubDomain.partiallySelected,
-            expanded: existingSubDomain.expanded !== undefined ? existingSubDomain.expanded : newSubDomain.expanded,
-            useCases: newSubDomain.useCases.map(newUseCase => {
-              const existingUseCase = existingSubDomain.useCases.find(uc => uc.id === newUseCase.id);
+            ...newBoundedContext,
+            selected: existingContext.selected !== undefined ? existingContext.selected : newBoundedContext.selected,
+            partiallySelected: existingContext.partiallySelected !== undefined ? existingContext.partiallySelected : newBoundedContext.partiallySelected,
+            expanded: existingContext.expanded !== undefined ? existingContext.expanded : newBoundedContext.expanded,
+            useCases: newBoundedContext.useCases.map(newUseCase => {
+              const existingUseCase = existingContext.useCases.find(uc => uc.id === newUseCase.id);
               return {
                 ...newUseCase,
                 selected: existingUseCase?.selected !== undefined ? existingUseCase.selected : newUseCase.selected
@@ -132,10 +132,10 @@ export const DomainsView: React.FC<DomainsViewProps> = ({ vscode }) => {
             ...domain,
             selected: newSelected,
             partiallySelected: false,
-            subDomains: domain.subDomains.map(sd => ({
-              ...sd,
+            boundedContexts: domain.boundedContexts.map(bc => ({
+              ...bc,
               selected: newSelected,
-              useCases: sd.useCases.map(uc => ({
+              useCases: bc.useCases.map(uc => ({
                 ...uc,
                 selected: newSelected
               }))
@@ -147,54 +147,54 @@ export const DomainsView: React.FC<DomainsViewProps> = ({ vscode }) => {
     }));
   };
 
-  const toggleUseCase = (domainId: string, subDomainId: string, useCaseId: string) => {
+  const toggleUseCase = (domainId: string, contextId: string, useCaseId: string) => {
     setState(prev => ({
       ...prev,
       domains: prev.domains.map(domain => {
         if (domain.id === domainId) {
           const updatedDomain = {
             ...domain,
-            subDomains: domain.subDomains.map(subDomain => {
-              if (subDomain.id === subDomainId) {
-                const updatedSubDomain = {
-                  ...subDomain,
-                  useCases: subDomain.useCases.map(useCase => 
-                    useCase.id === useCaseId 
+            boundedContexts: domain.boundedContexts.map(boundedContext => {
+              if (boundedContext.id === contextId) {
+                const updatedContext = {
+                  ...boundedContext,
+                  useCases: boundedContext.useCases.map(useCase =>
+                    useCase.id === useCaseId
                       ? { ...useCase, selected: !useCase.selected }
                       : useCase
                   )
                 };
-                
-                // Update subdomain selection state based on use cases
-                const selectedUseCases = updatedSubDomain.useCases.filter(uc => uc.selected);
-                const totalUseCases = updatedSubDomain.useCases.length;
-                
+
+                // Update bounded context selection state based on use cases
+                const selectedUseCases = updatedContext.useCases.filter(uc => uc.selected);
+                const totalUseCases = updatedContext.useCases.length;
+
                 if (selectedUseCases.length === 0) {
-                  updatedSubDomain.selected = false;
-                  updatedSubDomain.partiallySelected = false;
+                  updatedContext.selected = false;
+                  updatedContext.partiallySelected = false;
                 } else if (selectedUseCases.length === totalUseCases) {
-                  updatedSubDomain.selected = true;
-                  updatedSubDomain.partiallySelected = false;
+                  updatedContext.selected = true;
+                  updatedContext.partiallySelected = false;
                 } else {
-                  updatedSubDomain.selected = false;
-                  updatedSubDomain.partiallySelected = true;
+                  updatedContext.selected = false;
+                  updatedContext.partiallySelected = true;
                 }
-                
-                return updatedSubDomain;
+
+                return updatedContext;
               }
-              return subDomain;
+              return boundedContext;
             })
           };
-          
-          // Update domain selection state based on subdomains
-          const selectedSubDomains = updatedDomain.subDomains.filter(sd => sd.selected);
-          const partialSubDomains = updatedDomain.subDomains.filter(sd => sd.partiallySelected);
-          const totalSubDomains = updatedDomain.subDomains.length;
-          
-          if (selectedSubDomains.length === 0 && partialSubDomains.length === 0) {
+
+          // Update domain selection state based on bounded contexts
+          const selectedContexts = updatedDomain.boundedContexts.filter(bc => bc.selected);
+          const partialContexts = updatedDomain.boundedContexts.filter(bc => bc.partiallySelected);
+          const totalContexts = updatedDomain.boundedContexts.length;
+
+          if (selectedContexts.length === 0 && partialContexts.length === 0) {
             updatedDomain.selected = false;
             updatedDomain.partiallySelected = false;
-          } else if (selectedSubDomains.length === totalSubDomains) {
+          } else if (selectedContexts.length === totalContexts) {
             updatedDomain.selected = true;
             updatedDomain.partiallySelected = false;
           } else {
@@ -209,39 +209,39 @@ export const DomainsView: React.FC<DomainsViewProps> = ({ vscode }) => {
     }));
   };
 
-  const toggleSubDomain = (domainId: string, subDomainId: string) => {
+  const toggleBoundedContext = (domainId: string, contextId: string) => {
     setState(prev => ({
       ...prev,
       domains: prev.domains.map(domain => {
         if (domain.id === domainId) {
           const updatedDomain = {
             ...domain,
-            subDomains: domain.subDomains.map(subDomain => {
-              if (subDomain.id === subDomainId) {
-                const newSelected = !subDomain.selected && !subDomain.partiallySelected;
+            boundedContexts: domain.boundedContexts.map(boundedContext => {
+              if (boundedContext.id === contextId) {
+                const newSelected = !boundedContext.selected && !boundedContext.partiallySelected;
                 return {
-                  ...subDomain,
+                  ...boundedContext,
                   selected: newSelected,
                   partiallySelected: false,
-                  useCases: subDomain.useCases.map(uc => ({
+                  useCases: boundedContext.useCases.map(uc => ({
                     ...uc,
                     selected: newSelected
                   }))
                 };
               }
-              return subDomain;
+              return boundedContext;
             })
           };
-          
-          // Update domain selection state based on subdomains
-          const selectedSubDomains = updatedDomain.subDomains.filter(sd => sd.selected);
-          const partialSubDomains = updatedDomain.subDomains.filter(sd => sd.partiallySelected);
-          const totalSubDomains = updatedDomain.subDomains.length;
-          
-          if (selectedSubDomains.length === 0 && partialSubDomains.length === 0) {
+
+          // Update domain selection state based on bounded contexts
+          const selectedContexts = updatedDomain.boundedContexts.filter(bc => bc.selected);
+          const partialContexts = updatedDomain.boundedContexts.filter(bc => bc.partiallySelected);
+          const totalContexts = updatedDomain.boundedContexts.length;
+
+          if (selectedContexts.length === 0 && partialContexts.length === 0) {
             updatedDomain.selected = false;
             updatedDomain.partiallySelected = false;
-          } else if (selectedSubDomains.length === totalSubDomains) {
+          } else if (selectedContexts.length === totalContexts) {
             updatedDomain.selected = true;
             updatedDomain.partiallySelected = false;
           } else {
@@ -267,17 +267,17 @@ export const DomainsView: React.FC<DomainsViewProps> = ({ vscode }) => {
     }));
   };
 
-  const toggleSubDomainExpansion = (domainId: string, subDomainId: string) => {
+  const toggleContextExpansion = (domainId: string, contextId: string) => {
     setState(prev => ({
       ...prev,
       domains: prev.domains.map(domain => {
         if (domain.id === domainId) {
           return {
             ...domain,
-            subDomains: domain.subDomains.map(subDomain =>
-              subDomain.id === subDomainId 
-                ? { ...subDomain, expanded: !subDomain.expanded }
-                : subDomain
+            boundedContexts: domain.boundedContexts.map(boundedContext =>
+              boundedContext.id === contextId
+                ? { ...boundedContext, expanded: !boundedContext.expanded }
+                : boundedContext
             )
           };
         }
@@ -310,11 +310,11 @@ export const DomainsView: React.FC<DomainsViewProps> = ({ vscode }) => {
         ...domain,
         selected: true,
         partiallySelected: false,
-        subDomains: domain.subDomains.map(sd => ({
-          ...sd,
+        boundedContexts: domain.boundedContexts.map(bc => ({
+          ...bc,
           selected: true,
           partiallySelected: false,
-          useCases: sd.useCases.map(uc => ({ ...uc, selected: true }))
+          useCases: bc.useCases.map(uc => ({ ...uc, selected: true }))
         }))
       }))
     }));
@@ -327,11 +327,11 @@ export const DomainsView: React.FC<DomainsViewProps> = ({ vscode }) => {
         ...domain,
         selected: false,
         partiallySelected: false,
-        subDomains: domain.subDomains.map(sd => ({
-          ...sd,
+        boundedContexts: domain.boundedContexts.map(bc => ({
+          ...bc,
           selected: false,
           partiallySelected: false,
-          useCases: sd.useCases.map(uc => ({ ...uc, selected: false }))
+          useCases: bc.useCases.map(uc => ({ ...uc, selected: false }))
         }))
       }))
     }));
@@ -346,13 +346,13 @@ export const DomainsView: React.FC<DomainsViewProps> = ({ vscode }) => {
           ...domain,
           selected: shouldSelect,
           partiallySelected: false,
-          subDomains: domain.subDomains.map(sd => {
-            const subShouldSelect = shouldSelect && sd.inCurrentFile;
+          boundedContexts: domain.boundedContexts.map(bc => {
+            const contextShouldSelect = shouldSelect && bc.inCurrentFile;
             return {
-              ...sd,
-              selected: subShouldSelect,
+              ...bc,
+              selected: contextShouldSelect,
               partiallySelected: false,
-              useCases: sd.useCases.map(uc => ({ ...uc, selected: subShouldSelect }))
+              useCases: bc.useCases.map(uc => ({ ...uc, selected: contextShouldSelect }))
             };
           })
         };
@@ -360,17 +360,17 @@ export const DomainsView: React.FC<DomainsViewProps> = ({ vscode }) => {
     }));
   };
 
-  const toggleReferences = (domainId: string, subDomainId: string) => {
+  const toggleReferences = (domainId: string, contextId: string) => {
     setState(prev => ({
       ...prev,
       domains: prev.domains.map(domain => {
         if (domain.id === domainId) {
           return {
             ...domain,
-            subDomains: domain.subDomains.map(subDomain =>
-              subDomain.id === subDomainId 
-                ? { ...subDomain, showReferences: !subDomain.showReferences }
-                : subDomain
+            boundedContexts: domain.boundedContexts.map(boundedContext =>
+              boundedContext.id === contextId
+                ? { ...boundedContext, showReferences: !boundedContext.showReferences }
+                : boundedContext
             )
           };
         }
@@ -412,8 +412,8 @@ export const DomainsView: React.FC<DomainsViewProps> = ({ vscode }) => {
       if (domain.selected || domain.partiallySelected) {
         selectedDomains.push(domain);
       }
-      domain.subDomains.forEach(subDomain => {
-        subDomain.useCases.forEach(useCase => {
+      domain.boundedContexts.forEach(boundedContext => {
+        boundedContext.useCases.forEach(useCase => {
           if (useCase.selected) {
             selectedUseCases.push(useCase);
           }
@@ -429,11 +429,11 @@ export const DomainsView: React.FC<DomainsViewProps> = ({ vscode }) => {
 
   const selectedCount = {
     domains: state.domains.filter(d => d.selected).length,
-    subDomains: state.domains.reduce((acc, domain) => 
-      acc + domain.subDomains.filter(sd => sd.selected).length, 0),
-    useCases: state.domains.reduce((acc, domain) => 
-      acc + domain.subDomains.reduce((subAcc, subDomain) => 
-        subAcc + subDomain.useCases.filter(uc => uc.selected).length, 0), 0)
+    boundedContexts: state.domains.reduce((acc, domain) =>
+      acc + domain.boundedContexts.filter(bc => bc.selected).length, 0),
+    useCases: state.domains.reduce((acc, domain) =>
+      acc + domain.boundedContexts.reduce((bcAcc, boundedContext) =>
+        bcAcc + boundedContext.useCases.filter(uc => uc.selected).length, 0), 0)
   };
 
 
@@ -506,7 +506,7 @@ export const DomainsView: React.FC<DomainsViewProps> = ({ vscode }) => {
                   <button
                     className={`option-btn ${state.diagramMode === 'architecture' ? 'active' : ''}`}
                     onClick={() => setDiagramMode('architecture')}
-                    title="Show architecture view - subdomain connections only"
+                    title="Show architecture view - context connections only"
                   >
                     Architecture
                   </button>
@@ -524,8 +524,8 @@ export const DomainsView: React.FC<DomainsViewProps> = ({ vscode }) => {
             </span>
             <span className="count-separator">•</span>
             <span className="count-item">
-              <span className="count-number">{selectedCount.subDomains}</span>
-              <span className="count-label">subdomains</span>
+              <span className="count-number">{selectedCount.boundedContexts}</span>
+              <span className="count-label">contexts</span>
             </span>
             <span className="count-separator">•</span>
             <span className="count-item">
@@ -542,15 +542,15 @@ export const DomainsView: React.FC<DomainsViewProps> = ({ vscode }) => {
           <div className="no-domains">No domains found</div>
         ) : (
           state.domains.map(domain => (
-            <DomainItem 
+            <DomainItem
               key={domain.id}
               domain={domain}
               onToggleDomain={() => toggleDomain(domain.id)}
-              onToggleSubDomain={(subDomainId) => toggleSubDomain(domain.id, subDomainId)}
-              onToggleUseCase={(subDomainId, useCaseId) => toggleUseCase(domain.id, subDomainId, useCaseId)}
+              onToggleBoundedContext={(contextId) => toggleBoundedContext(domain.id, contextId)}
+              onToggleUseCase={(contextId, useCaseId) => toggleUseCase(domain.id, contextId, useCaseId)}
               onToggleExpansion={() => toggleDomainExpansion(domain.id)}
-              onToggleSubDomainExpansion={(subDomainId) => toggleSubDomainExpansion(domain.id, subDomainId)}
-              onToggleReferences={(subDomainId) => toggleReferences(domain.id, subDomainId)}
+              onToggleContextExpansion={(contextId) => toggleContextExpansion(domain.id, contextId)}
+              onToggleReferences={(contextId) => toggleReferences(domain.id, contextId)}
               viewMode={state.viewMode}
             />
           ))
@@ -564,21 +564,21 @@ export const DomainsView: React.FC<DomainsViewProps> = ({ vscode }) => {
 interface DomainItemProps {
   domain: Domain;
   onToggleDomain: () => void;
-  onToggleSubDomain: (subDomainId: string) => void;
-  onToggleUseCase: (subDomainId: string, useCaseId: string) => void;
+  onToggleBoundedContext: (contextId: string) => void;
+  onToggleUseCase: (contextId: string, useCaseId: string) => void;
   onToggleExpansion: () => void;
-  onToggleSubDomainExpansion: (subDomainId: string) => void;
-  onToggleReferences: (subDomainId: string) => void;
+  onToggleContextExpansion: (contextId: string) => void;
+  onToggleReferences: (contextId: string) => void;
   viewMode: 'current' | 'workspace';
 }
 
 const DomainItem: React.FC<DomainItemProps> = ({
   domain,
   onToggleDomain,
-  onToggleSubDomain,
+  onToggleBoundedContext,
   onToggleUseCase,
   onToggleExpansion,
-  onToggleSubDomainExpansion,
+  onToggleContextExpansion,
   onToggleReferences,
   viewMode
 }) => {
@@ -591,9 +591,9 @@ const DomainItem: React.FC<DomainItemProps> = ({
   ].filter(Boolean).join(' ');
 
   // Calculate actual counters from current state
-  const totalUseCases = domain.subDomains.reduce((total, sd) => total + sd.useCases.length, 0);
-  const selectedUseCases = domain.subDomains.reduce((total, sd) => 
-    total + sd.useCases.filter(uc => uc.selected).length, 0);
+  const totalUseCases = domain.boundedContexts.reduce((total, bc) => total + bc.useCases.length, 0);
+  const selectedUseCases = domain.boundedContexts.reduce((total, bc) =>
+    total + bc.useCases.filter(uc => uc.selected).length, 0);
 
   return (
     <div className={domainClasses}>
@@ -629,20 +629,20 @@ const DomainItem: React.FC<DomainItemProps> = ({
             </span>
           </div>
           <div className="node-meta">
-            {domain.subDomains.length} subdomain{domain.subDomains.length !== 1 ? 's' : ''}
+            {domain.boundedContexts.length} context{domain.boundedContexts.length !== 1 ? 's' : ''}
           </div>
         </div>
       </div>
 
       <div className="node-children" style={{ display: domain.expanded ? 'block' : 'none' }} role="group">
-        {domain.subDomains.map(subDomain => (
-          <SubDomainItem
-            key={subDomain.id}
-            subDomain={subDomain}
-            onToggleSubDomain={() => onToggleSubDomain(subDomain.id)}
-            onToggleUseCase={(useCaseId) => onToggleUseCase(subDomain.id, useCaseId)}
-            onToggleExpansion={() => onToggleSubDomainExpansion(subDomain.id)}
-            onToggleReferences={() => onToggleReferences(subDomain.id)}
+        {domain.boundedContexts.map(boundedContext => (
+          <BoundedContextItem
+            key={boundedContext.id}
+            boundedContext={boundedContext}
+            onToggleBoundedContext={() => onToggleBoundedContext(boundedContext.id)}
+            onToggleUseCase={(useCaseId) => onToggleUseCase(boundedContext.id, useCaseId)}
+            onToggleExpansion={() => onToggleContextExpansion(boundedContext.id)}
+            onToggleReferences={() => onToggleReferences(boundedContext.id)}
             viewMode={viewMode}
           />
         ))}
@@ -651,95 +651,95 @@ const DomainItem: React.FC<DomainItemProps> = ({
   );
 };
 
-interface SubDomainItemProps {
-  subDomain: SubDomain;
-  onToggleSubDomain: () => void;
+interface BoundedContextItemProps {
+  boundedContext: BoundedContext;
+  onToggleBoundedContext: () => void;
   onToggleUseCase: (useCaseId: string) => void;
   onToggleExpansion: () => void;
   onToggleReferences: () => void;
   viewMode: 'current' | 'workspace';
 }
 
-const SubDomainItem: React.FC<SubDomainItemProps> = ({
-  subDomain,
-  onToggleSubDomain,
+const BoundedContextItem: React.FC<BoundedContextItemProps> = ({
+  boundedContext,
+  onToggleBoundedContext,
   onToggleUseCase,
   onToggleExpansion,
   onToggleReferences,
   viewMode
 }) => {
-  const isEmpty = subDomain.useCases.length === 0;
-  const hasReferences = subDomain.referencedIn && subDomain.referencedIn.length > 0;
+  const isEmpty = boundedContext.useCases.length === 0;
+  const hasReferences = boundedContext.referencedIn && boundedContext.referencedIn.length > 0;
   const isSelectable = !isEmpty || hasReferences;
-  
-  const selectedCount = subDomain.useCases.filter(uc => uc.selected).length;
+
+  const selectedCount = boundedContext.useCases.filter(uc => uc.selected).length;
   const refIndicator = hasReferences ? (
-    <span className="ref-indicator" title={`${subDomain.referencedIn.length} cross-references`}>
-      🔗 {subDomain.referencedIn.length}
+    <span className="ref-indicator" title={`${boundedContext.referencedIn.length} cross-references`}>
+      🔗 {boundedContext.referencedIn.length}
     </span>
   ) : null;
 
-  const subDomainClasses = [
+  const contextClasses = [
     'tree-node',
     'subdomain-node',
     !isSelectable ? 'empty-subdomain-node' : '',
-    subDomain.selected ? 'selected' : '',
-    subDomain.partiallySelected ? 'partially-selected' : '',
-    !subDomain.inCurrentFile && viewMode === 'workspace' ? 'non-current-file' : ''
+    boundedContext.selected ? 'selected' : '',
+    boundedContext.partiallySelected ? 'partially-selected' : '',
+    !boundedContext.inCurrentFile && viewMode === 'workspace' ? 'non-current-file' : ''
   ].filter(Boolean).join(' ');
-  
-  const checkboxSymbol = isEmpty ? '∅' : (subDomain.selected ? '✓' : subDomain.partiallySelected ? '▣' : '○');
-  const checkboxClass = subDomain.selected ? 'checked' : (subDomain.partiallySelected ? 'indeterminate' : '');
-  const clickHandler = isSelectable ? onToggleSubDomain : undefined;
+
+  const checkboxSymbol = isEmpty ? '∅' : (boundedContext.selected ? '✓' : boundedContext.partiallySelected ? '▣' : '○');
+  const checkboxClass = boundedContext.selected ? 'checked' : (boundedContext.partiallySelected ? 'indeterminate' : '');
+  const clickHandler = isSelectable ? onToggleBoundedContext : undefined;
 
   return (
-    <div className={subDomainClasses}>
+    <div className={contextClasses}>
       <div className="node-content" onClick={clickHandler}>
         {isSelectable ? (
-          <span 
-            className="expander" 
+          <span
+            className="expander"
             onClick={(e) => { e.stopPropagation(); onToggleExpansion(); }}
-            title={subDomain.expanded ? 'Collapse' : 'Expand'}
+            title={boundedContext.expanded ? 'Collapse' : 'Expand'}
             role="button"
             tabIndex={0}
           >
-            {subDomain.expanded ? '▼' : '▶'}
+            {boundedContext.expanded ? '▼' : '▶'}
           </span>
         ) : (
           <span className="expander-placeholder"></span>
         )}
-        
+
         <div className="checkbox-container">
-          <div 
+          <div
             className={`custom-checkbox ${checkboxClass}`}
-            title={!isSelectable ? 'No use cases or references to select' : 'Select/deselect subdomain'}
+            title={!isSelectable ? 'No use cases or references to select' : 'Select/deselect bounded context'}
             role="checkbox"
-            aria-checked={!isSelectable ? 'false' : (subDomain.selected ? 'true' : subDomain.partiallySelected ? 'mixed' : 'false')}
+            aria-checked={!isSelectable ? 'false' : (boundedContext.selected ? 'true' : boundedContext.partiallySelected ? 'mixed' : 'false')}
           >
             <span className="checkbox-symbol">
               {checkboxSymbol}
             </span>
           </div>
         </div>
-        
+
         <div className="node-info">
           <div className="node-header">
-            <span className="node-name">{subDomain.name}{refIndicator}</span>
+            <span className="node-name">{boundedContext.name}{refIndicator}</span>
             <span className={`use-case-badge ${!isSelectable ? 'empty' : ''}`}
-                  title={!isSelectable ? 'No use cases or references' : `${selectedCount} of ${subDomain.useCases.length} use cases selected`}>
-              {!isSelectable ? '0' : `${selectedCount}/${subDomain.useCases.length}`}
+                  title={!isSelectable ? 'No use cases or references' : `${selectedCount} of ${boundedContext.useCases.length} use cases selected`}>
+              {!isSelectable ? '0' : `${selectedCount}/${boundedContext.useCases.length}`}
             </span>
           </div>
         </div>
       </div>
 
-      <div className="node-children" style={{ display: subDomain.expanded ? 'block' : 'none' }} role="group">
-        {subDomain.expanded && (
+      <div className="node-children" style={{ display: boundedContext.expanded ? 'block' : 'none' }} role="group">
+        {boundedContext.expanded && (
           <>
             {/* Entry Point use cases */}
             {!isEmpty && (
               <div className="entry-point-usecases">
-                {subDomain.useCases.map(useCase => (
+                {boundedContext.useCases.map(useCase => (
                   <UseCaseItem
                     key={useCase.id}
                     useCase={useCase}
@@ -748,26 +748,26 @@ const SubDomainItem: React.FC<SubDomainItemProps> = ({
                 ))}
               </div>
             )}
-            
+
             {/* Cross-references */}
             {hasReferences && (
               <div className="cross-references">
                 <div className="section-header">
                   <span className="section-icon">🔗</span>
                   <span className="section-title">Also Involved In</span>
-                  <button 
-                    className="toggle-refs-btn" 
+                  <button
+                    className="toggle-refs-btn"
                     onClick={(e) => { e.stopPropagation(); onToggleReferences(); }}
                   >
-                    {subDomain.showReferences ? 'Hide' : 'Show'} ({subDomain.referencedIn.length})
+                    {boundedContext.showReferences ? 'Hide' : 'Show'} ({boundedContext.referencedIn.length})
                   </button>
                 </div>
-                {subDomain.showReferences && (
-                  <CrossReferencesList references={subDomain.referencedIn} />
+                {boundedContext.showReferences && (
+                  <CrossReferencesList references={boundedContext.referencedIn} />
                 )}
               </div>
             )}
-            
+
             {/* Empty state */}
             {isEmpty && !hasReferences && (
               <div className="empty-subdomain">No use cases defined</div>

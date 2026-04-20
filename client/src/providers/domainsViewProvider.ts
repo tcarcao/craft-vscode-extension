@@ -316,7 +316,7 @@ export class DomainsViewProvider implements WebviewViewProvider {
         const blockRanges = selectedUseCases.map(uc => uc.blockRange);
 
         // Collect service block ranges for selected subdomains
-        const serviceBlockRanges = this.getServiceBlockRangesForSubDomains(selectedDomains);
+        const serviceBlockRanges = this.getServiceBlockRangesForContexts(selectedDomains);
         blockRanges.push(...serviceBlockRanges);
 
         const partialDsl: string = await this.languageClient.sendRequest('workspace/executeCommand', {
@@ -332,30 +332,30 @@ export class DomainsViewProvider implements WebviewViewProvider {
         commands.executeCommand('craft.previewPartialDSL', partialDsl, commandDiagramType, diagramType);
     }
 
-    private getServiceBlockRangesForSubDomains(selectedDomains: Domain[]): BlockRange[] {
+    private getServiceBlockRangesForContexts(selectedDomains: Domain[]): BlockRange[] {
         const serviceBlockRanges: BlockRange[] = [];
         const processedServices = new Set<string>(); // Avoid duplicate services
         
-        // Get all selected subdomain names
-        const selectedSubDomainNames = new Set<string>();
+        // Get all selected bounded context names
+        const selectedContextNames = new Set<string>();
         selectedDomains.forEach(domain => {
-            domain.subDomains.forEach(subDomain => {
-                if (subDomain.selected) {
-                    selectedSubDomainNames.add(subDomain.name);
+            domain.boundedContexts.forEach(boundedContext => {
+                if (boundedContext.selected) {
+                    selectedContextNames.add(boundedContext.name);
                 }
             });
         });
-        
-        // Find services that contain the selected subdomains
+
+        // Find services that contain the selected bounded contexts
         this._serviceGroups.forEach(serviceGroup => {
             serviceGroup.services.forEach(service => {
-                // Check if this service contains any of the selected subdomains
-                const hasSelectedSubDomain = service.subDomains.some(subDomain => 
-                    selectedSubDomainNames.has(subDomain.name)
+                // Check if this service contains any of the selected bounded contexts
+                const hasSelectedContext = service.boundedContexts.some(boundedContext =>
+                    selectedContextNames.has(boundedContext.name)
                 );
-                
-                // If this service contains selected subdomains and we haven't processed it yet
-                if (hasSelectedSubDomain && !processedServices.has(service.id)) {
+
+                // If this service contains selected bounded contexts and we haven't processed it yet
+                if (hasSelectedContext && !processedServices.has(service.id)) {
                     serviceBlockRanges.push(service.blockRange);
                     processedServices.add(service.id);
                 }
@@ -448,12 +448,12 @@ export class DomainsViewProvider implements WebviewViewProvider {
 
     private ensureValidDomains(domains: Domain[]): Domain[] {
         if (!domains) {return [];}
-        
+
         return domains.map(domain => ({
             ...domain,
-            subDomains: (domain.subDomains || []).map(subDomain => ({
-                ...subDomain,
-                useCases: subDomain.useCases || []
+            boundedContexts: (domain.boundedContexts || []).map(boundedContext => ({
+                ...boundedContext,
+                useCases: boundedContext.useCases || []
             }))
         }));
     }
@@ -467,24 +467,24 @@ export class DomainsViewProvider implements WebviewViewProvider {
         // In current mode, filter out children not in current file
         return domains.map(domain => ({
             ...domain,
-            subDomains: domain.subDomains
-                .filter(subDomain => subDomain.inCurrentFile)
-                .map(subDomain => ({
-                    ...subDomain,
-                    useCases: subDomain.useCases
+            boundedContexts: domain.boundedContexts
+                .filter(boundedContext => boundedContext.inCurrentFile)
+                .map(boundedContext => ({
+                    ...boundedContext,
+                    useCases: boundedContext.useCases
                 }))
         }));
     }
 
-    // Helper method to preserve domain states  
+    // Helper method to preserve domain states
     private preserveDomainStates(domain: Domain, existingDomain: Domain) {
         // Only preserve basic structural states, not selection since React manages those
         domain.expanded = existingDomain.expanded;
-        domain.subDomains.forEach(subDomain => {
-            const existingSubDomain = existingDomain.subDomains.find(sd => sd.id === subDomain.id);
-            if (existingSubDomain) {
-                subDomain.expanded = existingSubDomain.expanded;
-                subDomain.showReferences = existingSubDomain.showReferences;
+        domain.boundedContexts.forEach(boundedContext => {
+            const existingContext = existingDomain.boundedContexts.find(bc => bc.id === boundedContext.id);
+            if (existingContext) {
+                boundedContext.expanded = existingContext.expanded;
+                boundedContext.showReferences = existingContext.showReferences;
             }
         });
     }
@@ -501,10 +501,10 @@ export class DomainsViewProvider implements WebviewViewProvider {
     private deepCopyDomain(domain: Domain, inCurrentFileFilter: boolean): Domain {
         return {
             ...domain,
-            subDomains: domain.subDomains.filter(sd => inCurrentFileFilter === true ? sd.inCurrentFile : true).map(subDomain => ({
-                ...subDomain,
-                useCases: subDomain.useCases.map(useCase => ({ ...useCase })),
-                referencedIn: subDomain.referencedIn.map(ref => ({ ...ref }))
+            boundedContexts: domain.boundedContexts.filter(bc => inCurrentFileFilter === true ? bc.inCurrentFile : true).map(boundedContext => ({
+                ...boundedContext,
+                useCases: boundedContext.useCases.map(useCase => ({ ...useCase })),
+                referencedIn: boundedContext.referencedIn.map(ref => ({ ...ref }))
             }))
         };
     }
