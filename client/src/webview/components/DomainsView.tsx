@@ -11,6 +11,7 @@ interface ViewState {
   domains: Domain[];
   viewMode: 'current' | 'workspace';
   diagramMode: 'detailed' | 'architecture';
+  diagramType: 'domain' | 'sequence';
   optionsExpanded: boolean;
   isLoading: boolean;
 }
@@ -20,6 +21,7 @@ export const DomainsView: React.FC<DomainsViewProps> = ({ vscode }) => {
     domains: [],
     viewMode: 'current',
     diagramMode: 'detailed',
+    diagramType: 'domain',
     optionsExpanded: false,
     isLoading: true
   });
@@ -293,6 +295,10 @@ export const DomainsView: React.FC<DomainsViewProps> = ({ vscode }) => {
     setState(prev => ({ ...prev, diagramMode: mode }));
   };
 
+  const setDiagramType = (type: 'domain' | 'sequence') => {
+    setState(prev => ({ ...prev, diagramType: type }));
+  };
+
   const toggleDiagramOptions = () => {
     setState(prev => ({ ...prev, optionsExpanded: !prev.optionsExpanded }));
   };
@@ -389,11 +395,12 @@ export const DomainsView: React.FC<DomainsViewProps> = ({ vscode }) => {
     //   return;
     // }
     
-    vscode.postMessage({ 
-      type: WebviewMessages.PREVIEW, 
+    vscode.postMessage({
+      type: WebviewMessages.PREVIEW,
       selectedDomains: selectedItems.domains,
       selectedUseCases: selectedItems.useCases,
-      diagramMode: currentState.diagramMode
+      diagramMode: currentState.diagramMode,
+      diagramType: currentState.diagramType
     });
   };
 
@@ -467,16 +474,36 @@ export const DomainsView: React.FC<DomainsViewProps> = ({ vscode }) => {
           <div className="diagram-options">
             <div className="options-content">
               <div className="option-group">
+                <label className="option-label">Type:</label>
+                <div className="option-toggle">
+                  <button
+                    className={`option-btn ${state.diagramType === 'domain' ? 'active' : ''}`}
+                    onClick={() => setDiagramType('domain')}
+                    title="Show domain diagram"
+                  >
+                    Domain
+                  </button>
+                  <button
+                    className={`option-btn ${state.diagramType === 'sequence' ? 'active' : ''}`}
+                    onClick={() => setDiagramType('sequence')}
+                    title="Show sequence diagram"
+                  >
+                    Sequence
+                  </button>
+                </div>
+              </div>
+
+              <div className="option-group">
                 <label className="option-label">Mode:</label>
                 <div className="option-toggle">
-                  <button 
+                  <button
                     className={`option-btn ${state.diagramMode === 'detailed' ? 'active' : ''}`}
                     onClick={() => setDiagramMode('detailed')}
                     title="Show detailed domain diagram with use cases"
                   >
                     Detailed
                   </button>
-                  <button 
+                  <button
                     className={`option-btn ${state.diagramMode === 'architecture' ? 'active' : ''}`}
                     onClick={() => setDiagramMode('architecture')}
                     title="Show architecture view - subdomain connections only"

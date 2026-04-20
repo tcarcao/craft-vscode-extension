@@ -11,6 +11,7 @@ export interface FocusInfo {
 // Client-side composite types that combine focus info with additional options
 export interface DomainPreviewOptions {
     domainMode?: 'detailed' | 'architecture';
+    diagramType?: 'domain' | 'sequence';
 }
 
 export interface C4PreviewOptions extends FocusInfo {
@@ -21,6 +22,7 @@ export interface C4PreviewOptions extends FocusInfo {
 export interface DomainDownloadOptions extends DomainPreviewOptions {
     format: 'png' | 'svg' | 'pdf' | 'puml';
     filename?: string;
+    diagramType?: 'domain' | 'sequence';
 }
 
 export interface C4DownloadOptions extends C4PreviewOptions {
@@ -32,6 +34,7 @@ export interface C4DownloadOptions extends C4PreviewOptions {
 export interface DomainPreviewRequest {
     dsl: string;
     domainMode?: 'detailed' | 'architecture';
+    diagramType?: 'domain' | 'sequence';
 }
 
 export interface C4PreviewRequest {
@@ -45,6 +48,7 @@ export interface C4PreviewRequest {
 export interface DomainDownloadRequest {
     dsl: string;
     domainMode?: 'detailed' | 'architecture';
+    diagramType?: 'domain' | 'sequence';
     format: 'png' | 'svg' | 'pdf' | 'puml';
     filename?: string;
 }
@@ -73,6 +77,7 @@ export interface DomainDownloadMessage {
     format: 'png' | 'svg' | 'pdf' | 'puml';
     dsl: string;
     domainMode?: 'detailed' | 'architecture';
+    domainDiagramType?: 'domain' | 'sequence';
 }
 
 export interface C4DownloadMessage {
@@ -91,4 +96,5 @@ export type DownloadMessage = DomainDownloadMessage | C4DownloadMessage;
 export type DiagramType = 'domain' | 'c4';
 export type DiagramFormat = 'png' | 'svg' | 'pdf' | 'puml';
 export type DomainMode = 'detailed' | 'architecture';
+export type DomainDiagramType = 'domain' | 'sequence';
 export type BoundariesMode = 'boundaries' | 'transparent';

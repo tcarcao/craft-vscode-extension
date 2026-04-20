@@ -159,7 +159,7 @@ export class DomainsViewProvider implements WebviewViewProvider {
         webviewView.webview.onDidReceiveMessage(async (data) => {
             switch (data.type) {
                 case WebviewMessages.PREVIEW:
-                    this.handlePreview(data.selectedDomains, data.selectedUseCases, data.diagramMode);
+                    this.handlePreview(data.selectedDomains, data.selectedUseCases, data.diagramMode, data.diagramType);
                     break;
                 case WebviewMessages.REFRESH:
                     this.handleRefresh();
@@ -311,23 +311,25 @@ export class DomainsViewProvider implements WebviewViewProvider {
         }
     }
 
-    private async handlePreview(selectedDomains: Domain[], selectedUseCases: UseCase[], diagramMode = 'detailed') {       
+    private async handlePreview(selectedDomains: Domain[], selectedUseCases: UseCase[], diagramMode = 'detailed', diagramType = 'domain') {
         // Collect use case block ranges
         const blockRanges = selectedUseCases.map(uc => uc.blockRange);
-        
+
         // Collect service block ranges for selected subdomains
         const serviceBlockRanges = this.getServiceBlockRangesForSubDomains(selectedDomains);
         blockRanges.push(...serviceBlockRanges);
-        
+
         const partialDsl: string = await this.languageClient.sendRequest('workspace/executeCommand', {
             command: ServerCommands.EXTRACT_PARTIAL_DSL_FROM_BLOCK_RANGES,
             arguments: [blockRanges]
         });
         Logger.debug('Partial DSL extracted:', partialDsl);
-        
-        // Choose diagram type based on mode
-        const diagramType = diagramMode === 'architecture' ? 'Architecture' : 'Domain';
-        commands.executeCommand('craft.previewPartialDSL', partialDsl, diagramType);
+
+        // Map to command argument format
+        // diagramMode: 'detailed' | 'architecture' determines level of detail
+        // diagramType: 'domain' | 'sequence' determines the type of diagram
+        const commandDiagramType = diagramMode === 'architecture' ? 'Architecture' : 'Domain';
+        commands.executeCommand('craft.previewPartialDSL', partialDsl, commandDiagramType, diagramType);
     }
 
     private getServiceBlockRangesForSubDomains(selectedDomains: Domain[]): BlockRange[] {

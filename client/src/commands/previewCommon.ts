@@ -34,9 +34,10 @@ export async function previewDomainDiagram(
     
     const requestBody: DomainPreviewRequest = {
         dsl: text,
-        domainMode: options?.domainMode
+        domainMode: options?.domainMode,
+        diagramType: options?.diagramType
     };
-    
+
     const { data } = await axios.post(`${serverUrl}/preview/domain`, requestBody, {
         headers: {
             'Content-Type': 'application/json'
@@ -46,7 +47,10 @@ export async function previewDomainDiagram(
 
     const response: PreviewResponse = data;
     if (response.success && response.data) {
-        updateWebviewContent(previewPanel, 'Domain', response.data, text, { domainMode: options?.domainMode });
+        updateWebviewContent(previewPanel, 'Domain', response.data, text, {
+            domainMode: options?.domainMode,
+            diagramType: options?.diagramType
+        });
     } else {
         throw new Error(response.error || 'Failed to generate domain diagram');
     }
@@ -101,9 +105,9 @@ function updateWebviewContent(
     diagramType: string,
     diagram: string,
     text: string,
-    options: { domainMode?: DomainMode; focusInfo?: FocusInfo; boundariesMode?: 'boundaries' | 'transparent'; showDatabases?: boolean }
+    options: { domainMode?: DomainMode; diagramType?: 'domain' | 'sequence'; focusInfo?: FocusInfo; boundariesMode?: 'boundaries' | 'transparent'; showDatabases?: boolean }
 ): void {
-    const { domainMode, focusInfo, boundariesMode, showDatabases } = options;
+    const { domainMode, diagramType: domainDiagramType, focusInfo, boundariesMode, showDatabases } = options;
 
     // Update webview content
     previewPanel.webview.html = `
@@ -185,6 +189,7 @@ function updateWebviewContent(
                         dsl: \`${text.replace(/`/g, '\\`').replace(/\${/g, '\\${')}\`,
                         focusInfo: ${JSON.stringify(focusInfo || null)},
                         domainMode: '${domainMode || 'detailed'}',
+                        domainDiagramType: '${domainDiagramType || 'domain'}',
                         boundariesMode: '${boundariesMode || 'boundaries'}',
                         showDatabases: ${showDatabases ?? true}
                     });
@@ -231,6 +236,7 @@ export async function downloadDomainDiagram(
     const requestBody: DomainDownloadRequest = {
         dsl,
         domainMode: options.domainMode,
+        diagramType: options.diagramType,
         format: options.format,
         filename: options.filename
     };
@@ -338,6 +344,7 @@ export async function handleDomainDownload(message: DomainDownloadMessage): Prom
     try {
         const options: DomainDownloadOptions = {
             domainMode: message.domainMode || 'detailed',
+            diagramType: message.domainDiagramType || 'domain',
             format: message.format
         };
         await downloadDomainDiagram(message.dsl, options);

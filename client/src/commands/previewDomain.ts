@@ -39,14 +39,14 @@ export async function handlePreviewDomainsFromSelection() {
     await updateDomainPreview(previewPanel, selectedText);
 }
 
-export async function handlePreviewPartialDomains(text: string) {
+export async function handlePreviewPartialDomains(text: string, diagramType: 'domain' | 'sequence' = 'domain') {
     createAndShowPreviewPanel();
-    await updateDomainPreview(previewPanel, text, { domainMode: 'detailed' });
+    await updateDomainPreview(previewPanel, text, { domainMode: 'detailed', diagramType });
 }
 
-export async function handlePreviewPartialArchitecture(text: string) {
+export async function handlePreviewPartialArchitecture(text: string, diagramType: 'domain' | 'sequence' = 'domain') {
     createAndShowPreviewPanel();
-    await updateDomainPreview(previewPanel, text, { domainMode: 'architecture' });
+    await updateDomainPreview(previewPanel, text, { domainMode: 'architecture', diagramType });
 }
 
 export async function updateDomainPreview(

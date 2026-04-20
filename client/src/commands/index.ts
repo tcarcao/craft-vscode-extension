@@ -19,17 +19,17 @@ export function registerPreviewCommands(context: ExtensionContext, domainsProvid
         commands.registerCommand('craft.previewDomainsFromSelection', () =>
             handlePreviewDomainsFromSelection()
         ),
-        commands.registerCommand('craft.previewPartialDSL', (partialDSL, diagramType) => {
+        commands.registerCommand('craft.previewPartialDSL', (partialDSL, diagramType, domainDiagramType = 'domain') => {
             switch(diagramType) {
                 case "C4":
                     handlePreviewPartialC4(partialDSL);
                     break;
                 case "Architecture":
-                    handlePreviewPartialArchitecture(partialDSL);
+                    handlePreviewPartialArchitecture(partialDSL, domainDiagramType);
                     break;
                 case "Domain":
                 default:
-                    handlePreviewPartialDomains(partialDSL);
+                    handlePreviewPartialDomains(partialDSL, domainDiagramType);
                     break;
             }
         }),
