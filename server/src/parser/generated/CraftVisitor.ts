@@ -8,8 +8,8 @@ import { Domains_defContext } from "./CraftParser.js";
 import { Domain_block_listContext } from "./CraftParser.js";
 import { Domain_blockContext } from "./CraftParser.js";
 import { Domain_nameContext } from "./CraftParser.js";
-import { Subdomain_listContext } from "./CraftParser.js";
-import { SubdomainContext } from "./CraftParser.js";
+import { Bounded_context_listContext } from "./CraftParser.js";
+import { Bounded_contextContext } from "./CraftParser.js";
 import { Actor_defContext } from "./CraftParser.js";
 import { Actors_defContext } from "./CraftParser.js";
 import { Actor_definition_listContext } from "./CraftParser.js";
@@ -51,8 +51,8 @@ import { Deployment_typeContext } from "./CraftParser.js";
 import { Deployment_configContext } from "./CraftParser.js";
 import { Deployment_ruleContext } from "./CraftParser.js";
 import { Deployment_targetContext } from "./CraftParser.js";
-import { Domain_listContext } from "./CraftParser.js";
-import { Domain_refContext } from "./CraftParser.js";
+import { Context_listContext } from "./CraftParser.js";
+import { Context_refContext } from "./CraftParser.js";
 import { Datastore_listContext } from "./CraftParser.js";
 import { DatastoreContext } from "./CraftParser.js";
 import { Use_caseContext } from "./CraftParser.js";
@@ -121,17 +121,17 @@ export class CraftVisitor<Result> extends AbstractParseTreeVisitor<Result> {
      */
     visitDomain_name?: (ctx: Domain_nameContext) => Result;
     /**
-     * Visit a parse tree produced by `CraftParser.subdomain_list`.
+     * Visit a parse tree produced by `CraftParser.bounded_context_list`.
      * @param ctx the parse tree
      * @return the visitor result
      */
-    visitSubdomain_list?: (ctx: Subdomain_listContext) => Result;
+    visitBounded_context_list?: (ctx: Bounded_context_listContext) => Result;
     /**
-     * Visit a parse tree produced by `CraftParser.subdomain`.
+     * Visit a parse tree produced by `CraftParser.bounded_context`.
      * @param ctx the parse tree
      * @return the visitor result
      */
-    visitSubdomain?: (ctx: SubdomainContext) => Result;
+    visitBounded_context?: (ctx: Bounded_contextContext) => Result;
     /**
      * Visit a parse tree produced by `CraftParser.actor_def`.
      * @param ctx the parse tree
@@ -379,17 +379,17 @@ export class CraftVisitor<Result> extends AbstractParseTreeVisitor<Result> {
      */
     visitDeployment_target?: (ctx: Deployment_targetContext) => Result;
     /**
-     * Visit a parse tree produced by `CraftParser.domain_list`.
+     * Visit a parse tree produced by `CraftParser.context_list`.
      * @param ctx the parse tree
      * @return the visitor result
      */
-    visitDomain_list?: (ctx: Domain_listContext) => Result;
+    visitContext_list?: (ctx: Context_listContext) => Result;
     /**
-     * Visit a parse tree produced by `CraftParser.domain_ref`.
+     * Visit a parse tree produced by `CraftParser.context_ref`.
      * @param ctx the parse tree
      * @return the visitor result
      */
-    visitDomain_ref?: (ctx: Domain_refContext) => Result;
+    visitContext_ref?: (ctx: Context_refContext) => Result;
     /**
      * Visit a parse tree produced by `CraftParser.datastore_list`.
      * @param ctx the parse tree

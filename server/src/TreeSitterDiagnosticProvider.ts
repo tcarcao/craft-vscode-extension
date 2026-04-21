@@ -93,7 +93,7 @@ export class TreeSitterDiagnosticProvider {
 
             case 'service_definition':
             case 'service_block':
-                return 'Invalid service property. Expected: domains, language, data-stores, or deployment';
+                return 'Invalid service property. Expected: contexts, language, data-stores, or deployment';
 
             case 'arch_component_list':
                 return 'Invalid component syntax. Expected component name or component flow (with >)';

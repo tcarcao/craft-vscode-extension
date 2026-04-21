@@ -8,8 +8,8 @@ import { Domains_defContext } from "./CraftParser.js";
 import { Domain_block_listContext } from "./CraftParser.js";
 import { Domain_blockContext } from "./CraftParser.js";
 import { Domain_nameContext } from "./CraftParser.js";
-import { Subdomain_listContext } from "./CraftParser.js";
-import { SubdomainContext } from "./CraftParser.js";
+import { Bounded_context_listContext } from "./CraftParser.js";
+import { Bounded_contextContext } from "./CraftParser.js";
 import { Actor_defContext } from "./CraftParser.js";
 import { Actors_defContext } from "./CraftParser.js";
 import { Actor_definition_listContext } from "./CraftParser.js";
@@ -51,8 +51,8 @@ import { Deployment_typeContext } from "./CraftParser.js";
 import { Deployment_configContext } from "./CraftParser.js";
 import { Deployment_ruleContext } from "./CraftParser.js";
 import { Deployment_targetContext } from "./CraftParser.js";
-import { Domain_listContext } from "./CraftParser.js";
-import { Domain_refContext } from "./CraftParser.js";
+import { Context_listContext } from "./CraftParser.js";
+import { Context_refContext } from "./CraftParser.js";
 import { Datastore_listContext } from "./CraftParser.js";
 import { DatastoreContext } from "./CraftParser.js";
 import { Use_caseContext } from "./CraftParser.js";
@@ -142,25 +142,25 @@ export class CraftListener implements ParseTreeListener {
      */
     exitDomain_name?: (ctx: Domain_nameContext) => void;
     /**
-     * Enter a parse tree produced by `CraftParser.subdomain_list`.
+     * Enter a parse tree produced by `CraftParser.bounded_context_list`.
      * @param ctx the parse tree
      */
-    enterSubdomain_list?: (ctx: Subdomain_listContext) => void;
+    enterBounded_context_list?: (ctx: Bounded_context_listContext) => void;
     /**
-     * Exit a parse tree produced by `CraftParser.subdomain_list`.
+     * Exit a parse tree produced by `CraftParser.bounded_context_list`.
      * @param ctx the parse tree
      */
-    exitSubdomain_list?: (ctx: Subdomain_listContext) => void;
+    exitBounded_context_list?: (ctx: Bounded_context_listContext) => void;
     /**
-     * Enter a parse tree produced by `CraftParser.subdomain`.
+     * Enter a parse tree produced by `CraftParser.bounded_context`.
      * @param ctx the parse tree
      */
-    enterSubdomain?: (ctx: SubdomainContext) => void;
+    enterBounded_context?: (ctx: Bounded_contextContext) => void;
     /**
-     * Exit a parse tree produced by `CraftParser.subdomain`.
+     * Exit a parse tree produced by `CraftParser.bounded_context`.
      * @param ctx the parse tree
      */
-    exitSubdomain?: (ctx: SubdomainContext) => void;
+    exitBounded_context?: (ctx: Bounded_contextContext) => void;
     /**
      * Enter a parse tree produced by `CraftParser.actor_def`.
      * @param ctx the parse tree
@@ -572,25 +572,25 @@ export class CraftListener implements ParseTreeListener {
      */
     exitDeployment_target?: (ctx: Deployment_targetContext) => void;
     /**
-     * Enter a parse tree produced by `CraftParser.domain_list`.
+     * Enter a parse tree produced by `CraftParser.context_list`.
      * @param ctx the parse tree
      */
-    enterDomain_list?: (ctx: Domain_listContext) => void;
+    enterContext_list?: (ctx: Context_listContext) => void;
     /**
-     * Exit a parse tree produced by `CraftParser.domain_list`.
+     * Exit a parse tree produced by `CraftParser.context_list`.
      * @param ctx the parse tree
      */
-    exitDomain_list?: (ctx: Domain_listContext) => void;
+    exitContext_list?: (ctx: Context_listContext) => void;
     /**
-     * Enter a parse tree produced by `CraftParser.domain_ref`.
+     * Enter a parse tree produced by `CraftParser.context_ref`.
      * @param ctx the parse tree
      */
-    enterDomain_ref?: (ctx: Domain_refContext) => void;
+    enterContext_ref?: (ctx: Context_refContext) => void;
     /**
-     * Exit a parse tree produced by `CraftParser.domain_ref`.
+     * Exit a parse tree produced by `CraftParser.context_ref`.
      * @param ctx the parse tree
      */
-    exitDomain_ref?: (ctx: Domain_refContext) => void;
+    exitContext_ref?: (ctx: Context_refContext) => void;
     /**
      * Enter a parse tree produced by `CraftParser.datastore_list`.
      * @param ctx the parse tree
