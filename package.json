@@ -32,7 +32,7 @@
         "antlr4ng": "^3.0.16",
         "axios": "^1.0.0",
         "glob": "^11.0.3",
-        "tree-sitter-craft": "^0.1.6",
+        "tree-sitter-craft": "^0.1.7",
         "vscode-languageclient": "^9.0.1",
         "vscode-languageserver": "^9.0.1",
         "vscode-languageserver-textdocument": "^1.0.12",
@@ -165,8 +165,8 @@
                 "description": "Actor type keywords (user, system, service)"
             },
             {
-                "id": "craft-domains-property",
-                "description": "Domains property keyword"
+                "id": "craft-contexts-property",
+                "description": "Contexts property keyword"
             },
             {
                 "id": "craft-language-property",
@@ -229,8 +229,8 @@
                 "description": "Data store names"
             },
             {
-                "id": "craft-subdomain-name",
-                "description": "Subdomain names"
+                "id": "craft-context-name",
+                "description": "Bounded context names"
             },
             {
                 "id": "craft-component-name",
@@ -371,8 +371,8 @@
                     "craft-actor-type": [
                         "keyword.other.actor-type.craft"
                     ],
-                    "craft-domains-property": [
-                        "keyword.other.property.domains.craft"
+                    "craft-contexts-property": [
+                        "keyword.other.property.contexts.craft"
                     ],
                     "craft-language-property": [
                         "keyword.other.property.language.craft"
@@ -419,8 +419,8 @@
                     "craft-data-store-name": [
                         "entity.name.type.datastore.craft"
                     ],
-                    "craft-subdomain-name": [
-                        "entity.name.type.subdomain.craft"
+                    "craft-context-name": [
+                        "entity.name.type.context.craft"
                     ],
                     "craft-component-name": [
                         "entity.name.type.component.craft"
@@ -526,7 +526,7 @@
                         "foreground": "#800080",
                         "bold": true
                     },
-                    "craft-domains-property": {
+                    "craft-contexts-property": {
                         "foreground": "#d73a49",
                         "bold": true
                     },
@@ -600,7 +600,7 @@
                         "foreground": "#e36209",
                         "bold": true
                     },
-                    "craft-subdomain-name": {
+                    "craft-context-name": {
                         "foreground": "#22863a",
                         "bold": true
                     },

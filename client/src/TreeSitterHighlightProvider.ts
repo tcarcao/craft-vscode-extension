@@ -32,7 +32,7 @@ export class TreeSitterHighlightProvider implements DocumentSemanticTokensProvid
     'craft-actors-keyword',
     'craft-actor-keyword',
     'craft-flow-keyword',
-    'craft-domains-property',
+    'craft-contexts-property',
     'craft-language-property',
     'craft-data-stores-property',
     'craft-deployment-property',
