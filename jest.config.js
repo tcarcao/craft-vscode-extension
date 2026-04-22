@@ -11,16 +11,11 @@ export default {
     }],
   },
   testMatch: [
-    '**/server/src/**/*.test.ts',
-    '**/server/src/**/*.spec.ts'
+    '**/client/src/**/*.test.ts',
+    '**/client/src/**/*.spec.ts'
   ],
   testPathIgnorePatterns: [
     '/node_modules/',
-  ],
-  collectCoverageFrom: [
-    'server/src/**/*.ts',
-    '!server/src/**/*.d.ts',
-    '!server/src/parser/generated/**',
   ],
   testEnvironment: 'node',
   verbose: true,

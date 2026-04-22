@@ -1,0 +1,150 @@
+{
+    "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+    "name": "Craft",
+    "scopeName": "source.craft",
+    "fileTypes": [".craft"],
+    "patterns": [
+        { "include": "#comment" },
+        { "include": "#string" },
+        { "include": "#block-keywords" },
+        { "include": "#property-keywords" },
+        { "include": "#action-verbs" },
+        { "include": "#actor-types" },
+        { "include": "#section-keywords" },
+        { "include": "#use-case-title" },
+        { "include": "#number" },
+        { "include": "#boolean" },
+        { "include": "#punctuation" },
+        { "include": "#identifier" }
+    ],
+    "repository": {
+        "comment": {
+            "patterns": [
+                {
+                    "name": "comment.line.double-slash.craft",
+                    "match": "//.*$"
+                },
+                {
+                    "name": "comment.block.craft",
+                    "begin": "/\\*",
+                    "end": "\\*/"
+                }
+            ]
+        },
+        "string": {
+            "name": "string.quoted.double.craft",
+            "begin": "\"",
+            "end": "\"",
+            "patterns": [
+                {
+                    "name": "constant.character.escape.craft",
+                    "match": "\\\\."
+                }
+            ]
+        },
+        "use-case-title": {
+            "comment": "Match use_case keyword followed by its quoted title on the same line",
+            "match": "(use_case)\\s+(\"[^\"]*\")",
+            "captures": {
+                "1": { "name": "keyword.control.use-case.craft" },
+                "2": { "name": "string.quoted.double.craft" }
+            }
+        },
+        "block-keywords": {
+            "comment": "Top-level block-opening keywords",
+            "match": "\\b(services|domains|actors|arch|exposure|use_case|when)\\b",
+            "captures": {
+                "1": { "name": "keyword.control.craft" }
+            }
+        },
+        "service-block-keyword": {
+            "comment": "Standalone 'service' keyword (block-level, not actor-type value)",
+            "match": "^\\s*(service)\\b",
+            "captures": {
+                "1": { "name": "keyword.control.craft" }
+            }
+        },
+        "domain-block-keyword": {
+            "comment": "Standalone 'domain' keyword (block-level definition)",
+            "match": "^\\s*(domain)\\b",
+            "captures": {
+                "1": { "name": "keyword.control.craft" }
+            }
+        },
+        "actor-block-keyword": {
+            "comment": "Standalone 'actor' keyword (block-level definition)",
+            "match": "^\\s*(actor)\\b",
+            "captures": {
+                "1": { "name": "keyword.control.craft" }
+            }
+        },
+        "property-keywords": {
+            "comment": "Property / label keywords that appear before ':'",
+            "match": "\\b(contexts|language|data-stores|deployment|to|through)\\s*:",
+            "captures": {
+                "1": { "name": "keyword.other.property.craft" }
+            }
+        },
+        "section-keywords": {
+            "comment": "Architecture section labels used inside arch blocks",
+            "match": "\\b(presentation|gateway)\\s*:",
+            "captures": {
+                "1": { "name": "keyword.other.section.craft" }
+            }
+        },
+        "action-verbs": {
+            "comment": "Contextual action verbs — appear after an identifier in use_case bodies",
+            "match": "\\b(asks|notifies|listens|returns)\\b",
+            "captures": {
+                "1": { "name": "keyword.operator.action.craft" }
+            }
+        },
+        "actor-types": {
+            "comment": "Actor type values (user / system / service after 'actor NAME')",
+            "match": "\\b(user|system|service)\\b",
+            "captures": {
+                "1": { "name": "support.type.actor.craft" }
+            }
+        },
+        "number": {
+            "name": "constant.numeric.craft",
+            "match": "\\b[0-9]+(\\.[0-9]+)?(%)?\\b"
+        },
+        "boolean": {
+            "name": "constant.language.boolean.craft",
+            "match": "\\b(true|false)\\b"
+        },
+        "punctuation": {
+            "patterns": [
+                {
+                    "name": "punctuation.section.craft",
+                    "match": "[{}]"
+                },
+                {
+                    "name": "punctuation.separator.craft",
+                    "match": ","
+                },
+                {
+                    "name": "punctuation.definition.craft",
+                    "match": ":"
+                },
+                {
+                    "name": "punctuation.accessor.craft",
+                    "match": "->"
+                },
+                {
+                    "name": "keyword.operator.arrow.craft",
+                    "match": ">"
+                },
+                {
+                    "name": "punctuation.bracket.craft",
+                    "match": "[()]"
+                }
+            ]
+        },
+        "identifier": {
+            "name": "variable.other.craft",
+            "match": "[A-Za-z_][A-Za-z0-9_-]*"
+        }
+    }
+}

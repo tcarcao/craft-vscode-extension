@@ -29,39 +29,28 @@
         "vscode": "^1.75.0"
     },
     "dependencies": {
-        "antlr4ng": "^3.0.16",
         "axios": "^1.0.0",
         "glob": "^11.0.3",
-        "tree-sitter-craft": "^0.1.10",
         "vscode-languageclient": "^9.0.1",
-        "vscode-languageserver": "^9.0.1",
-        "vscode-languageserver-textdocument": "^1.0.12",
-        "vscode-uri": "^3.1.0",
-        "web-tree-sitter": "^0.20.8"
+        "vscode-uri": "^3.1.0"
     },
     "scripts": {
         "vscode:prepublish": "npm run bundle",
-        "compile": "npm run copy-tree-sitter && tsc -b && cd client && npm run compile",
-        "copy-tree-sitter": "cp node_modules/tree-sitter-craft/tree-sitter-craft.wasm resources/ && cp -r node_modules/tree-sitter-craft/queries resources",
+        "compile": "tsc -b && cd client && npm run compile",
         "watch": "tsc -b -w",
         "lint": "eslint",
         "test": "jest",
-        "test:formatter": "tsx server/src/parser/TreeSitterFormatterProvider.manual.test.ts",
-        "postinstall": "cd client && npm install && cd ../server && npm install && cd .. && npm run copy-tree-sitter",
-        "update-grammar": "./update-grammar.sh",
-        "bundle": "npm run copy-tree-sitter && npm run bundle-client && npm run bundle-server && npm run bundle-webviews && npm run copy-static-assets",
-        "bundle-client": "esbuild ./client/src/extension.ts --bundle --outfile=dist/client.js --external:vscode --format=cjs --platform=node --minify --loader:.wasm=file",
+        "postinstall": "cd client && npm install",
+        "bundle": "npm run bundle-client && npm run bundle-webviews && npm run copy-static-assets",
+        "bundle-client": "esbuild ./client/src/extension.ts --bundle --outfile=dist/client.js --external:vscode --format=cjs --platform=node --minify",
         "bundle-webviews": "mkdir -p dist/webview && esbuild ./client/src/webview/DomainsApp.tsx --bundle --outfile=dist/webview/domains.js --format=iife --platform=browser --minify && esbuild ./client/src/webview/ServicesApp.tsx --bundle --outfile=dist/webview/services.js --format=iife --platform=browser --minify",
-        "copy-static-assets": "mkdir -p dist/styles dist/@vscode/codicons/dist dist/node_modules/web-tree-sitter && cp client/src/ui/styles/treeStyles.css dist/styles/ && cp -r client/node_modules/@vscode/codicons/dist/* dist/@vscode/codicons/dist/ && cp node_modules/web-tree-sitter/tree-sitter.wasm dist/node_modules/web-tree-sitter/ && cp node_modules/web-tree-sitter/tree-sitter.js dist/node_modules/web-tree-sitter/",
-        "bundle-server": "esbuild ./server/src/server.ts --bundle --outfile=dist/server.js --external:vscode --format=cjs --platform=node --loader:.wasm=file",
-        "dev": "npm run copy-tree-sitter && npm run copy-static-assets && npm run dev-client & npm run dev-server & npm run dev-webviews",
-        "dev-client": "esbuild ./client/src/extension.ts --bundle --outfile=dist/client.js --external:vscode --format=cjs --platform=node --sourcemap --watch --loader:.wasm=file",
+        "copy-static-assets": "mkdir -p dist/styles dist/@vscode/codicons/dist && cp client/src/ui/styles/treeStyles.css dist/styles/ && cp -r client/node_modules/@vscode/codicons/dist/* dist/@vscode/codicons/dist/",
+        "dev": "npm run copy-static-assets && npm run dev-client & npm run dev-webviews",
+        "dev-client": "esbuild ./client/src/extension.ts --bundle --outfile=dist/client.js --external:vscode --format=cjs --platform=node --sourcemap --watch",
         "dev-webviews": "mkdir -p dist/webview && esbuild ./client/src/webview/DomainsApp.tsx --bundle --outfile=dist/webview/domains.js --format=iife --platform=browser --sourcemap --watch & esbuild ./client/src/webview/ServicesApp.tsx --bundle --outfile=dist/webview/services.js --format=iife --platform=browser --sourcemap --watch",
-        "dev-server": "esbuild ./server/src/server.ts --bundle --outfile=dist/server.js --external:vscode --format=cjs --platform=node --sourcemap --watch --loader:.wasm=file",
-        "debug": "npm run copy-tree-sitter && npm run copy-static-assets && npm run debug-webviews && npm run debug-client && npm run debug-server",
-        "debug-client": "esbuild ./client/src/extension.ts --bundle --outfile=dist/client.js --external:vscode --format=cjs --platform=node --sourcemap --loader:.wasm=file",
-        "debug-webviews": "mkdir -p dist/webview && esbuild ./client/src/webview/DomainsApp.tsx --bundle --outfile=dist/webview/domains.js --format=iife --platform=browser --sourcemap && esbuild ./client/src/webview/ServicesApp.tsx --bundle --outfile=dist/webview/services.js --format=iife --platform=browser --sourcemap",
-        "debug-server": "esbuild ./server/src/server.ts --bundle --outfile=dist/server.js --external:vscode --format=cjs --platform=node --sourcemap --loader:.wasm=file"
+        "debug": "npm run copy-static-assets && npm run debug-webviews && npm run debug-client",
+        "debug-client": "esbuild ./client/src/extension.ts --bundle --outfile=dist/client.js --external:vscode --format=cjs --platform=node --sourcemap",
+        "debug-webviews": "mkdir -p dist/webview && esbuild ./client/src/webview/DomainsApp.tsx --bundle --outfile=dist/webview/domains.js --format=iife --platform=browser --sourcemap && esbuild ./client/src/webview/ServicesApp.tsx --bundle --outfile=dist/webview/services.js --format=iife --platform=browser --sourcemap"
     },
     "devDependencies": {
         "@eslint/js": "^9.13.0",
@@ -129,6 +118,13 @@
                     ".craft"
                 ],
                 "configuration": "./language-configuration.json"
+            }
+        ],
+        "grammars": [
+            {
+                "language": "craft",
+                "scopeName": "source.craft",
+                "path": "./syntaxes/craft.tmLanguage.json"
             }
         ],
         "semanticTokenTypes": [

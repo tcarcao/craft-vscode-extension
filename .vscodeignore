@@ -1,26 +1,26 @@
-# Everything except what we explicitly include
+# Exclude everything except what we explicitly allow
 **/*
 
-# Include only bundled distribution files
+# Bundled distribution files (client, webviews, static assets, and Go binary)
 !dist/**
 
-# Include resources (WASM, queries, icons)
-!resources/**
+# TextMate grammar for baseline syntax highlighting (S2 / Q6)
+!syntaxes/**
 
-# Include essential config files
+# Essential config files
 !package.json
 !language-configuration.json
 !LICENSE
-!readme.md
+!README.md
 
-# Include external dependencies needed by bundled server
-!node_modules/web-tree-sitter/**
+# Icons
+!resources/craft_icon.png
+!resources/craft_icon.svg
 
-# Exclude source maps from dist
+# Exclude source maps and old build artifacts
 dist/**/*.map
-
-# Exclude test files and development artifacts
-**/.vscode-test/**
-**/test/**
-**/.eslintrc
-**/.prettierrc
+dist/server.js
+dist/server.js.map
+dist/node_modules/**
+dist/tree-sitter-craft-*.wasm
+dist/tree-sitter-*.wasm
