@@ -1,3 +1,4 @@
+import { describe, it, expect } from '@jest/globals';
 import type { ExtensionContext } from 'vscode';
 import { PLATFORM_MAP, resolveBinary } from './binaryManager.js';
 import type { BinaryManagerDeps } from './binaryManager.js';

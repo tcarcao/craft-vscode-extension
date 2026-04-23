@@ -9,6 +9,9 @@ export default {
   transform: {
     '^.+\\.ts$': ['ts-jest', {
       useESM: true,
+      tsconfig: {
+        moduleResolution: 'Bundler',
+      },
     }],
   },
   testMatch: [
