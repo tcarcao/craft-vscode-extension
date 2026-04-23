@@ -1,4 +1,4 @@
-import { describe, it, expect } from '@jest/globals';
+import { describe, it, expect, jest } from '@jest/globals';
 import type { ExtensionContext } from 'vscode';
 import { PLATFORM_MAP, resolveBinary } from './binaryManager.js';
 import type { BinaryManagerDeps } from './binaryManager.js';
@@ -34,5 +34,67 @@ describe('resolveBinary — unsupported platform', () => {
     await expect(resolveBinary(mockContext, deps)).rejects.toThrow(
       'Unsupported platform: freebsd-x64'
     );
+  });
+});
+
+describe('resolveBinary — executablePath setting override', () => {
+  it('returns the configured path when it exists', async () => {
+    const { workspace } = await import('vscode');
+    (workspace.getConfiguration as jest.Mock).mockReturnValue({
+      get: jest.fn().mockReturnValue('/custom/craft'),
+    });
+
+    const deps: BinaryManagerDeps = {
+      existsSync: (p) => p === '/custom/craft',
+      platform: () => 'linux',
+      arch: () => 'x64',
+    };
+
+    const result = await resolveBinary(mockContext, deps);
+    expect(result).toBe('/custom/craft');
+  });
+
+  it('falls through when executablePath is set but file does not exist', async () => {
+    const { workspace, window } = await import('vscode');
+    (workspace.getConfiguration as jest.Mock).mockReturnValue({
+      get: jest.fn().mockReturnValue('/nonexistent/craft'),
+    });
+    // Make withProgress execute the task callback so downloadString is actually called
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (window.withProgress as any).mockImplementation((_opts: unknown, task: (p: { report: () => void }) => Promise<unknown>) =>
+      task({ report: () => undefined })
+    );
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (window.showErrorMessage as any).mockResolvedValue(undefined);
+
+    const deps: BinaryManagerDeps = {
+      existsSync: () => false,
+      platform: () => 'linux',
+      arch: () => 'x64',
+      downloadString: (jest.fn() as unknown as jest.Mock<() => Promise<string>>).mockRejectedValue(new Error('download skipped in test')) as unknown as (url: string) => Promise<string>,
+      mkdtemp: jest.fn() as unknown as (prefix: string) => Promise<string>,
+      rm: (jest.fn() as unknown as jest.Mock<() => Promise<void>>).mockResolvedValue(undefined) as unknown as (p: string, opts?: { recursive?: boolean; force?: boolean }) => Promise<void>,
+    };
+
+    await expect(resolveBinary(mockContext, deps)).rejects.toThrow();
+  });
+});
+
+describe('resolveBinary — cache hit', () => {
+  it('returns cached path when binary already exists at expected location', async () => {
+    const { workspace } = await import('vscode');
+    (workspace.getConfiguration as jest.Mock).mockReturnValue({
+      get: jest.fn().mockReturnValue(''),
+    });
+
+    const expectedPath = '/fake/storage/craft-lsp/v0.1.0/linux-x64/craft';
+    const deps: BinaryManagerDeps = {
+      existsSync: (p) => p === expectedPath,
+      platform: () => 'linux',
+      arch: () => 'x64',
+    };
+
+    const result = await resolveBinary(mockContext, deps);
+    expect(result).toBe(expectedPath);
   });
 });
