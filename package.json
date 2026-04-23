@@ -104,6 +104,11 @@
                     ],
                     "default": "warn",
                     "description": "Logging verbosity level. Use 'debug' or 'trace' for development and troubleshooting."
+                },
+                "craft.lsp.executablePath": {
+                    "type": "string",
+                    "default": "",
+                    "description": "Path to the craft language server binary. When set, the managed download is skipped and this binary is used directly. Leave empty to use the automatically downloaded binary."
                 }
             }
         },
