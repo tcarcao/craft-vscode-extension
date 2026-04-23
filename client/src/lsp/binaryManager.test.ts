@@ -112,5 +112,6 @@ describe('_sha256File', () => {
     const expected = createHash('sha256').update(content).digest('hex');
 
     expect(result).toBe(expected);
+    expect(fsPromises.readFile).toHaveBeenCalledWith('/any/path');
   });
 });
