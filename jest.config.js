@@ -3,6 +3,7 @@ export default {
   preset: 'ts-jest/presets/default-esm',
   extensionsToTreatAsEsm: ['.ts'],
   moduleNameMapper: {
+    '^vscode$': '<rootDir>/__mocks__/vscode.ts',
     '^(\\.{1,2}/.*)\\.js$': '$1',
   },
   transform: {
