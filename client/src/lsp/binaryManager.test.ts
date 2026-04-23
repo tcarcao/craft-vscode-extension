@@ -2,6 +2,8 @@ import { describe, it, expect, jest } from '@jest/globals';
 import type { ExtensionContext } from 'vscode';
 import { PLATFORM_MAP, resolveBinary } from './binaryManager.js';
 import type { BinaryManagerDeps } from './binaryManager.js';
+import { _sha256File } from './binaryManager.js';
+import * as fsPromises from 'node:fs/promises';
 
 const mockContext = {
   extension: { packageJSON: { version: '0.1.0' } },
@@ -96,5 +98,19 @@ describe('resolveBinary — cache hit', () => {
 
     const result = await resolveBinary(mockContext, deps);
     expect(result).toBe(expectedPath);
+  });
+});
+
+describe('_sha256File', () => {
+  it('computes the correct SHA256 hex digest', async () => {
+    const content = Buffer.from('hello craft');
+    jest.spyOn(fsPromises, 'readFile').mockResolvedValue(content as any);
+
+    const result = await _sha256File('/any/path');
+
+    const { createHash } = await import('node:crypto');
+    const expected = createHash('sha256').update(content).digest('hex');
+
+    expect(result).toBe(expected);
   });
 });
