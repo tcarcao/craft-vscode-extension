@@ -115,3 +115,103 @@ describe('_sha256File', () => {
     expect(fsPromises.readFile).toHaveBeenCalledWith('/any/path');
   });
 });
+
+describe('resolveBinary — full download happy path', () => {
+  beforeEach(async () => {
+    const { workspace, window } = await import('vscode');
+    (workspace.getConfiguration as any).mockReturnValue({
+      get: jest.fn().mockReturnValue(''),
+    });
+    (window.withProgress as any).mockImplementation(
+      (_opts: unknown, task: (progress: { report: jest.Mock }) => Promise<void>) =>
+        task({ report: jest.fn() })
+    );
+  });
+
+  it('downloads, verifies, extracts, and returns binary path on linux-x64', async () => {
+    const archiveName = 'craft_0.1.0_linux_amd64.tar.gz';
+    const checksumLine = `abc123def456  ${archiveName}`;
+
+    const mockDownloadString = jest.fn(async (_url: string) => checksumLine + '\n');
+    const mockDownloadFile = jest.fn(async (_url: string, _dest: string, _onProgress: (r: number, t: number) => void) => {});
+    const mockSha256File = jest.fn(async (_p: string) => 'abc123def456');
+    const mockExecFile = jest.fn(async (_cmd: string, _args: string[]) => ({ stdout: '', stderr: '' }));
+    const mockMkdtemp = jest.fn(async (_prefix: string) => '/tmp/craft-lsp-xyz');
+    const mockMkdir = jest.fn(async (_p: string, _opts?: { recursive?: boolean }) => undefined as string | undefined);
+    const mockChmod = jest.fn(async (_p: string, _mode: number): Promise<void> => {});
+    const mockReaddir = jest.fn(async (_p: string) => ['v0.1.0'] as string[]);
+    const mockRm = jest.fn(async (_p: string, _opts?: { recursive?: boolean; force?: boolean }): Promise<void> => {});
+
+    const deps: BinaryManagerDeps = {
+      existsSync: () => false,
+      platform: () => 'linux',
+      arch: () => 'x64',
+      tmpdir: () => '/tmp',
+      downloadString: mockDownloadString,
+      downloadFile: mockDownloadFile,
+      sha256File: mockSha256File,
+      execFile: mockExecFile,
+      mkdtemp: mockMkdtemp,
+      mkdir: mockMkdir,
+      chmod: mockChmod,
+      readdir: mockReaddir,
+      rm: mockRm,
+    };
+
+    const result = await resolveBinary(mockContext, deps);
+
+    expect(result).toBe('/fake/storage/craft-lsp/v0.1.0/linux-x64/craft');
+
+    expect(mockDownloadString).toHaveBeenCalledWith(
+      'https://github.com/tcarcao/craft/releases/download/v0.1.0/checksums.txt'
+    );
+    expect(mockDownloadFile).toHaveBeenCalledWith(
+      'https://github.com/tcarcao/craft/releases/download/v0.1.0/craft_0.1.0_linux_amd64.tar.gz',
+      '/tmp/craft-lsp-xyz/craft_0.1.0_linux_amd64.tar.gz',
+      expect.any(Function)
+    );
+    expect(mockExecFile).toHaveBeenCalledWith('tar', [
+      'xzf',
+      '/tmp/craft-lsp-xyz/craft_0.1.0_linux_amd64.tar.gz',
+      '-C',
+      '/fake/storage/craft-lsp/v0.1.0/linux-x64',
+      'craft',
+    ]);
+    expect(mockChmod).toHaveBeenCalledWith(
+      '/fake/storage/craft-lsp/v0.1.0/linux-x64/craft',
+      0o755
+    );
+    expect(mockRm).toHaveBeenCalledWith('/tmp/craft-lsp-xyz', { recursive: true, force: true });
+  });
+
+  it('runs xattr quarantine removal on darwin', async () => {
+    const archiveName = 'craft_0.1.0_darwin_arm64.tar.gz';
+    const checksumLine = `deadbeef  ${archiveName}`;
+
+    const mockExecFile = jest.fn(async (_cmd: string, _args: string[]) => ({ stdout: '', stderr: '' }));
+
+    const deps: BinaryManagerDeps = {
+      existsSync: () => false,
+      platform: () => 'darwin',
+      arch: () => 'arm64',
+      tmpdir: () => '/tmp',
+      downloadString: jest.fn(async (_url: string) => checksumLine + '\n'),
+      downloadFile: jest.fn(async (_url: string, _dest: string, _onProgress: (r: number, t: number) => void) => {}),
+      sha256File: jest.fn(async (_p: string) => 'deadbeef'),
+      execFile: mockExecFile,
+      mkdtemp: jest.fn(async (_prefix: string) => '/tmp/craft-lsp-abc'),
+      mkdir: jest.fn(async (_p: string, _opts?: { recursive?: boolean }) => undefined as string | undefined),
+      chmod: jest.fn(async (_p: string, _mode: number): Promise<void> => {}),
+      readdir: jest.fn(async (_p: string) => ['v0.1.0'] as string[]),
+      rm: jest.fn(async (_p: string, _opts?: { recursive?: boolean; force?: boolean }): Promise<void> => {}),
+    };
+
+    await resolveBinary(mockContext, deps);
+
+    expect(mockExecFile).toHaveBeenCalledWith('xattr', [
+      '-dr',
+      'com.apple.quarantine',
+      '/fake/storage/craft-lsp/v0.1.0/darwin-arm64/craft',
+    ]);
+  });
+});
