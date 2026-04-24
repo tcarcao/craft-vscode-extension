@@ -1,4 +1,4 @@
-import { describe, it, expect, jest } from '@jest/globals';
+import { describe, it, expect, jest, beforeEach } from '@jest/globals';
 import type { ExtensionContext } from 'vscode';
 import { PLATFORM_MAP, resolveBinary } from './binaryManager.js';
 import type { BinaryManagerDeps } from './binaryManager.js';
@@ -213,5 +213,6 @@ describe('resolveBinary — full download happy path', () => {
       'com.apple.quarantine',
       '/fake/storage/craft-lsp/v0.1.0/darwin-arm64/craft',
     ]);
+    expect(deps.rm).toHaveBeenCalledWith('/tmp/craft-lsp-abc', { recursive: true, force: true });
   });
 });
