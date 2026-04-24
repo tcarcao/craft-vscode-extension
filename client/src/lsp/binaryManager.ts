@@ -61,8 +61,7 @@ export async function resolveBinary(context: ExtensionContext, deps: BinaryManag
 
   // Step 2: Build expected path
   const version = context.extension.packageJSON.version as string;
-  const resolvedArch = arch() === 'x64' ? 'x64' : arch();
-  const platformKey = `${platform()}-${resolvedArch}`;
+  const platformKey = `${platform()}-${arch()}`;
   const entry = PLATFORM_MAP[platformKey];
   if (!entry) {
     throw new Error(`Unsupported platform: ${platformKey}`);
@@ -271,7 +270,7 @@ export function _downloadFile(
         res.pipe(ws);
         ws.on('finish', resolve);
         ws.on('error', reject);
-        res.on('error', reject);
+        res.on('error', (err) => { ws.destroy(); reject(err); });
       })
       .on('error', reject);
   });
