@@ -9,6 +9,7 @@ import {
     TransportKind
 } from 'vscode-languageclient/node';
 import { registerPreviewCommands, cleanUpPreviewCommands } from './commands';
+import { resolveBinary } from './lsp/binaryManager.js';
 import { DomainsViewProvider } from './providers/domainsViewProvider';
 import { DomainsViewService } from './services/domainsViewService';
 import { ServicesViewProvider } from './providers/servicesViewProvider';
@@ -29,32 +30,8 @@ export function activate(context: ExtensionContext) {
     });
 }
 
-// craftBinaryPath returns the path to the bundled craft binary for the current
-// platform. The binaries are packaged per-platform into the VSIX by GoReleaser
-// and unpacked under dist/bin/ at install time.
-function craftBinaryPath(context: ExtensionContext): string {
-    const platform = os.platform();
-    const arch = os.arch();
-
-    let binaryName = 'craft';
-    let target: string;
-
-    if (platform === 'darwin') {
-        target = arch === 'arm64' ? 'darwin-arm64' : 'darwin-x64';
-    } else if (platform === 'linux') {
-        target = arch === 'arm64' ? 'linux-arm64' : 'linux-x64';
-    } else if (platform === 'win32') {
-        binaryName = 'craft.exe';
-        target = 'win32-x64';
-    } else {
-        target = 'linux-x64';
-    }
-
-    return context.asAbsolutePath(path.join('dist', 'bin', target, binaryName));
-}
-
 async function startLanguageServer(context: ExtensionContext) {
-    const binary = craftBinaryPath(context);
+    const binary = await resolveBinary(context);
     Logger.info(`Craft LSP binary: ${binary}`);
 
     const serverOptions: ServerOptions = {
