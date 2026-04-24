@@ -216,3 +216,102 @@ describe('resolveBinary — full download happy path', () => {
     expect(deps.rm).toHaveBeenCalledWith('/tmp/craft-lsp-abc', { recursive: true, force: true });
   });
 });
+
+describe('resolveBinary — checksum mismatch', () => {
+  it('throws when SHA256 does not match checksums.txt', async () => {
+    // beforeEach already clears mocks; set up workspace + withProgress mocks here
+    const { workspace, window } = await import('vscode');
+    (workspace.getConfiguration as any).mockReturnValue({ get: jest.fn().mockReturnValue('') });
+    (window.withProgress as any).mockImplementation(
+      (_opts: unknown, task: (progress: { report: jest.Mock }) => Promise<void>) =>
+        task({ report: jest.fn() })
+    );
+
+    const archiveName = 'craft_0.1.0_linux_amd64.tar.gz';
+    const checksumLine = `expected_hash  ${archiveName}`;
+
+    const deps: BinaryManagerDeps = {
+      existsSync: () => false,
+      platform: () => 'linux',
+      arch: () => 'x64',
+      tmpdir: () => '/tmp',
+      downloadString: jest.fn(async (_url: string) => checksumLine + '\n'),
+      downloadFile: jest.fn(async (_url: string, _dest: string, _onProgress: (r: number, t: number) => void) => {}),
+      sha256File: jest.fn(async (_p: string) => 'actual_different_hash'),  // mismatch!
+      execFile: jest.fn(async (_cmd: string, _args: string[]) => ({ stdout: '', stderr: '' })),
+      mkdtemp: jest.fn(async (_prefix: string) => '/tmp/craft-lsp-chk'),
+      mkdir: jest.fn(async (_p: string, _opts?: { recursive?: boolean }) => undefined as string | undefined),
+      chmod: jest.fn(async (_p: string, _mode: number): Promise<void> => {}),
+      readdir: jest.fn(async (_p: string) => [] as string[]),
+      rm: jest.fn(async (_p: string, _opts?: { recursive?: boolean; force?: boolean }): Promise<void> => {}),
+    };
+
+    await expect(resolveBinary(mockContext, deps)).rejects.toThrow(/checksum/i);
+  });
+});
+
+describe('resolveBinary — old version cleanup', () => {
+  it('removes stale version directories after successful download', async () => {
+    const { workspace, window } = await import('vscode');
+    (workspace.getConfiguration as any).mockReturnValue({ get: jest.fn().mockReturnValue('') });
+    (window.withProgress as any).mockImplementation(
+      (_opts: unknown, task: (progress: { report: jest.Mock }) => Promise<void>) =>
+        task({ report: jest.fn() })
+    );
+
+    const archiveName = 'craft_0.1.0_linux_amd64.tar.gz';
+    const checksumLine = `goodhash  ${archiveName}`;
+    const mockRm = jest.fn(async (_p: string, _opts?: { recursive?: boolean; force?: boolean }): Promise<void> => {});
+
+    const deps: BinaryManagerDeps = {
+      existsSync: () => false,
+      platform: () => 'linux',
+      arch: () => 'x64',
+      tmpdir: () => '/tmp',
+      downloadString: jest.fn(async (_url: string) => checksumLine + '\n'),
+      downloadFile: jest.fn(async (_url: string, _dest: string, _onProgress: (r: number, t: number) => void) => {}),
+      sha256File: jest.fn(async (_p: string) => 'goodhash'),
+      execFile: jest.fn(async (_cmd: string, _args: string[]) => ({ stdout: '', stderr: '' })),
+      mkdtemp: jest.fn(async (_prefix: string) => '/tmp/craft-lsp-old'),
+      mkdir: jest.fn(async (_p: string, _opts?: { recursive?: boolean }) => undefined as string | undefined),
+      chmod: jest.fn(async (_p: string, _mode: number): Promise<void> => {}),
+      readdir: jest.fn(async (_p: string) => ['v0.0.9', 'v0.1.0'] as string[]),  // old + current
+      rm: mockRm,
+    };
+
+    await resolveBinary(mockContext, deps);
+
+    // rm called for old version dir (v0.0.9), NOT for current (v0.1.0)
+    expect(mockRm).toHaveBeenCalledWith(
+      '/fake/storage/craft-lsp/v0.0.9',
+      { recursive: true, force: true }
+    );
+    // rm called exactly twice: once for old version, once for temp dir
+    expect(mockRm).toHaveBeenCalledTimes(2);
+  });
+});
+
+describe('resolveBinary — download failure UX', () => {
+  it('shows error message on download failure', async () => {
+    const { workspace, window } = await import('vscode');
+    (workspace.getConfiguration as any).mockReturnValue({ get: jest.fn().mockReturnValue('') });
+    (window.withProgress as any).mockImplementation(
+      (_opts: unknown, task: (progress: { report: jest.Mock }) => Promise<void>) =>
+        task({ report: jest.fn() })
+    );
+    (window.showErrorMessage as any).mockResolvedValue(undefined);
+
+    const deps: BinaryManagerDeps = {
+      existsSync: () => false,
+      platform: () => 'linux',
+      arch: () => 'x64',
+      tmpdir: () => '/tmp',
+      downloadString: jest.fn(async (_url: string): Promise<string> => { throw new Error('network error'); }),
+      mkdtemp: jest.fn(async (_prefix: string) => '/tmp/craft-lsp-fail'),
+      rm: jest.fn(async (_p: string, _opts?: { recursive?: boolean; force?: boolean }): Promise<void> => {}),
+    };
+
+    await expect(resolveBinary(mockContext, deps)).rejects.toThrow();
+    expect(window.showErrorMessage).toHaveBeenCalled();
+  });
+});
