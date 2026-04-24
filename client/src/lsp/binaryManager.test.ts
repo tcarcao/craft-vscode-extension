@@ -312,6 +312,10 @@ describe('resolveBinary — download failure UX', () => {
     };
 
     await expect(resolveBinary(mockContext, deps)).rejects.toThrow();
-    expect(window.showErrorMessage).toHaveBeenCalled();
+    expect(window.showErrorMessage).toHaveBeenCalledWith(
+      expect.stringContaining('network error'),
+      'Retry',
+      'Set Binary Path'
+    );
   });
 });
