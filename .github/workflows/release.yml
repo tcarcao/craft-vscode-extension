@@ -169,10 +169,10 @@ jobs:
           asset_name: ${{ steps.package.outputs.name }}-${{ steps.package.outputs.version }}.vsix
           asset_content_type: application/zip
 
-      - name: Publish to VS Code Marketplace
-        run: npx @vscode/vsce publish -p ${{ secrets.DEV_AZURE_PERSONAL_TOKEN }}
+      - name: Publish to VS Code Marketplace (pre-release)
+        run: npx @vscode/vsce publish --pre-release -p ${{ secrets.DEV_AZURE_PERSONAL_TOKEN }}
         env:
           VSCE_PAT: ${{ secrets.DEV_AZURE_PERSONAL_TOKEN }}
 
-      - name: Publish to Open VSX Registry
-        run: npx ovsx publish ./${{ steps.package.outputs.name }}-${{ steps.package.outputs.version }}.vsix -p ${{ secrets.OVSX_PAT }}
+      - name: Publish to Open VSX Registry (pre-release)
+        run: npx ovsx publish --pre-release ./${{ steps.package.outputs.name }}-${{ steps.package.outputs.version }}.vsix -p ${{ secrets.OVSX_PAT }}
