@@ -67,16 +67,37 @@ jobs:
       
       - name: Build extension
         run: npm run bundle
-      
+
       - name: Package extension
         run: npx @vscode/vsce package
-      
+
       - name: Get package info
         id: package
         run: |
           echo "name=$(node -p "require('./package.json').name")" >> $GITHUB_OUTPUT
           echo "version=$(node -p "require('./package.json').version")" >> $GITHUB_OUTPUT
-      
+
+      - name: Smoke-test craft binary download
+        run: |
+          VERSION=${GITHUB_REF#refs/tags/v}
+          ARCHIVE="craft_${VERSION}_linux_amd64.tar.gz"
+          BASE_URL="https://github.com/tcarcao/craft/releases/download/v${VERSION}"
+
+          CHECKSUMS=$(curl -fsSL "${BASE_URL}/checksums.txt")
+          EXPECTED=$(printf '%s\n' "$CHECKSUMS" | grep "$ARCHIVE" | awk '{print $1}')
+
+          curl -fsSL "${BASE_URL}/${ARCHIVE}" -o "$ARCHIVE"
+          ACTUAL=$(sha256sum "$ARCHIVE" | awk '{print $1}')
+
+          if [ "$EXPECTED" != "$ACTUAL" ]; then
+            echo "Checksum mismatch: expected $EXPECTED, got $ACTUAL"
+            exit 1
+          fi
+
+          tar xzf "$ARCHIVE" craft
+          chmod +x craft
+          ./craft --version
+
       - name: Commit version bump back to repository
         run: |
           VERSION=${GITHUB_REF#refs/tags/v}
@@ -149,3 +170,6 @@ jobs:
         run: npx @vscode/vsce publish -p ${{ secrets.DEV_AZURE_PERSONAL_TOKEN }}
         env:
           VSCE_PAT: ${{ secrets.DEV_AZURE_PERSONAL_TOKEN }}
+
+      - name: Publish to Open VSX Registry
+        run: npx ovsx publish ./${{ steps.package.outputs.name }}-${{ steps.package.outputs.version }}.vsix -p ${{ secrets.OVSX_PAT }}
