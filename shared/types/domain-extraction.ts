@@ -4,59 +4,6 @@ export interface BlockRange {
   fileUri: string;
 }
 
-export interface UseCaseInfo {
-    name: string;
-    entryPointSubDomain: string | null;
-    allDomains: string[];
-    scenarios: string[];
-    blockRange: BlockRange;
-}
-export interface ServiceDefinition {
-    name: string;
-    domains: string[];
-    dataStores?: string[];
-    language?: string;
-    blockRange: BlockRange;
-}
-
-export interface DomainDefinition {
-    name: string;
-    subDomains: string[];
-    blockRange: BlockRange;
-}
-
-export interface ActorDefinition {
-    name: string;
-    type: 'user' | 'system' | 'service';
-    blockRange: BlockRange;
-}
-
-export interface FileResult {
-    domains: string[];
-    useCases: UseCaseInfo[];
-    serviceDefinitions: ServiceDefinition[];
-    domainDefinitions: DomainDefinition[];
-    actorDefinitions: ActorDefinition[];
-    uri: string;
-    fileName: string;
-}
-
-// Workspace extraction result (combines all files)
-export interface ExtractionResult {
-    // Combined data from all files
-    domains: string[];
-    useCases: UseCaseInfo[];
-    serviceDefinitions: ServiceDefinition[];
-    domainDefinitions: DomainDefinition[];
-    actorDefinitions: ActorDefinition[];
-
-    // Individual file results
-    fileResults: FileResult[];
-
-    // Error handling
-    error?: string;
-}
-
 // LspDomainRef is the per-bounded-context entry inside each service in the
 // server's workspace/executeCommand response.
 export interface LspDomainRef {
