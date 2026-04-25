@@ -45,9 +45,22 @@ export interface ExtractionResult {
     fileResults: FileResult[];
     error?: string;
 }
+export interface LspDomainRef {
+    name: string;
+    uri: string;
+    line: number;
+    bcName: string;
+}
+export interface LspServiceEntry {
+    name: string;
+    domains: LspDomainRef[];
+}
+export interface LspExtractionResult {
+    services: LspServiceEntry[];
+}
 export declare const ServerCommands: {
-    readonly EXTRACT_DOMAINS_FROM_CURRENT: "craft.extractDomains";
-    readonly EXTRACT_DOMAINS_FROM_WORKSPACE: "craft.extractAllDomainsFromWorkspace";
+    readonly EXTRACT_DOMAINS_FROM_CURRENT: "EXTRACT_DOMAINS_FROM_CURRENT";
+    readonly EXTRACT_DOMAINS_FROM_WORKSPACE: "EXTRACT_DOMAINS_FROM_WORKSPACE";
     readonly EXTRACT_PARTIAL_DSL_FROM_BLOCK_RANGES: "craft.extractDslFromBlockRanges";
 };
 export declare const WebviewMessages: {

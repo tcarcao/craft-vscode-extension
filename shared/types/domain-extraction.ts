@@ -49,18 +49,39 @@ export interface ExtractionResult {
     serviceDefinitions: ServiceDefinition[];
     domainDefinitions: DomainDefinition[];
     actorDefinitions: ActorDefinition[];
-    
+
     // Individual file results
     fileResults: FileResult[];
-    
+
     // Error handling
     error?: string;
 }
 
+// LspDomainRef is the per-bounded-context entry inside each service in the
+// server's workspace/executeCommand response.
+export interface LspDomainRef {
+  name: string;    // parent domain name
+  uri: string;     // file URI where the domain/BC is declared
+  line: number;    // 1-based source line
+  bcName: string;  // bounded context name
+}
+
+// LspServiceEntry is one service in the server's response.
+export interface LspServiceEntry {
+  name: string;
+  domains: LspDomainRef[];
+}
+
+// LspExtractionResult is the actual shape returned by the Go LSP server for
+// both EXTRACT_DOMAINS_FROM_CURRENT and EXTRACT_DOMAINS_FROM_WORKSPACE.
+export interface LspExtractionResult {
+  services: LspServiceEntry[];
+}
+
 // Command request/response types
 export const ServerCommands = {
-  EXTRACT_DOMAINS_FROM_CURRENT: 'craft.extractDomains',
-  EXTRACT_DOMAINS_FROM_WORKSPACE: 'craft.extractAllDomainsFromWorkspace',
+  EXTRACT_DOMAINS_FROM_CURRENT: 'EXTRACT_DOMAINS_FROM_CURRENT',
+  EXTRACT_DOMAINS_FROM_WORKSPACE: 'EXTRACT_DOMAINS_FROM_WORKSPACE',
   EXTRACT_PARTIAL_DSL_FROM_BLOCK_RANGES: 'craft.extractDslFromBlockRanges'
 } as const;
 
