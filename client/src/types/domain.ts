@@ -9,6 +9,8 @@ export interface DSLDiscoveryOptions {
 export interface DSLDiscoveryResult {
     domains: Domain[];
     serviceGroups: ServiceGroup[];
+    actorBlocks: BlockRange[];
+    archBlocks: BlockRange[];
 }
 
 const defaultDomain = 'Unknown';

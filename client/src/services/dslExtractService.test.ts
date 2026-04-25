@@ -1,143 +1,197 @@
 import { DslExtractService } from './dslExtractService.js';
-import { LspExtractionResult } from '../../../shared/lib/types/domain-extraction.js';
+import { CraftExtractionResult } from '../../../shared/lib/types/domain-extraction.js';
 import type { LanguageClient } from 'vscode-languageclient/node';
 
 function makeService(): DslExtractService {
   return new DslExtractService({} as LanguageClient);
 }
 
-function toDomains(svc: DslExtractService, result: LspExtractionResult, currentResult: LspExtractionResult | null = null) {
+function toDomains(svc: DslExtractService, result: CraftExtractionResult) {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  return (svc as any).convertToDomainStructure(result, currentResult);
+  return (svc as any).buildDomains(result);
 }
 
-function toServiceGroups(svc: DslExtractService, result: LspExtractionResult, domains: ReturnType<typeof toDomains>, currentResult: LspExtractionResult | null = null) {
+function toServiceGroups(
+  svc: DslExtractService,
+  result: CraftExtractionResult,
+  domains: ReturnType<typeof toDomains>
+) {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  return (svc as any).convertToServiceGroups(result, currentResult, domains);
+  return (svc as any).buildServiceGroups(result, domains);
 }
 
-describe('DslExtractService.convertToDomainStructure', () => {
-  it('returns empty array when services is empty', () => {
-    const result = toDomains(makeService(), { services: [] });
-    expect(result).toEqual([]);
+const emptyResult = (): CraftExtractionResult => ({
+  services: [],
+  domains: [],
+  useCases: [],
+  actors: [],
+  actorBlocks: [],
+  archs: [],
+});
+
+describe('DslExtractService.buildDomains', () => {
+  it('returns empty array when domains is empty', () => {
+    expect(toDomains(makeService(), emptyResult())).toEqual([]);
   });
 
-  it('groups bounded contexts under their parent domain', () => {
-    const lsp: LspExtractionResult = {
-      services: [
-        { name: 'OrderSvc', domains: [{ name: 'Commerce', bcName: 'Orders', uri: 'file:///a.craft', line: 1 }] },
-        { name: 'PaySvc',   domains: [{ name: 'Commerce', bcName: 'Payments', uri: 'file:///a.craft', line: 5 }] },
-        { name: 'AuthSvc',  domains: [{ name: 'Identity', bcName: 'Auth', uri: 'file:///b.craft', line: 1 }] },
+  it('builds Domain from CraftDomainEntry with bounded contexts', () => {
+    const result: CraftExtractionResult = {
+      ...emptyResult(),
+      domains: [
+        {
+          name: 'Commerce', uri: 'file:///a.craft', startLine: 1, endLine: 5,
+          inCurrentFile: false,
+          boundedContexts: [
+            { name: 'Orders', startLine: 2 },
+            { name: 'Payments', startLine: 3 },
+          ],
+        },
       ],
     };
 
-    const domains = toDomains(makeService(), lsp);
-
-    expect(domains).toHaveLength(2);
-
-    const commerce = domains.find((d: { name: string }) => d.name === 'Commerce');
-    expect(commerce).toBeDefined();
-    expect(commerce.boundedContexts.map((bc: { name: string }) => bc.name)).toEqual(
+    const domains = toDomains(makeService(), result);
+    expect(domains).toHaveLength(1);
+    expect(domains[0].name).toBe('Commerce');
+    expect(domains[0].boundedContexts.map((bc: { name: string }) => bc.name)).toEqual(
       expect.arrayContaining(['Orders', 'Payments'])
     );
-
-    const identity = domains.find((d: { name: string }) => d.name === 'Identity');
-    expect(identity).toBeDefined();
-    expect(identity.boundedContexts.map((bc: { name: string }) => bc.name)).toEqual(['Auth']);
-  });
-
-  it('deduplicates bounded contexts that appear in multiple services', () => {
-    const lsp: LspExtractionResult = {
-      services: [
-        { name: 'SvcA', domains: [{ name: 'Core', bcName: 'Shared', uri: 'file:///a.craft', line: 1 }] },
-        { name: 'SvcB', domains: [{ name: 'Core', bcName: 'Shared', uri: 'file:///a.craft', line: 5 }] },
-      ],
-    };
-
-    const domains = toDomains(makeService(), lsp);
-    const core = domains.find((d: { name: string }) => d.name === 'Core');
-    expect(core.boundedContexts).toHaveLength(1);
-    expect(core.boundedContexts[0].name).toBe('Shared');
   });
 
   it('sorts domains alphabetically with Unknown last', () => {
-    const lsp: LspExtractionResult = {
-      services: [
-        { name: 'SvcA', domains: [{ name: 'Unknown', bcName: 'X', uri: 'file:///a.craft', line: 1 }] },
-        { name: 'SvcB', domains: [{ name: 'Billing', bcName: 'Y', uri: 'file:///a.craft', line: 2 }] },
-        { name: 'SvcC', domains: [{ name: 'Auth',    bcName: 'Z', uri: 'file:///a.craft', line: 3 }] },
+    const result: CraftExtractionResult = {
+      ...emptyResult(),
+      domains: [
+        { name: 'Unknown', uri: 'file:///a.craft', startLine: 1, endLine: 3, inCurrentFile: false, boundedContexts: [] },
+        { name: 'Billing', uri: 'file:///a.craft', startLine: 4, endLine: 6, inCurrentFile: false, boundedContexts: [] },
+        { name: 'Auth',    uri: 'file:///a.craft', startLine: 7, endLine: 9, inCurrentFile: false, boundedContexts: [] },
       ],
     };
 
-    const domains = toDomains(makeService(), lsp);
+    const domains = toDomains(makeService(), result);
     expect(domains.map((d: { name: string }) => d.name)).toEqual(['Auth', 'Billing', 'Unknown']);
   });
 
-  it('marks boundedContexts as inCurrentFile when they appear in currentResult', () => {
-    const workspace: LspExtractionResult = {
-      services: [
-        { name: 'SvcA', domains: [{ name: 'Core', bcName: 'Alpha', uri: 'file:///a.craft', line: 1 }] },
-        { name: 'SvcB', domains: [{ name: 'Core', bcName: 'Beta',  uri: 'file:///b.craft', line: 1 }] },
-      ],
-    };
-    const current: LspExtractionResult = {
-      services: [
-        { name: 'SvcA', domains: [{ name: 'Core', bcName: 'Alpha', uri: 'file:///a.craft', line: 1 }] },
+  it('sets inCurrentFile from domain entry and propagates to BCs', () => {
+    const result: CraftExtractionResult = {
+      ...emptyResult(),
+      domains: [
+        {
+          name: 'Core', uri: 'file:///a.craft', startLine: 1, endLine: 5, inCurrentFile: true,
+          boundedContexts: [{ name: 'Alpha', startLine: 2 }],
+        },
+        {
+          name: 'Edge', uri: 'file:///b.craft', startLine: 1, endLine: 3, inCurrentFile: false,
+          boundedContexts: [{ name: 'Beta', startLine: 2 }],
+        },
       ],
     };
 
-    const domains = toDomains(makeService(), workspace, current);
+    const domains = toDomains(makeService(), result);
     const core = domains.find((d: { name: string }) => d.name === 'Core');
-    const alpha = core.boundedContexts.find((bc: { name: string }) => bc.name === 'Alpha');
-    const beta  = core.boundedContexts.find((bc: { name: string }) => bc.name === 'Beta');
+    const edge = domains.find((d: { name: string }) => d.name === 'Edge');
 
-    expect(alpha.inCurrentFile).toBe(true);
-    expect(beta.inCurrentFile).toBe(false);
+    expect(core.inCurrentFile).toBe(true);
+    expect(core.boundedContexts[0].inCurrentFile).toBe(true);
+    expect(edge.inCurrentFile).toBe(false);
+    expect(edge.boundedContexts[0].inCurrentFile).toBe(false);
+  });
+
+  it('does not have inCurrentFile collision across domains with same BC name', () => {
+    const result: CraftExtractionResult = {
+      ...emptyResult(),
+      domains: [
+        {
+          name: 'DomainA', uri: 'file:///current.craft', startLine: 1, endLine: 5, inCurrentFile: true,
+          boundedContexts: [{ name: 'Shared', startLine: 2 }],
+        },
+        {
+          name: 'DomainB', uri: 'file:///other.craft', startLine: 1, endLine: 5, inCurrentFile: false,
+          boundedContexts: [{ name: 'Shared', startLine: 2 }],
+        },
+      ],
+    };
+
+    const domains = toDomains(makeService(), result);
+    const domainA = domains.find((d: { name: string }) => d.name === 'DomainA');
+    const domainB = domains.find((d: { name: string }) => d.name === 'DomainB');
+
+    expect(domainA.boundedContexts[0].inCurrentFile).toBe(true);
+    expect(domainB.boundedContexts[0].inCurrentFile).toBe(false);
   });
 });
 
-describe('DslExtractService.convertToServiceGroups', () => {
+describe('DslExtractService.buildServiceGroups', () => {
   it('returns empty array when services is empty', () => {
-    const result = toServiceGroups(makeService(), { services: [] }, []);
-    expect(result).toEqual([]);
+    expect(toServiceGroups(makeService(), emptyResult(), [])).toEqual([]);
   });
 
-  it('groups services under their parent domain', () => {
-    const lsp: LspExtractionResult = {
+  it('links service to domain via contexts', () => {
+    const result: CraftExtractionResult = {
+      ...emptyResult(),
+      domains: [
+        {
+          name: 'Commerce', uri: 'file:///a.craft', startLine: 17, endLine: 24, inCurrentFile: false,
+          boundedContexts: [
+            { name: 'Orders', startLine: 18 },
+            { name: 'Payments', startLine: 19 },
+          ],
+        },
+      ],
       services: [
-        { name: 'OrderSvc', domains: [{ name: 'Commerce', bcName: 'Orders', uri: 'file:///a.craft', line: 1 }] },
-        { name: 'PaySvc',   domains: [{ name: 'Commerce', bcName: 'Payments', uri: 'file:///a.craft', line: 5 }] },
-        { name: 'AuthSvc',  domains: [{ name: 'Identity', bcName: 'Auth', uri: 'file:///b.craft', line: 1 }] },
+        { name: 'OrderSvc', uri: 'file:///a.craft', startLine: 2, endLine: 6,  inCurrentFile: false, contexts: ['Orders'] },
+        { name: 'PaySvc',   uri: 'file:///a.craft', startLine: 7, endLine: 11, inCurrentFile: false, contexts: ['Payments'] },
       ],
     };
-    const domains = toDomains(makeService(), lsp);
-    const groups = toServiceGroups(makeService(), lsp, domains);
+    const domains = toDomains(makeService(), result);
+    const groups = toServiceGroups(makeService(), result, domains);
 
-    expect(groups).toHaveLength(2);
-    const commerce = groups.find((g: { name: string }) => g.name === 'Commerce');
-    expect(commerce.services.map((s: { name: string }) => s.name)).toEqual(
+    expect(groups).toHaveLength(1);
+    expect(groups[0].name).toBe('Commerce');
+    expect(groups[0].services.map((s: { name: string }) => s.name)).toEqual(
       expect.arrayContaining(['OrderSvc', 'PaySvc'])
     );
   });
 
-  it('marks services as inCurrentFile based on currentResult', () => {
-    const lsp: LspExtractionResult = {
+  it('populates blockRange from service entry start/endLine', () => {
+    const result: CraftExtractionResult = {
+      ...emptyResult(),
+      domains: [
+        {
+          name: 'Core', uri: 'file:///a.craft', startLine: 10, endLine: 14, inCurrentFile: false,
+          boundedContexts: [{ name: 'Alpha', startLine: 11 }],
+        },
+      ],
       services: [
-        { name: 'SvcA', domains: [{ name: 'Core', bcName: 'Alpha', uri: 'file:///a.craft', line: 1 }] },
-        { name: 'SvcB', domains: [{ name: 'Core', bcName: 'Alpha', uri: 'file:///a.craft', line: 5 }] },
+        { name: 'AlphaSvc', uri: 'file:///a.craft', startLine: 2, endLine: 8, inCurrentFile: false, contexts: ['Alpha'] },
       ],
     };
-    const current: LspExtractionResult = {
-      services: [{ name: 'SvcA', domains: [{ name: 'Core', bcName: 'Alpha', uri: 'file:///a.craft', line: 1 }] }],
+    const domains = toDomains(makeService(), result);
+    const groups = toServiceGroups(makeService(), result, domains);
+
+    expect(groups[0].services[0].blockRange).toEqual({
+      fileUri: 'file:///a.craft', startLine: 2, endLine: 8,
+    });
+  });
+
+  it('marks service inCurrentFile from server-provided flag', () => {
+    const result: CraftExtractionResult = {
+      ...emptyResult(),
+      domains: [
+        {
+          name: 'Core', uri: 'file:///a.craft', startLine: 10, endLine: 14, inCurrentFile: true,
+          boundedContexts: [{ name: 'Alpha', startLine: 11 }],
+        },
+      ],
+      services: [
+        { name: 'SvcA', uri: 'file:///a.craft', startLine: 2, endLine: 5, inCurrentFile: true,  contexts: ['Alpha'] },
+        { name: 'SvcB', uri: 'file:///b.craft', startLine: 2, endLine: 5, inCurrentFile: false, contexts: ['Alpha'] },
+      ],
     };
-    const domains = toDomains(makeService(), lsp, current);
-    const groups = toServiceGroups(makeService(), lsp, domains, current);
-
+    const domains = toDomains(makeService(), result);
+    const groups = toServiceGroups(makeService(), result, domains);
     const core = groups.find((g: { name: string }) => g.name === 'Core');
-    const svcA = core.services.find((s: { name: string }) => s.name === 'SvcA');
-    const svcB = core.services.find((s: { name: string }) => s.name === 'SvcB');
 
-    expect(svcA.inCurrentFile).toBe(true);
-    expect(svcB.inCurrentFile).toBe(false);
+    expect(core.services.find((s: { name: string }) => s.name === 'SvcA').inCurrentFile).toBe(true);
+    expect(core.services.find((s: { name: string }) => s.name === 'SvcB').inCurrentFile).toBe(false);
   });
 });

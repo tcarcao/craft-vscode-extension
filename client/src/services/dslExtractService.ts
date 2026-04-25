@@ -1,9 +1,9 @@
 import { Uri } from 'vscode';
 import { LanguageClient } from 'vscode-languageclient/node';
 import {
-    LspExtractionResult,
-    LspDomainRef,
-    ServerCommands
+    BlockRange,
+    CraftExtractionResult,
+    ServerCommands,
 } from '../../../shared/lib/types/domain-extraction.js';
 import {
     Domain,
@@ -21,133 +21,119 @@ export class DslExtractService {
 
     async discoverDSL(options: DSLDiscoveryOptions = {}): Promise<DSLDiscoveryResult> {
         try {
-            let currentResult: LspExtractionResult | null = null;
-            if (options.currentFile) {
-                const uri = Uri.file(options.currentFile).toString();
-                currentResult = await this.languageClient.sendRequest('workspace/executeCommand', {
-                    command: ServerCommands.EXTRACT_DOMAINS_FROM_CURRENT,
-                    arguments: [uri],
-                });
-            }
+            const currentFileUri = options.currentFile
+                ? Uri.file(options.currentFile).toString()
+                : undefined;
 
-            const workspaceResult: LspExtractionResult | null =
+            const result: CraftExtractionResult | null =
                 await this.languageClient.sendRequest('workspace/executeCommand', {
-                    command: ServerCommands.EXTRACT_DOMAINS_FROM_WORKSPACE,
-                    arguments: [],
+                    command: ServerCommands.CRAFT_EXTRACT_WORKSPACE,
+                    arguments: currentFileUri ? [currentFileUri] : [],
                 });
 
-            Logger.debug('workspaceResult', workspaceResult);
+            Logger.debug('CRAFT_EXTRACT_WORKSPACE result', result);
 
-            if (!workspaceResult) {
-                return { domains: [], serviceGroups: [] };
+            if (!result) {
+                return { domains: [], serviceGroups: [], actorBlocks: [], archBlocks: [] };
             }
 
-            const domains = this.convertToDomainStructure(workspaceResult, currentResult);
-            const serviceGroups = this.convertToServiceGroups(workspaceResult, currentResult, domains);
+            const domains = this.buildDomains(result);
+            const serviceGroups = this.buildServiceGroups(result, domains);
+            const actorBlocks = this.buildActorBlocks(result);
+            const archBlocks = this.buildArchBlocks(result);
 
-            return { domains, serviceGroups };
+            return { domains, serviceGroups, actorBlocks, archBlocks };
         } catch (error) {
-            Logger.error('Error discovering domains:', error);
+            Logger.error('Error discovering DSL:', error);
             throw error;
         }
     }
 
-    private convertToDomainStructure(
-        result: LspExtractionResult,
-        currentResult: LspExtractionResult | null,
-    ): Domain[] {
-        const currentBCNames = new Set<string>(
-            (currentResult?.services ?? []).flatMap(s => s.domains?.map(d => d.bcName) ?? [])
-        );
+    private buildDomains(result: CraftExtractionResult): Domain[] {
+        return (result.domains ?? [])
+            .map(d => {
+                const boundedContexts: BoundedContext[] = (d.boundedContexts ?? []).map(bc => ({
+                    id: DomainC.GenerateContextId(d.name, bc.name),
+                    name: bc.name,
+                    description: `Bounded Context: ${bc.name}`,
+                    expanded: false,
+                    showReferences: false,
+                    selected: true,
+                    partiallySelected: false,
+                    focused: true,
+                    inCurrentFile: d.inCurrentFile,
+                    useCases: [],
+                    referencedIn: [],
+                    selectedUseCases: 0,
+                    totalUseCases: 0,
+                }));
 
-        // Map<domainName, Map<bcName, LspDomainRef>>
-        const domainMap = new Map<string, Map<string, LspDomainRef>>();
-
-        for (const svc of result.services ?? []) {
-            for (const ref of svc.domains ?? []) {
-                if (!domainMap.has(ref.name)) {
-                    domainMap.set(ref.name, new Map());
-                }
-                domainMap.get(ref.name)!.set(ref.bcName, ref);
-            }
-        }
-
-        const domains: Domain[] = [];
-
-        for (const [domainName, bcMap] of domainMap) {
-            const boundedContexts: BoundedContext[] = [...bcMap.values()].map(ref => ({
-                id: DomainC.GenerateContextId(domainName, ref.bcName),
-                name: ref.bcName,
-                description: `Bounded Context: ${ref.bcName}`,
-                expanded: false,
-                showReferences: false,
-                selected: true,
-                partiallySelected: false,
-                focused: true,
-                inCurrentFile: currentBCNames.has(ref.bcName),
-                useCases: [],
-                referencedIn: [],
-                selectedUseCases: 0,
-                totalUseCases: 0,
-            }));
-
-            domains.push({
-                id: DomainC.GenerateDomainId(domainName),
-                name: domainName,
-                description: `Domain: ${domainName}`,
-                expanded: domainName === DomainC.DefaultDomain,
-                selected: true,
-                partiallySelected: false,
-                inCurrentFile: boundedContexts.some(bc => bc.inCurrentFile),
-                boundedContexts,
-                selectedUseCases: 0,
-                totalUseCases: 0,
-                selectedBoundedContexts: boundedContexts.length,
+                return {
+                    id: DomainC.GenerateDomainId(d.name),
+                    name: d.name,
+                    description: `Domain: ${d.name}`,
+                    expanded: d.name === DomainC.DefaultDomain,
+                    selected: true,
+                    partiallySelected: false,
+                    inCurrentFile: d.inCurrentFile,
+                    boundedContexts,
+                    selectedUseCases: 0,
+                    totalUseCases: 0,
+                    selectedBoundedContexts: boundedContexts.length,
+                };
+            })
+            .sort((a, b) => {
+                if (a.name === DomainC.DefaultDomain && b.name !== DomainC.DefaultDomain) return 1;
+                if (b.name === DomainC.DefaultDomain && a.name !== DomainC.DefaultDomain) return -1;
+                return a.name.localeCompare(b.name);
             });
-        }
-
-        return domains.sort((a, b) => {
-            if (a.name === DomainC.DefaultDomain && b.name !== DomainC.DefaultDomain) return 1;
-            if (b.name === DomainC.DefaultDomain && a.name !== DomainC.DefaultDomain) return -1;
-            return a.name.localeCompare(b.name);
-        });
     }
 
-    private convertToServiceGroups(
-        result: LspExtractionResult,
-        currentResult: LspExtractionResult | null,
-        domains: Domain[],
-    ): ServiceGroup[] {
-        const currentServiceNames = new Set<string>(
-            (currentResult?.services ?? []).map(s => s.name)
-        );
+    private buildServiceGroups(result: CraftExtractionResult, domains: Domain[]): ServiceGroup[] {
+        const domainByBC = new Map<string, Domain>();
+        for (const d of domains) {
+            for (const bc of d.boundedContexts) {
+                domainByBC.set(bc.name, d);
+            }
+        }
 
         const groupMap = new Map<string, Service[]>();
 
         for (const svc of result.services ?? []) {
-            const parentDomainName = svc.domains?.[0]?.name ?? DomainC.DefaultDomain;
-            const domain = domains.find(d => d.name === parentDomainName) ?? DomainC.EmptyDomain;
-            const bcNames = (svc.domains ?? []).map(d => d.bcName);
-            const boundedContexts = domain.boundedContexts.filter(bc => bcNames.includes(bc.name));
+            const primaryDomain =
+                svc.contexts.map(ctx => domainByBC.get(ctx)).find(d => d !== undefined) ??
+                DomainC.EmptyDomain;
+
+            const boundedContexts = (svc.contexts ?? [])
+                .map(ctx => primaryDomain.boundedContexts.find(bc => bc.name === ctx))
+                .filter((bc): bc is BoundedContext => bc !== undefined);
 
             const service: Service = {
-                id: DomainC.GenerateServiceId(parentDomainName, bcNames[0] ?? '', svc.name),
+                id: DomainC.GenerateServiceId(
+                    primaryDomain.name,
+                    svc.contexts[0] ?? '',
+                    svc.name
+                ),
                 name: svc.name,
-                domain,
+                domain: primaryDomain,
                 boundedContexts,
                 dependencies: [],
                 selected: true,
                 partiallySelected: false,
                 focused: true,
-                inCurrentFile: currentServiceNames.has(svc.name),
+                inCurrentFile: svc.inCurrentFile,
                 expanded: false,
-                blockRange: { startLine: 0, endLine: 0, fileUri: '' },
+                blockRange: {
+                    fileUri: svc.uri,
+                    startLine: svc.startLine,
+                    endLine: svc.endLine,
+                },
             };
 
-            if (!groupMap.has(parentDomainName)) {
-                groupMap.set(parentDomainName, []);
+            if (!groupMap.has(primaryDomain.name)) {
+                groupMap.set(primaryDomain.name, []);
             }
-            groupMap.get(parentDomainName)!.push(service);
+            groupMap.get(primaryDomain.name)!.push(service);
         }
 
         return [...groupMap.entries()].map(([name, services]) => ({
@@ -157,6 +143,18 @@ export class DslExtractService {
             selected: false,
             partiallySelected: false,
             inCurrentFile: services.some(s => s.inCurrentFile),
+        }));
+    }
+
+    private buildActorBlocks(result: CraftExtractionResult): BlockRange[] {
+        return result.actorBlocks ?? [];
+    }
+
+    private buildArchBlocks(result: CraftExtractionResult): BlockRange[] {
+        return (result.archs ?? []).map(arch => ({
+            fileUri: arch.uri,
+            startLine: arch.startLine,
+            endLine: arch.endLine,
         }));
     }
 }
