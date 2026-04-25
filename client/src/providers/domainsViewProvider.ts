@@ -23,6 +23,8 @@ export class DomainsViewProvider implements WebviewViewProvider {
     
     // Store service groups for service block range lookup
     private _serviceGroups: ServiceGroup[] = [];
+    private _actorBlocks: BlockRange[] = [];
+    private _archBlocks: BlockRange[] = [];
 
     // Helper method to get the appropriate domain map based on view mode
     private getDomainsMap(): Map<string, Domain> {
@@ -257,10 +259,12 @@ export class DomainsViewProvider implements WebviewViewProvider {
 
     private async refreshDomains() {
         try {
-            const { domains, serviceGroups } = await this._extractService.discoverDSL({ currentFile: this._state.currentFile });
-            
-            // Store service groups for service block range lookup
+            const { domains, serviceGroups, actorBlocks, archBlocks } = await this._extractService.discoverDSL({ currentFile: this._state.currentFile });
+
+            // Store service groups and block ranges for preview assembly
             this._serviceGroups = serviceGroups;
+            this._actorBlocks = actorBlocks;
+            this._archBlocks = archBlocks;
 
             // Update both current file and workspace domains with preserved states
             // Create deep copies to avoid shared references
@@ -312,22 +316,36 @@ export class DomainsViewProvider implements WebviewViewProvider {
     }
 
     private async handlePreview(selectedDomains: Domain[], selectedUseCases: UseCase[], diagramMode = 'detailed', diagramType = 'domain') {
-        // Collect use case block ranges
-        const blockRanges = selectedUseCases.map(uc => uc.blockRange);
+        const blockRanges: BlockRange[] = [];
 
-        // Collect service block ranges for selected subdomains
-        const serviceBlockRanges = this.getServiceBlockRangesForContexts(selectedDomains);
-        blockRanges.push(...serviceBlockRanges);
+        // Selected use case block ranges
+        selectedUseCases.forEach(uc => blockRanges.push(uc.blockRange));
+
+        // Service block ranges for selected bounded contexts
+        const serviceRanges = this.getServiceBlockRangesForContexts(selectedDomains);
+        blockRanges.push(...serviceRanges);
+
+        // Always include ALL actor blocks (renderer requires actor declarations)
+        blockRanges.push(...this._actorBlocks);
+
+        // Always include ALL arch blocks (renderer may require arch declarations)
+        blockRanges.push(...this._archBlocks);
+
+        // Deduplicate ranges by uri+startLine+endLine
+        const seen = new Set<string>();
+        const dedupedRanges = blockRanges.filter(r => {
+            const key = `${r.fileUri}:${r.startLine}:${r.endLine}`;
+            if (seen.has(key)) { return false; }
+            seen.add(key);
+            return true;
+        });
 
         const partialDsl: string = await this.languageClient.sendRequest('workspace/executeCommand', {
             command: ServerCommands.EXTRACT_PARTIAL_DSL_FROM_BLOCK_RANGES,
-            arguments: [blockRanges]
+            arguments: [dedupedRanges],
         });
         Logger.debug('Partial DSL extracted:', partialDsl);
 
-        // Map to command argument format
-        // diagramMode: 'detailed' | 'architecture' determines level of detail
-        // diagramType: 'domain' | 'sequence' determines the type of diagram
         const commandDiagramType = diagramMode === 'architecture' ? 'Architecture' : 'Domain';
         commands.executeCommand('craft.previewPartialDSL', partialDsl, commandDiagramType, diagramType);
     }

@@ -3,7 +3,7 @@ import { ServicesViewService } from '../services/servicesViewService';
 import { DslExtractService } from '../services/dslExtractService';
 import { ServiceTreeState, ServiceGroup } from '../types/domain';
 import { LanguageClient } from 'vscode-languageclient/node';
-import { ServerCommands } from '../../../shared/lib/types/domain-extraction';
+import { ServerCommands, BlockRange } from '../../../shared/lib/types/domain-extraction';
 import { WebviewMessages, ProviderMessages } from '../types/messages';
 import { Logger } from '../utils/Logger';
 
@@ -23,6 +23,9 @@ export class ServicesViewProvider implements WebviewViewProvider {
         currentFile: undefined,
         isLoading: false,
     };
+
+    private _actorBlocks: BlockRange[] = [];
+    private _archBlocks: BlockRange[] = [];
 
     // Helper method to get the appropriate service groups map based on view mode
     private getServiceGroupsMap(): Map<string, ServiceGroup> {
@@ -260,7 +263,9 @@ export class ServicesViewProvider implements WebviewViewProvider {
 
     private async refreshServices() {
         try {
-            const { serviceGroups } = await this._extractService.discoverDSL({ currentFile: this._state.currentFile });
+            const { serviceGroups, actorBlocks, archBlocks } = await this._extractService.discoverDSL({ currentFile: this._state.currentFile });
+            this._actorBlocks = actorBlocks;
+            this._archBlocks = archBlocks;
 
             // Update both current file and workspace service groups with preserved states
             // Create deep copies to avoid shared references
@@ -314,16 +319,32 @@ export class ServicesViewProvider implements WebviewViewProvider {
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     private async handlePreview(selectedServices: any[], selectedUseCases: any[], focusInfo: any) {
-        const blockRanges = [];
+        const blockRanges: BlockRange[] = [];
+
         selectedServices.forEach(s => blockRanges.push(s.blockRange));
         selectedUseCases.forEach(uc => blockRanges.push(uc.blockRange));
-        
+
+        // Always include ALL actor blocks (renderer requires actor declarations)
+        blockRanges.push(...this._actorBlocks);
+
+        // Always include ALL arch blocks (renderer may require arch declarations)
+        blockRanges.push(...this._archBlocks);
+
+        // Deduplicate ranges by uri+startLine+endLine
+        const seen = new Set<string>();
+        const dedupedRanges = blockRanges.filter(r => {
+            const key = `${r.fileUri}:${r.startLine}:${r.endLine}`;
+            if (seen.has(key)) { return false; }
+            seen.add(key);
+            return true;
+        });
+
         const partialDsl: string = await this.languageClient.sendRequest('workspace/executeCommand', {
             command: ServerCommands.EXTRACT_PARTIAL_DSL_FROM_BLOCK_RANGES,
-            arguments: [blockRanges]
+            arguments: [dedupedRanges],
         });
         Logger.debug('Partial DSL extracted:', partialDsl);
-        
+
         commands.executeCommand('craft.previewC4PartialDSL', partialDsl, focusInfo);
     }
 
