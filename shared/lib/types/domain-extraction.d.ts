@@ -3,22 +3,58 @@ export interface BlockRange {
     endLine: number;
     fileUri: string;
 }
-export interface LspDomainRef {
+export interface CraftExtractionResult {
+    services: CraftServiceEntry[];
+    domains: CraftDomainEntry[];
+    useCases: CraftUseCaseEntry[];
+    actors: CraftActorEntry[];
+    actorBlocks: BlockRange[];
+    archs: CraftArchEntry[];
+}
+export interface CraftServiceEntry {
     name: string;
     uri: string;
-    line: number;
-    bcName: string;
+    startLine: number;
+    endLine: number;
+    contexts: string[];
+    inCurrentFile: boolean;
 }
-export interface LspServiceEntry {
+export interface CraftDomainEntry {
     name: string;
-    domains: LspDomainRef[];
+    uri: string;
+    startLine: number;
+    endLine: number;
+    boundedContexts: CraftBCEntry[];
+    inCurrentFile: boolean;
 }
-export interface LspExtractionResult {
-    services: LspServiceEntry[];
+export interface CraftBCEntry {
+    name: string;
+    startLine: number;
+}
+export interface CraftUseCaseEntry {
+    name: string;
+    uri: string;
+    startLine: number;
+    endLine: number;
+    inCurrentFile: boolean;
+}
+export interface CraftActorEntry {
+    name: string;
+    type: string;
+    uri: string;
+    startLine: number;
+    endLine: number;
+    inCurrentFile: boolean;
+}
+export interface CraftArchEntry {
+    name: string;
+    uri: string;
+    startLine: number;
+    endLine: number;
+    inCurrentFile: boolean;
 }
 export declare const ServerCommands: {
-    readonly EXTRACT_DOMAINS_FROM_CURRENT: "EXTRACT_DOMAINS_FROM_CURRENT";
-    readonly EXTRACT_DOMAINS_FROM_WORKSPACE: "EXTRACT_DOMAINS_FROM_WORKSPACE";
+    readonly CRAFT_EXTRACT_WORKSPACE: "CRAFT_EXTRACT_WORKSPACE";
     readonly EXTRACT_PARTIAL_DSL_FROM_BLOCK_RANGES: "craft.extractDslFromBlockRanges";
 };
 export declare const WebviewMessages: {

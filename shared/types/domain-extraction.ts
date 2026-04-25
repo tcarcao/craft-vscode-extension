@@ -4,70 +4,96 @@ export interface BlockRange {
   fileUri: string;
 }
 
-// LspDomainRef is the per-bounded-context entry inside each service in the
-// server's workspace/executeCommand response.
-export interface LspDomainRef {
-  name: string;    // parent domain name
-  uri: string;     // file URI where the domain/BC is declared
-  line: number;    // 1-based source line
-  bcName: string;  // bounded context name
+// CraftExtractionResult is the response shape for CRAFT_EXTRACT_WORKSPACE.
+export interface CraftExtractionResult {
+  services: CraftServiceEntry[];
+  domains: CraftDomainEntry[];
+  useCases: CraftUseCaseEntry[];
+  actors: CraftActorEntry[];
+  actorBlocks: BlockRange[];
+  archs: CraftArchEntry[];
 }
 
-// LspServiceEntry is one service in the server's response.
-export interface LspServiceEntry {
+export interface CraftServiceEntry {
   name: string;
-  domains: LspDomainRef[];
+  uri: string;
+  startLine: number;
+  endLine: number;
+  contexts: string[];
+  inCurrentFile: boolean;
 }
 
-// LspExtractionResult is the actual shape returned by the Go LSP server for
-// both EXTRACT_DOMAINS_FROM_CURRENT and EXTRACT_DOMAINS_FROM_WORKSPACE.
-export interface LspExtractionResult {
-  services: LspServiceEntry[];
+export interface CraftDomainEntry {
+  name: string;
+  uri: string;
+  startLine: number;
+  endLine: number;
+  boundedContexts: CraftBCEntry[];
+  inCurrentFile: boolean;
 }
 
-// Command request/response types
+export interface CraftBCEntry {
+  name: string;
+  startLine: number;
+}
+
+export interface CraftUseCaseEntry {
+  name: string;
+  uri: string;
+  startLine: number;
+  endLine: number;
+  inCurrentFile: boolean;
+}
+
+export interface CraftActorEntry {
+  name: string;
+  type: string;
+  uri: string;
+  startLine: number;
+  endLine: number;
+  inCurrentFile: boolean;
+}
+
+export interface CraftArchEntry {
+  name: string;
+  uri: string;
+  startLine: number;
+  endLine: number;
+  inCurrentFile: boolean;
+}
+
 export const ServerCommands = {
-  EXTRACT_DOMAINS_FROM_CURRENT: 'EXTRACT_DOMAINS_FROM_CURRENT',
-  EXTRACT_DOMAINS_FROM_WORKSPACE: 'EXTRACT_DOMAINS_FROM_WORKSPACE',
-  EXTRACT_PARTIAL_DSL_FROM_BLOCK_RANGES: 'craft.extractDslFromBlockRanges'
+  CRAFT_EXTRACT_WORKSPACE: 'CRAFT_EXTRACT_WORKSPACE',
+  EXTRACT_PARTIAL_DSL_FROM_BLOCK_RANGES: 'craft.extractDslFromBlockRanges',
 } as const;
 
-// Webview message types - from webview to provider
 export const WebviewMessages = {
-  // Common messages
   READY: 'ready',
   REFRESH: 'refresh',
   SET_VIEW_MODE: 'setViewMode',
   SHOW_INFORMATION: 'showInformation',
-  
-  // Domain view messages
   PREVIEW: 'preview',
-  
-  // Selection commands (triggered by toolbar)
   SELECTION_COMMAND: 'selectionCommand',
   REFRESH_COMMAND: 'refreshCommand',
   PREVIEW_COMMAND: 'previewCommand',
-  TOGGLE_OPTIONS_COMMAND: 'toggleOptionsCommand'
+  TOGGLE_OPTIONS_COMMAND: 'toggleOptionsCommand',
 } as const;
 
-// Provider message types - from provider to webview
 export const ProviderMessages = {
   INITIAL_DATA: 'initialData',
   DATA_REFRESH: 'dataRefresh',
   SELECTION_COMMAND: 'selectionCommand',
   REFRESH_COMMAND: 'refreshCommand',
   PREVIEW_COMMAND: 'previewCommand',
-  TOGGLE_OPTIONS_COMMAND: 'toggleOptionsCommand'
+  TOGGLE_OPTIONS_COMMAND: 'toggleOptionsCommand',
 } as const;
 
-// Selection command actions
 export const SelectionActions = {
   SELECT_ALL: 'selectAll',
   SELECT_NONE: 'selectNone',
-  SELECT_CURRENT_FILE: 'selectCurrentFile'
+  SELECT_CURRENT_FILE: 'selectCurrentFile',
 } as const;
 
-// Message payload types
 export interface WebviewMessage {
   type: string;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -81,7 +107,10 @@ export interface ShowInformationMessage extends WebviewMessage {
 
 export interface SelectionCommandMessage extends WebviewMessage {
   type: typeof WebviewMessages.SELECTION_COMMAND;
-  action: typeof SelectionActions.SELECT_ALL | typeof SelectionActions.SELECT_NONE | typeof SelectionActions.SELECT_CURRENT_FILE;
+  action:
+    | typeof SelectionActions.SELECT_ALL
+    | typeof SelectionActions.SELECT_NONE
+    | typeof SelectionActions.SELECT_CURRENT_FILE;
 }
 
 export interface SetViewModeMessage extends WebviewMessage {
