@@ -219,8 +219,8 @@ describe('resolveBinary — checksum mismatch', () => {
   it('throws when SHA256 does not match checksums.txt', async () => {
     // beforeEach already clears mocks; set up workspace + withProgress mocks here
     const { workspace, window } = await import('vscode');
-    (workspace.getConfiguration as any).mockReturnValue({ get: jest.fn().mockReturnValue('') });
-    (window.withProgress as any).mockImplementation(
+    (workspace.getConfiguration as jest.Mock).mockReturnValue({ get: jest.fn().mockReturnValue('') });
+    (window.withProgress as jest.Mock).mockImplementation(
       (_opts: unknown, task: (progress: { report: jest.Mock }) => Promise<void>) =>
         task({ report: jest.fn() })
     );
@@ -251,8 +251,8 @@ describe('resolveBinary — checksum mismatch', () => {
 describe('resolveBinary — old version cleanup', () => {
   it('removes stale version directories after successful download', async () => {
     const { workspace, window } = await import('vscode');
-    (workspace.getConfiguration as any).mockReturnValue({ get: jest.fn().mockReturnValue('') });
-    (window.withProgress as any).mockImplementation(
+    (workspace.getConfiguration as jest.Mock).mockReturnValue({ get: jest.fn().mockReturnValue('') });
+    (window.withProgress as jest.Mock).mockImplementation(
       (_opts: unknown, task: (progress: { report: jest.Mock }) => Promise<void>) =>
         task({ report: jest.fn() })
     );
