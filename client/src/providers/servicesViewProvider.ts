@@ -323,10 +323,10 @@ export class ServicesViewProvider implements WebviewViewProvider {
         const blockRanges: BlockRange[] = [];
 
         selectedServices.forEach(s => blockRanges.push(s.blockRange));
-        Logger.debug('[preview] service ranges:', selectedServices.length, JSON.stringify(selectedServices.map((s: any) => s.blockRange)));
+        Logger.debug('[preview] service ranges:', selectedServices.length, JSON.stringify(selectedServices.map(s => s.blockRange)));
 
         selectedUseCases.forEach(uc => blockRanges.push(uc.blockRange));
-        Logger.debug('[preview] use case ranges:', selectedUseCases.length, JSON.stringify(selectedUseCases.map((uc: any) => uc.blockRange)));
+        Logger.debug('[preview] use case ranges:', selectedUseCases.length, JSON.stringify(selectedUseCases.map(uc => uc.blockRange)));
 
         // Always include ALL actor blocks (renderer requires actor declarations)
         Logger.debug('[preview] actor blocks:', this._actorBlocks.length, JSON.stringify(this._actorBlocks));

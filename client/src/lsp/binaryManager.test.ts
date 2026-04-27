@@ -62,12 +62,10 @@ describe('resolveBinary — executablePath setting override', () => {
       get: jest.fn().mockReturnValue('/nonexistent/craft'),
     });
     // Make withProgress execute the task callback so downloadString is actually called
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    (window.withProgress as any).mockImplementation((_opts: unknown, task: (p: { report: () => void }) => Promise<unknown>) =>
+    (window.withProgress as jest.Mock).mockImplementation((_opts: unknown, task: (p: { report: () => void }) => Promise<unknown>) =>
       task({ report: () => undefined })
     );
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    (window.showErrorMessage as any).mockResolvedValue(undefined);
+    (window.showErrorMessage as jest.Mock<() => Promise<unknown>>).mockResolvedValue(undefined);
 
     const deps: BinaryManagerDeps = {
       existsSync: () => false,
@@ -104,7 +102,7 @@ describe('resolveBinary — cache hit', () => {
 describe('_sha256File', () => {
   it('computes the correct SHA256 hex digest', async () => {
     const content = Buffer.from('hello craft');
-    jest.spyOn(fsPromises, 'readFile').mockResolvedValue(content as any);
+    (jest.spyOn(fsPromises, 'readFile') as unknown as jest.Mock<() => Promise<unknown>>).mockResolvedValue(content);
 
     const result = await _sha256File('/any/path');
 
@@ -119,10 +117,10 @@ describe('_sha256File', () => {
 describe('resolveBinary — full download happy path', () => {
   beforeEach(async () => {
     const { workspace, window } = await import('vscode');
-    (workspace.getConfiguration as any).mockReturnValue({
+    (workspace.getConfiguration as jest.Mock).mockReturnValue({
       get: jest.fn().mockReturnValue(''),
     });
-    (window.withProgress as any).mockImplementation(
+    (window.withProgress as jest.Mock).mockImplementation(
       (_opts: unknown, task: (progress: { report: jest.Mock }) => Promise<void>) =>
         task({ report: jest.fn() })
     );
@@ -294,12 +292,12 @@ describe('resolveBinary — old version cleanup', () => {
 describe('resolveBinary — download failure UX', () => {
   it('shows error message on download failure', async () => {
     const { workspace, window } = await import('vscode');
-    (workspace.getConfiguration as any).mockReturnValue({ get: jest.fn().mockReturnValue('') });
-    (window.withProgress as any).mockImplementation(
+    (workspace.getConfiguration as jest.Mock).mockReturnValue({ get: jest.fn().mockReturnValue('') });
+    (window.withProgress as jest.Mock).mockImplementation(
       (_opts: unknown, task: (progress: { report: jest.Mock }) => Promise<void>) =>
         task({ report: jest.fn() })
     );
-    (window.showErrorMessage as any).mockResolvedValue(undefined);
+    (window.showErrorMessage as jest.Mock<() => Promise<unknown>>).mockResolvedValue(undefined);
 
     const deps: BinaryManagerDeps = {
       existsSync: () => false,

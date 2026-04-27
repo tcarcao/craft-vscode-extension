@@ -19,7 +19,7 @@ export const PLATFORM_MAP: Record<string, { os: string; arch: string; ext: strin
   'win32-x64':    { os: 'windows', arch: 'amd64', ext: 'zip'    },
 };
 
-export type BinaryManagerDeps = {
+export interface BinaryManagerDeps {
   existsSync?: (p: string) => boolean;
   downloadString?: (url: string) => Promise<string>;
   downloadFile?: (url: string, dest: string, onProgress: (r: number, t: number) => void) => Promise<void>;
@@ -33,7 +33,7 @@ export type BinaryManagerDeps = {
   chmod?: (p: string, mode: number) => Promise<void>;
   readdir?: (p: string) => Promise<string[]>;
   rm?: (p: string, opts?: { recursive?: boolean; force?: boolean }) => Promise<void>;
-};
+}
 
 export async function resolveBinary(context: ExtensionContext, deps: BinaryManagerDeps = {}): Promise<string> {
   const {
@@ -117,7 +117,7 @@ export async function resolveBinary(context: ExtensionContext, deps: BinaryManag
   return binaryPath;
 }
 
-type DownloadParams = {
+interface DownloadParams {
   context: ExtensionContext;
   version: string;
   entry: { os: string; arch: string; ext: string };
@@ -136,7 +136,7 @@ type DownloadParams = {
   chmod: (p: string, mode: number) => Promise<void>;
   readdir: (p: string) => Promise<string[]>;
   rm: (p: string, opts?: { recursive?: boolean; force?: boolean }) => Promise<void>;
-};
+}
 
 async function _performDownload(p: DownloadParams): Promise<void> {
   const { version, entry, binaryName, binaryPath } = p;
