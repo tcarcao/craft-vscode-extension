@@ -60,7 +60,7 @@ export async function resolveBinary(context: ExtensionContext, deps: BinaryManag
   }
 
   // Step 2: Build expected path
-  const version = context.extension.packageJSON.version as string;
+  const version = (context.extension.packageJSON.lspVersion ?? context.extension.packageJSON.version) as string;
   const platformKey = `${platform()}-${arch()}`;
   const entry = PLATFORM_MAP[platformKey];
   if (!entry) {
