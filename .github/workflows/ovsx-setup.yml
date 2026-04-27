@@ -1,0 +1,11 @@
+name: Create Open VSX Namespace
+
+on:
+  workflow_dispatch:
+
+jobs:
+  create-namespace:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Create tcarcao namespace on Open VSX
+        run: npx ovsx create-namespace tcarcao -p ${{ secrets.OVSX_PAT }}
