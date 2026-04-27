@@ -43,6 +43,8 @@ export interface CraftUseCaseEntry {
   startLine: number;
   endLine: number;
   inCurrentFile: boolean;
+  entryPointContext?: string;
+  involvedContexts?: string[];
 }
 
 export interface CraftActorEntry {

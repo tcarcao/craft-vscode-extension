@@ -12,13 +12,12 @@
 		"jsx": "react-jsx",
 		"moduleResolution": "node",
 		"allowSyntheticDefaultImports": true,
-		"esModuleInterop": true
+		"esModuleInterop": true,
+		"types": ["node", "jest"],
+		"skipLibCheck": true
 	},
 	"include": [
 		"src"
-	],
-	"types": [
-		"node"
 	],
 	"exclude": [
 		"node_modules",

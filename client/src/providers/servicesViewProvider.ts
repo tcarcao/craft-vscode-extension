@@ -319,15 +319,21 @@ export class ServicesViewProvider implements WebviewViewProvider {
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     private async handlePreview(selectedServices: any[], selectedUseCases: any[], focusInfo: any) {
+        Logger.debug('[preview] services view preview triggered', { services: selectedServices.length, useCases: selectedUseCases.length });
         const blockRanges: BlockRange[] = [];
 
         selectedServices.forEach(s => blockRanges.push(s.blockRange));
+        Logger.debug('[preview] service ranges:', selectedServices.length, JSON.stringify(selectedServices.map((s: any) => s.blockRange)));
+
         selectedUseCases.forEach(uc => blockRanges.push(uc.blockRange));
+        Logger.debug('[preview] use case ranges:', selectedUseCases.length, JSON.stringify(selectedUseCases.map((uc: any) => uc.blockRange)));
 
         // Always include ALL actor blocks (renderer requires actor declarations)
+        Logger.debug('[preview] actor blocks:', this._actorBlocks.length, JSON.stringify(this._actorBlocks));
         blockRanges.push(...this._actorBlocks);
 
         // Always include ALL arch blocks (renderer may require arch declarations)
+        Logger.debug('[preview] arch blocks:', this._archBlocks.length, JSON.stringify(this._archBlocks));
         blockRanges.push(...this._archBlocks);
 
         // Deduplicate ranges by uri+startLine+endLine
@@ -339,11 +345,18 @@ export class ServicesViewProvider implements WebviewViewProvider {
             return true;
         });
 
+        Logger.debug('[preview] sending ranges to LSP:', JSON.stringify(dedupedRanges));
+
         const partialDsl: string = await this.languageClient.sendRequest('workspace/executeCommand', {
             command: ServerCommands.EXTRACT_PARTIAL_DSL_FROM_BLOCK_RANGES,
             arguments: [dedupedRanges],
         });
-        Logger.debug('Partial DSL extracted:', partialDsl);
+
+        if (!partialDsl) {
+            Logger.warn('[preview] DSL result is empty — check that block ranges reference open files in the workspace');
+        } else {
+            Logger.debug('[preview] DSL result (' + partialDsl.length + ' chars):\n' + partialDsl);
+        }
 
         commands.executeCommand('craft.previewC4PartialDSL', partialDsl, focusInfo);
     }

@@ -98,6 +98,7 @@ export interface UseCase {
     scenarios: string[];
     entryPointContext: string;
     involvedContexts: string[];
+    inCurrentFile: boolean;
 }
 
 function generateUseCaseId(domainName: string, contextName: string, useCaseName: string): string {

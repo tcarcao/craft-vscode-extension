@@ -316,19 +316,24 @@ export class DomainsViewProvider implements WebviewViewProvider {
     }
 
     private async handlePreview(selectedDomains: Domain[], selectedUseCases: UseCase[], diagramMode = 'detailed', diagramType = 'domain') {
+        Logger.debug('[preview] domains view preview triggered', { diagramMode, diagramType });
         const blockRanges: BlockRange[] = [];
 
         // Selected use case block ranges
         selectedUseCases.forEach(uc => blockRanges.push(uc.blockRange));
+        Logger.debug('[preview] use case ranges:', selectedUseCases.length, JSON.stringify(selectedUseCases.map(uc => uc.blockRange)));
 
         // Service block ranges for selected bounded contexts
         const serviceRanges = this.getServiceBlockRangesForContexts(selectedDomains);
         blockRanges.push(...serviceRanges);
+        Logger.debug('[preview] service ranges:', serviceRanges.length, JSON.stringify(serviceRanges));
 
         // Always include ALL actor blocks (renderer requires actor declarations)
+        Logger.debug('[preview] actor blocks:', this._actorBlocks.length, JSON.stringify(this._actorBlocks));
         blockRanges.push(...this._actorBlocks);
 
         // Always include ALL arch blocks (renderer may require arch declarations)
+        Logger.debug('[preview] arch blocks:', this._archBlocks.length, JSON.stringify(this._archBlocks));
         blockRanges.push(...this._archBlocks);
 
         // Deduplicate ranges by uri+startLine+endLine
@@ -340,11 +345,18 @@ export class DomainsViewProvider implements WebviewViewProvider {
             return true;
         });
 
+        Logger.debug('[preview] sending ranges to LSP:', JSON.stringify(dedupedRanges));
+
         const partialDsl: string = await this.languageClient.sendRequest('workspace/executeCommand', {
             command: ServerCommands.EXTRACT_PARTIAL_DSL_FROM_BLOCK_RANGES,
             arguments: [dedupedRanges],
         });
-        Logger.debug('Partial DSL extracted:', partialDsl);
+
+        if (!partialDsl) {
+            Logger.warn('[preview] DSL result is empty — check that block ranges reference open files in the workspace');
+        } else {
+            Logger.debug('[preview] DSL result (' + partialDsl.length + ' chars):\n' + partialDsl);
+        }
 
         const commandDiagramType = diagramMode === 'architecture' ? 'Architecture' : 'Domain';
         commands.executeCommand('craft.previewPartialDSL', partialDsl, commandDiagramType, diagramType);
@@ -489,7 +501,7 @@ export class DomainsViewProvider implements WebviewViewProvider {
                 .filter(boundedContext => boundedContext.inCurrentFile)
                 .map(boundedContext => ({
                     ...boundedContext,
-                    useCases: boundedContext.useCases
+                    useCases: boundedContext.useCases.filter(uc => uc.inCurrentFile)
                 }))
         }));
     }
@@ -519,9 +531,11 @@ export class DomainsViewProvider implements WebviewViewProvider {
     private deepCopyDomain(domain: Domain, inCurrentFileFilter: boolean): Domain {
         return {
             ...domain,
-            boundedContexts: domain.boundedContexts.filter(bc => inCurrentFileFilter === true ? bc.inCurrentFile : true).map(boundedContext => ({
+            boundedContexts: domain.boundedContexts.filter(bc => inCurrentFileFilter ? bc.inCurrentFile : true).map(boundedContext => ({
                 ...boundedContext,
-                useCases: boundedContext.useCases.map(useCase => ({ ...useCase })),
+                useCases: boundedContext.useCases
+                    .filter(uc => inCurrentFileFilter ? uc.inCurrentFile : true)
+                    .map(useCase => ({ ...useCase })),
                 referencedIn: boundedContext.referencedIn.map(ref => ({ ...ref }))
             }))
         };
