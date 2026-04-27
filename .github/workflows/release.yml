@@ -82,7 +82,7 @@ jobs:
 
       - name: Smoke-test craft binary download
         run: |
-          VERSION=${GITHUB_REF#refs/tags/v}
+          VERSION=$(node -p "require('./package.json').lspVersion")
           ARCHIVE="craft_${VERSION}_linux_amd64.tar.gz"
           BASE_URL="https://github.com/tcarcao/craft/releases/download/v${VERSION}"
 
