@@ -3,7 +3,7 @@
     "displayName": "Craft Arch Diagrams",
     "description": "Syntax highlighting, language server, and visual diagram generation for the Craft architecture modeling language",
     "version": "0.1.3",
-    "lspVersion": "2.5.2",
+    "lspVersion": "2.5.3",
     "publisher": "tcarcao",
     "icon": "resources/craft_icon.png",
     "repository": {
