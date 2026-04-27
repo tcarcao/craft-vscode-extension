@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.4] — 2026-04-27
+
+### Changed
+- Bundled LSP binary updated to `craft v2.5.2` (fixes parse error on numeric tokens in action phrases).
+
+---
+
 ## [0.1.0] — 2026-04-24 (pre-release)
 
 ### Added
