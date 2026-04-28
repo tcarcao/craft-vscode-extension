@@ -3,7 +3,7 @@
     "displayName": "Craft Arch Diagrams",
     "description": "Syntax highlighting, language server, and visual diagram generation for the Craft architecture modeling language",
     "version": "0.1.5",
-    "lspVersion": "2.5.3",
+    "lspVersion": "2.5.4",
     "publisher": "tcarcao",
     "icon": "resources/craft_icon.png",
     "repository": {
@@ -497,7 +497,9 @@
             }
         ],
         "configurationDefaults": {
-            "editor.semanticHighlighting.enabled": true,
+            "[craft]": {
+                "editor.semanticHighlighting.enabled": true
+            },
             "editor.semanticTokenColorCustomizations": {
                 "rules": {
                     "craft-flow-keyword": {
