@@ -24,129 +24,120 @@
         "comment": {
             "patterns": [
                 {
-                    "name": "comment.line.double-slash.craft",
+                    "name": "comment.line.double-slash",
                     "match": "//.*$"
                 },
                 {
-                    "name": "comment.block.craft",
+                    "name": "comment.block",
                     "begin": "/\\*",
                     "end": "\\*/"
                 }
             ]
         },
         "string": {
-            "name": "string.quoted.double.craft",
+            "name": "string.quoted.double",
             "begin": "\"",
             "end": "\"",
             "patterns": [
                 {
-                    "name": "constant.character.escape.craft",
+                    "name": "constant.character.escape",
                     "match": "\\\\."
                 }
             ]
         },
         "use-case-title": {
-            "comment": "Match use_case keyword followed by its quoted title on the same line",
             "match": "(use_case)\\s+(\"[^\"]*\")",
             "captures": {
-                "1": { "name": "keyword.control.use-case.craft" },
-                "2": { "name": "string.quoted.double.craft" }
+                "1": { "name": "keyword.control" },
+                "2": { "name": "string.quoted" }
             }
         },
         "block-keywords": {
-            "comment": "Top-level block-opening keywords",
             "match": "\\b(services|domains|actors|arch|exposure|use_case|when)\\b",
             "captures": {
-                "1": { "name": "keyword.control.craft" }
+                "1": { "name": "keyword.control" }
             }
         },
         "service-block-keyword": {
-            "comment": "Standalone 'service' keyword (block-level, not actor-type value)",
             "match": "^\\s*(service)\\b",
             "captures": {
-                "1": { "name": "keyword.control.craft" }
+                "1": { "name": "keyword.control" }
             }
         },
         "domain-block-keyword": {
-            "comment": "Standalone 'domain' keyword (block-level definition)",
             "match": "^\\s*(domain)\\b",
             "captures": {
-                "1": { "name": "keyword.control.craft" }
+                "1": { "name": "keyword.control" }
             }
         },
         "actor-block-keyword": {
-            "comment": "Standalone 'actor' keyword (block-level definition)",
             "match": "^\\s*(actor)\\b",
             "captures": {
-                "1": { "name": "keyword.control.craft" }
+                "1": { "name": "keyword.control" }
             }
         },
         "property-keywords": {
-            "comment": "Property / label keywords that appear before ':'",
             "match": "\\b(contexts|language|data-stores|deployment|to|through)\\s*:",
             "captures": {
-                "1": { "name": "keyword.other.property.craft" }
+                "1": { "name": "keyword.other" }
             }
         },
         "section-keywords": {
-            "comment": "Architecture section labels used inside arch blocks",
             "match": "\\b(presentation|gateway)\\s*:",
             "captures": {
-                "1": { "name": "keyword.other.section.craft" }
+                "1": { "name": "keyword.other" }
             }
         },
         "action-verbs": {
-            "comment": "Contextual action verbs — appear after an identifier in use_case bodies",
             "match": "\\b(asks|notifies|listens|returns)\\b",
             "captures": {
-                "1": { "name": "keyword.operator.action.craft" }
+                "1": { "name": "entity.name.function" }
             }
         },
         "actor-types": {
-            "comment": "Actor type values (user / system / service after 'actor NAME')",
             "match": "\\b(user|system|service)\\b",
             "captures": {
-                "1": { "name": "support.type.actor.craft" }
+                "1": { "name": "support.type" }
             }
         },
         "number": {
-            "name": "constant.numeric.craft",
+            "name": "constant.numeric",
             "match": "\\b[0-9]+(\\.[0-9]+)?(%)?\\b"
         },
         "boolean": {
-            "name": "constant.language.boolean.craft",
+            "name": "constant.language",
             "match": "\\b(true|false)\\b"
         },
         "punctuation": {
             "patterns": [
                 {
-                    "name": "punctuation.section.craft",
+                    "name": "punctuation.operator",
                     "match": "[{}]"
                 },
                 {
-                    "name": "punctuation.separator.craft",
+                    "name": "punctuation.operator",
                     "match": ","
                 },
                 {
-                    "name": "punctuation.definition.craft",
+                    "name": "punctuation.operator",
                     "match": ":"
                 },
                 {
-                    "name": "punctuation.accessor.craft",
+                    "name": "punctuation.operator",
                     "match": "->"
                 },
                 {
-                    "name": "keyword.operator.arrow.craft",
+                    "name": "punctuation.operator",
                     "match": ">"
                 },
                 {
-                    "name": "punctuation.bracket.craft",
+                    "name": "punctuation.bracket",
                     "match": "[()]"
                 }
             ]
         },
         "identifier": {
-            "name": "variable.other.craft",
+            "name": "variable.other",
             "match": "[A-Za-z_][A-Za-z0-9_-]*"
         }
     }
