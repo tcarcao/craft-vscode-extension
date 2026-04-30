@@ -136,182 +136,227 @@
         "semanticTokenTypes": [
             {
                 "id": "craft-flow-keyword",
+                "superType": "keyword",
                 "description": "Flow control keywords like use_case, when"
             },
             {
                 "id": "craft-services-keyword",
+                "superType": "keyword",
                 "description": "Services block keyword"
             },
             {
                 "id": "craft-arch-keyword",
+                "superType": "keyword",
                 "description": "Architecture block keyword"
             },
             {
                 "id": "craft-exposure-keyword",
+                "superType": "keyword",
                 "description": "Exposure block keyword"
             },
             {
                 "id": "craft-domain-keyword",
+                "superType": "keyword",
                 "description": "Domain block keyword"
             },
             {
                 "id": "craft-actor-keyword",
+                "superType": "keyword",
                 "description": "Actor block keyword"
             },
             {
                 "id": "craft-actors-keyword",
+                "superType": "keyword",
                 "description": "Actors block keyword"
             },
             {
                 "id": "craft-actor-type",
+                "superType": "keyword",
                 "description": "Actor type keywords (user, system, service)"
             },
             {
                 "id": "craft-contexts-property",
+                "superType": "property",
                 "description": "Contexts property keyword"
             },
             {
                 "id": "craft-language-property",
+                "superType": "property",
                 "description": "Language property keyword"
             },
             {
                 "id": "craft-data-stores-property",
+                "superType": "property",
                 "description": "Data stores property keyword"
             },
             {
                 "id": "craft-deployment-property",
+                "superType": "property",
                 "description": "Deployment property keyword"
             },
             {
                 "id": "craft-to-property",
+                "superType": "property",
                 "description": "To property keyword"
             },
             {
                 "id": "craft-through-property",
+                "superType": "property",
                 "description": "Through property keyword"
             },
             {
                 "id": "craft-presentation-section",
+                "superType": "property",
                 "description": "Presentation section keyword"
             },
             {
                 "id": "craft-gateway-section",
+                "superType": "property",
                 "description": "Gateway section keyword"
             },
             {
                 "id": "craft-asks-verb",
+                "superType": "function",
                 "description": "Asks action verb"
             },
             {
                 "id": "craft-notifies-verb",
+                "superType": "function",
                 "description": "Notifies action verb"
             },
             {
                 "id": "craft-listens-verb",
+                "superType": "function",
                 "description": "Listens action verb"
             },
             {
                 "id": "craft-returns-verb",
+                "superType": "function",
                 "description": "Returns action verb"
             },
             {
                 "id": "craft-service-name",
+                "superType": "class",
                 "description": "Service names"
             },
             {
                 "id": "craft-domain-name",
+                "superType": "namespace",
                 "description": "Domain definition names"
             },
             {
                 "id": "craft-domain-list",
+                "superType": "namespace",
                 "description": "Domain list values"
             },
             {
                 "id": "craft-data-store-name",
+                "superType": "variable",
                 "description": "Data store names"
             },
             {
                 "id": "craft-context-name",
+                "superType": "type",
                 "description": "Bounded context names"
             },
             {
                 "id": "craft-component-name",
+                "superType": "type",
                 "description": "Component names"
             },
             {
                 "id": "craft-exposure-name",
+                "superType": "interface",
                 "description": "Exposure names"
             },
             {
                 "id": "craft-language-value",
+                "superType": "enumMember",
                 "description": "Language values"
             },
             {
                 "id": "craft-actor-name",
+                "superType": "parameter",
                 "description": "Actor names (in use cases)"
             },
             {
                 "id": "craft-actor-definition",
+                "superType": "parameter",
                 "description": "Actor definition names"
             },
             {
                 "id": "craft-regular-verb",
+                "superType": "function",
                 "description": "Regular verbs"
             },
             {
                 "id": "craft-phrase-word",
+                "superType": "variable",
                 "description": "Words in phrases"
             },
             {
                 "id": "craft-connector-word",
+                "superType": "operator",
                 "description": "Connector words (a, an, the, to, from, etc.)"
             },
             {
                 "id": "craft-deployment-type",
+                "superType": "enumMember",
                 "description": "Deployment type"
             },
             {
                 "id": "craft-deployment-target",
-                "description": "Deplyment target"
+                "superType": "enumMember",
+                "description": "Deployment target"
             },
             {
                 "id": "craft-usecase-string",
+                "superType": "string",
                 "description": "Use case names"
             },
             {
                 "id": "craft-event-string",
+                "superType": "event",
                 "description": "Event strings"
             },
             {
                 "id": "craft-regular-string",
+                "superType": "string",
                 "description": "Regular strings"
             },
             {
                 "id": "craft-comment",
+                "superType": "comment",
                 "description": "Comments"
             },
             {
                 "id": "craft-boolean",
+                "superType": "enumMember",
                 "description": "Boolean values (true, false)"
             },
             {
                 "id": "craft-braces",
+                "superType": "operator",
                 "description": "Braces"
             },
             {
                 "id": "craft-comma",
+                "superType": "operator",
                 "description": "Commas"
             },
             {
                 "id": "craft-percentage",
+                "superType": "number",
                 "description": "Percentage"
             },
             {
                 "id": "craft-parenthesis",
+                "superType": "operator",
                 "description": "Parenthesis"
             },
             {
                 "id": "craft-deployment-arrow",
+                "superType": "operator",
                 "description": "Deployment Arrow"
             }
         ],
@@ -335,33 +380,33 @@
                     "craft-through-property": ["keyword.other"],
                     "craft-presentation-section": ["keyword.other"],
                     "craft-gateway-section": ["keyword.other"],
-                    "craft-asks-verb": ["support.function"],
-                    "craft-notifies-verb": ["support.function"],
-                    "craft-listens-verb": ["support.function"],
-                    "craft-returns-verb": ["support.function"],
-                    "craft-regular-verb": ["support.function"],
-                    "craft-actor-definition": ["variable.parameter"],
+                    "craft-asks-verb": ["entity.name.function"],
+                    "craft-notifies-verb": ["entity.name.function"],
+                    "craft-listens-verb": ["entity.name.function"],
+                    "craft-returns-verb": ["entity.name.function"],
+                    "craft-regular-verb": ["entity.name.function"],
+                    "craft-actor-definition": ["variable.parameter.craft"],
                     "craft-context-name": ["entity.name.type"],
-                    "craft-service-name": ["entity.name.type"],
+                    "craft-service-name": ["entity.name.class"],
                     "craft-component-name": ["entity.name.type"],
-                    "craft-exposure-name": ["entity.name.type"],
-                    "craft-data-store-name": ["entity.name.type"],
-                    "craft-deployment-type": ["entity.name.type"],
+                    "craft-exposure-name": ["entity.name.interface"],
+                    "craft-data-store-name": ["variable.other"],
+                    "craft-deployment-type": ["variable.other.enummember"],
                     "craft-domain-name": ["entity.name.namespace"],
                     "craft-domain-list": ["entity.name.namespace"],
-                    "craft-actor-name": ["variable.parameter"],
-                    "craft-deployment-target": ["variable.other"],
-                    "craft-actor-type": ["support.type"],
-                    "craft-language-value": ["support.type"],
+                    "craft-actor-name": ["variable.parameter.craft"],
+                    "craft-deployment-target": ["variable.other.enummember"],
+                    "craft-actor-type": ["keyword.other"],
+                    "craft-language-value": ["variable.other.enummember"],
                     "craft-usecase-string": ["string.quoted.double"],
-                    "craft-event-string": ["string.quoted.double"],
+                    "craft-event-string": ["string.other"],
                     "craft-regular-string": ["string.quoted.double"],
-                    "craft-connector-word": ["variable.language"],
-                    "craft-comma": ["punctuation.operator"],
+                    "craft-connector-word": ["keyword.operator"],
+                    "craft-comma": ["punctuation.separator"],
                     "craft-parenthesis": ["punctuation.bracket"],
-                    "craft-braces": ["punctuation.operator"],
-                    "craft-deployment-arrow": ["punctuation.operator"],
-                    "craft-comment": ["comment.line"],
+                    "craft-braces": ["punctuation.definition.block"],
+                    "craft-deployment-arrow": ["keyword.operator"],
+                    "craft-comment": ["comment.line.double-slash"],
                     "craft-boolean": ["constant.language"],
                     "craft-percentage": ["constant.numeric"]
                 }
