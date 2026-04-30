@@ -2,7 +2,7 @@
     "name": "craft-arch-diagrams",
     "displayName": "Craft Arch Diagrams",
     "description": "Syntax highlighting, language server, and visual diagram generation for the Craft architecture modeling language",
-    "version": "0.1.8",
+    "version": "0.1.9",
     "lspVersion": "2.6.1",
     "publisher": "tcarcao",
     "icon": "resources/craft_icon.png",
@@ -365,50 +365,138 @@
             {
                 "language": "craft",
                 "scopes": {
-                    "craft-flow-keyword": ["keyword.control"],
-                    "craft-services-keyword": ["keyword.control"],
-                    "craft-arch-keyword": ["keyword.control"],
-                    "craft-exposure-keyword": ["keyword.control"],
-                    "craft-domain-keyword": ["keyword.control"],
-                    "craft-actor-keyword": ["keyword.control"],
-                    "craft-actors-keyword": ["keyword.control"],
-                    "craft-contexts-property": ["keyword.other"],
-                    "craft-language-property": ["keyword.other"],
-                    "craft-data-stores-property": ["keyword.other"],
-                    "craft-deployment-property": ["keyword.other"],
-                    "craft-to-property": ["keyword.other"],
-                    "craft-through-property": ["keyword.other"],
-                    "craft-presentation-section": ["keyword.other"],
-                    "craft-gateway-section": ["keyword.other"],
-                    "craft-asks-verb": ["entity.name.function"],
-                    "craft-notifies-verb": ["entity.name.function"],
-                    "craft-listens-verb": ["entity.name.function"],
-                    "craft-returns-verb": ["entity.name.function"],
-                    "craft-regular-verb": ["entity.name.function"],
-                    "craft-actor-definition": ["variable.parameter.craft"],
-                    "craft-context-name": ["entity.name.type"],
-                    "craft-service-name": ["entity.name.class"],
-                    "craft-component-name": ["entity.name.type"],
-                    "craft-exposure-name": ["entity.name.interface"],
-                    "craft-data-store-name": ["variable.other"],
-                    "craft-deployment-type": ["variable.other.enummember"],
-                    "craft-domain-name": ["entity.name.namespace"],
-                    "craft-domain-list": ["entity.name.namespace"],
-                    "craft-actor-name": ["variable.parameter.craft"],
-                    "craft-deployment-target": ["variable.other.enummember"],
-                    "craft-actor-type": ["keyword.other"],
-                    "craft-language-value": ["variable.other.enummember"],
-                    "craft-usecase-string": ["string.quoted.double"],
-                    "craft-event-string": ["string.other"],
-                    "craft-regular-string": ["string.quoted.double"],
-                    "craft-connector-word": ["keyword.operator"],
-                    "craft-comma": ["punctuation.separator"],
-                    "craft-parenthesis": ["punctuation.bracket"],
-                    "craft-braces": ["punctuation.definition.block"],
-                    "craft-deployment-arrow": ["keyword.operator"],
-                    "craft-comment": ["comment.line.double-slash"],
-                    "craft-boolean": ["constant.language"],
-                    "craft-percentage": ["constant.numeric"]
+                    "craft-flow-keyword": [
+                        "keyword.control"
+                    ],
+                    "craft-services-keyword": [
+                        "keyword.control"
+                    ],
+                    "craft-arch-keyword": [
+                        "keyword.control"
+                    ],
+                    "craft-exposure-keyword": [
+                        "keyword.control"
+                    ],
+                    "craft-domain-keyword": [
+                        "keyword.control"
+                    ],
+                    "craft-actor-keyword": [
+                        "keyword.control"
+                    ],
+                    "craft-actors-keyword": [
+                        "keyword.control"
+                    ],
+                    "craft-contexts-property": [
+                        "keyword.other"
+                    ],
+                    "craft-language-property": [
+                        "keyword.other"
+                    ],
+                    "craft-data-stores-property": [
+                        "keyword.other"
+                    ],
+                    "craft-deployment-property": [
+                        "keyword.other"
+                    ],
+                    "craft-to-property": [
+                        "keyword.other"
+                    ],
+                    "craft-through-property": [
+                        "keyword.other"
+                    ],
+                    "craft-presentation-section": [
+                        "keyword.other"
+                    ],
+                    "craft-gateway-section": [
+                        "keyword.other"
+                    ],
+                    "craft-asks-verb": [
+                        "entity.name.function"
+                    ],
+                    "craft-notifies-verb": [
+                        "entity.name.function"
+                    ],
+                    "craft-listens-verb": [
+                        "entity.name.function"
+                    ],
+                    "craft-returns-verb": [
+                        "entity.name.function"
+                    ],
+                    "craft-regular-verb": [
+                        "entity.name.function"
+                    ],
+                    "craft-actor-definition": [
+                        "variable.parameter.craft"
+                    ],
+                    "craft-context-name": [
+                        "entity.name.type"
+                    ],
+                    "craft-service-name": [
+                        "entity.name.class"
+                    ],
+                    "craft-component-name": [
+                        "entity.name.type"
+                    ],
+                    "craft-exposure-name": [
+                        "entity.name.interface"
+                    ],
+                    "craft-data-store-name": [
+                        "variable.other"
+                    ],
+                    "craft-deployment-type": [
+                        "variable.other.enummember"
+                    ],
+                    "craft-domain-name": [
+                        "entity.name.namespace"
+                    ],
+                    "craft-domain-list": [
+                        "entity.name.namespace"
+                    ],
+                    "craft-actor-name": [
+                        "variable.parameter.craft"
+                    ],
+                    "craft-deployment-target": [
+                        "variable.other.enummember"
+                    ],
+                    "craft-actor-type": [
+                        "keyword.other"
+                    ],
+                    "craft-language-value": [
+                        "variable.other.enummember"
+                    ],
+                    "craft-usecase-string": [
+                        "string.quoted.double"
+                    ],
+                    "craft-event-string": [
+                        "string.other"
+                    ],
+                    "craft-regular-string": [
+                        "string.quoted.double"
+                    ],
+                    "craft-connector-word": [
+                        "keyword.operator"
+                    ],
+                    "craft-comma": [
+                        "punctuation.separator"
+                    ],
+                    "craft-parenthesis": [
+                        "punctuation.bracket"
+                    ],
+                    "craft-braces": [
+                        "punctuation.definition.block"
+                    ],
+                    "craft-deployment-arrow": [
+                        "keyword.operator"
+                    ],
+                    "craft-comment": [
+                        "comment.line.double-slash"
+                    ],
+                    "craft-boolean": [
+                        "constant.language"
+                    ],
+                    "craft-percentage": [
+                        "constant.numeric"
+                    ]
                 }
             }
         ],
