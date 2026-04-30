@@ -349,7 +349,7 @@
                     "craft-deployment-type": ["entity.name.type"],
                     "craft-domain-name": ["entity.name.namespace"],
                     "craft-domain-list": ["entity.name.namespace"],
-                    "craft-actor-name": ["variable.other"],
+                    "craft-actor-name": ["entity.name.type"],
                     "craft-deployment-target": ["variable.other"],
                     "craft-actor-type": ["support.type"],
                     "craft-language-value": ["support.type"],
