@@ -6,19 +6,21 @@
     "patterns": [
         { "include": "#comment" },
         { "include": "#string" },
+        { "include": "#actor-declaration" },
+        { "include": "#domain-declaration" },
+        { "include": "#service-declaration" },
+        { "include": "#use-case-declaration" },
         { "include": "#block-keywords" },
-        { "include": "#domain-block-keyword" },
-        { "include": "#service-block-keyword" },
-        { "include": "#actor-block-keyword" },
-        { "include": "#property-keywords" },
+        { "include": "#flow-keyword" },
         { "include": "#action-verbs" },
+        { "include": "#connector-keywords" },
         { "include": "#actor-types" },
+        { "include": "#property-keywords" },
         { "include": "#section-keywords" },
-        { "include": "#use-case-title" },
+        { "include": "#entity-name" },
         { "include": "#number" },
         { "include": "#boolean" },
-        { "include": "#punctuation" },
-        { "include": "#identifier" }
+        { "include": "#punctuation" }
     ],
     "repository": {
         "comment": {
@@ -45,35 +47,63 @@
                 }
             ]
         },
-        "use-case-title": {
-            "match": "(use_case)\\s+(\"[^\"]*\")",
+        "actor-declaration": {
+            "match": "^\\s*(actor)\\s+(user|system|service)\\s+([A-Z][A-Za-z0-9_]*)",
             "captures": {
-                "1": { "name": "keyword.control" },
-                "2": { "name": "string.quoted" }
+                "1": { "name": "storage.type" },
+                "2": { "name": "support.type" },
+                "3": { "name": "entity.name.type" }
+            }
+        },
+        "domain-declaration": {
+            "match": "^\\s*(domain)\\s+([A-Z][A-Za-z0-9_]*)",
+            "captures": {
+                "1": { "name": "storage.type" },
+                "2": { "name": "entity.name.type" }
+            }
+        },
+        "service-declaration": {
+            "match": "^\\s*(service)\\s+([A-Z][A-Za-z0-9_]*)",
+            "captures": {
+                "1": { "name": "storage.type" },
+                "2": { "name": "entity.name.type" }
+            }
+        },
+        "use-case-declaration": {
+            "match": "^\\s*(use_case)\\s+(\"[^\"]*\")",
+            "captures": {
+                "1": { "name": "storage.type" },
+                "2": { "name": "string.quoted.double" }
             }
         },
         "block-keywords": {
-            "match": "\\b(services|domains|actors|arch|exposure|use_case|when)\\b",
+            "match": "\\b(services|domains|actors|arch|exposure)\\b",
+            "captures": {
+                "1": { "name": "keyword.other" }
+            }
+        },
+        "flow-keyword": {
+            "match": "^\\s*(when)\\b",
             "captures": {
                 "1": { "name": "keyword.control" }
             }
         },
-        "service-block-keyword": {
-            "match": "^\\s*(service)\\b",
+        "action-verbs": {
+            "match": "\\b(asks|notifies|listens|returns|marks)\\b",
             "captures": {
-                "1": { "name": "keyword.control" }
+                "1": { "name": "entity.name.function" }
             }
         },
-        "domain-block-keyword": {
-            "match": "^\\s*(domain)\\b",
+        "connector-keywords": {
+            "match": "\\b(to|through)\\b",
             "captures": {
-                "1": { "name": "keyword.control" }
+                "1": { "name": "keyword.operator" }
             }
         },
-        "actor-block-keyword": {
-            "match": "^\\s*(actor)\\b",
+        "actor-types": {
+            "match": "\\b(user|system|service)\\b",
             "captures": {
-                "1": { "name": "keyword.control" }
+                "1": { "name": "support.type" }
             }
         },
         "property-keywords": {
@@ -88,17 +118,9 @@
                 "1": { "name": "keyword.other" }
             }
         },
-        "action-verbs": {
-            "match": "\\b(asks|notifies|listens|returns)\\b",
-            "captures": {
-                "1": { "name": "entity.name.function" }
-            }
-        },
-        "actor-types": {
-            "match": "\\b(user|system|service)\\b",
-            "captures": {
-                "1": { "name": "support.type" }
-            }
+        "entity-name": {
+            "name": "entity.name.type",
+            "match": "\\b[A-Z][A-Za-z0-9_]*\\b"
         },
         "number": {
             "name": "constant.numeric",
@@ -111,15 +133,15 @@
         "punctuation": {
             "patterns": [
                 {
-                    "name": "punctuation.operator",
+                    "name": "punctuation.definition.block",
                     "match": "[{}]"
                 },
                 {
-                    "name": "punctuation.operator",
+                    "name": "punctuation.separator",
                     "match": ","
                 },
                 {
-                    "name": "punctuation.operator",
+                    "name": "punctuation.separator",
                     "match": ":"
                 },
                 {
@@ -135,10 +157,6 @@
                     "match": "[()]"
                 }
             ]
-        },
-        "identifier": {
-            "name": "variable.other",
-            "match": "[A-Za-z_][A-Za-z0-9_-]*"
         }
     }
 }
