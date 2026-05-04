@@ -1,5 +1,19 @@
 # Changelog
 
+## [0.1.10] — 2026-05-04
+
+### Changed
+- Bundled LSP binary updated to `craft v2.7.0`.
+
+---
+
+## [0.1.9] — 2026-05-01 (not in previous changelog)
+
+### Changed
+- LSP version bump to `2.6.1`.
+
+---
+
 ## [0.1.4] — 2026-04-27
 
 ### Changed
