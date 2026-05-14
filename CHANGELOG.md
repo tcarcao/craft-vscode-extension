@@ -1,5 +1,27 @@
 # Changelog
 
+## [0.2.0] — 2026-05-14
+
+### Added
+- **Mermaid preview commands.** Three new commands render Mermaid diagrams in-editor via the bundled `mermaid` npm package:
+  - `Craft: Preview Mermaid Domain`
+  - `Craft: Preview Mermaid Sequence`
+  - `Craft: Preview Mermaid C4`
+  Each opens a single reusable webview. Diagrams render client-side — no server-side image generation, works offline (no CDN fetches).
+- **Export commands.** Two new commands shell out to the bundled `craft` CLI:
+  - `Craft: Copy Diagram as Mermaid` — puts Mermaid source on the system clipboard.
+  - `Craft: Export Diagram as Markdown` — writes `.md` files (Mermaid wrapped in fenced blocks) to a user-selected directory. GitHub renders them inline.
+- **`craft.mermaid.theme` setting.** Choose between `default`, `dark`, `forest`, and `neutral` Mermaid themes for in-editor previews.
+
+### Changed
+- Bundled `mermaid@10` (~600 KB minified) is now included in the VSIX. No CDN fetches.
+- Bundled LSP binary updated to `craft v2.8.2`. v2.8.2 adds the `/preview/mermaid/{domain,sequence,c4}` server endpoints the new commands call.
+
+### Notes
+- The new Mermaid commands are Command Palette only in this release. Side-panel buttons in the Domains/Services views continue to use the existing PlantUML preview pipeline. A "Preview as Mermaid" entry in the side panel can land in a follow-up.
+
+---
+
 ## [0.1.11] — 2026-05-14
 
 ### Changed
