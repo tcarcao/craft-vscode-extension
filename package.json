@@ -554,6 +554,11 @@
                 "category": "Craft"
             },
             {
+                "command": "craft.exportMermaidMarkdown",
+                "title": "Craft: Export Diagram as Markdown",
+                "category": "Craft"
+            },
+            {
                 "command": "craft.openSettings",
                 "title": "Craft: Open Settings",
                 "category": "Craft"
