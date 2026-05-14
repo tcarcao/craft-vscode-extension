@@ -549,6 +549,11 @@
                 "category": "Craft"
             },
             {
+                "command": "craft.copyMermaidToClipboard",
+                "title": "Craft: Copy Diagram as Mermaid",
+                "category": "Craft"
+            },
+            {
                 "command": "craft.openSettings",
                 "title": "Craft: Open Settings",
                 "category": "Craft"

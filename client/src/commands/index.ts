@@ -5,6 +5,7 @@ import { handlePreviewDomain, handlePreviewDomainsFromSelection, handlePreviewPa
 import { registerPreviewMermaidDomain } from './previewMermaidDomain';
 import { registerPreviewMermaidSequence } from './previewMermaidSequence';
 import { registerPreviewMermaidC4 } from './previewMermaidC4';
+import { registerCopyMermaidToClipboard } from './copyMermaidToClipboard';
 import { DomainsViewProvider } from '../providers/domainsViewProvider';
 import { ServicesViewProvider } from '../providers/servicesViewProvider';
 
@@ -12,6 +13,7 @@ export function registerPreviewCommands(context: ExtensionContext, domainsProvid
     registerPreviewMermaidDomain(context);
     registerPreviewMermaidSequence(context);
     registerPreviewMermaidC4(context);
+    registerCopyMermaidToClipboard(context);
     context.subscriptions.push(
         commands.registerCommand('craft.previewC4', () =>
             handlePreviewC4()
