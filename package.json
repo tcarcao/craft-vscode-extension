@@ -539,6 +539,16 @@
                 "category": "Craft"
             },
             {
+                "command": "craft.previewMermaidSequence",
+                "title": "Craft: Preview Mermaid Sequence",
+                "category": "Craft"
+            },
+            {
+                "command": "craft.previewMermaidC4",
+                "title": "Craft: Preview Mermaid C4",
+                "category": "Craft"
+            },
+            {
                 "command": "craft.openSettings",
                 "title": "Craft: Open Settings",
                 "category": "Craft"
