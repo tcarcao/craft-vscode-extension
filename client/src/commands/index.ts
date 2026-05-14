@@ -2,10 +2,12 @@
 import { commands, ExtensionContext } from 'vscode';
 import { handlePreviewC4, handlePreviewSelectedC4, handlePreviewPartialC4, cleanUpPreviewC4 } from './previewC4';
 import { handlePreviewDomain, handlePreviewDomainsFromSelection, handlePreviewPartialDomains, handlePreviewPartialArchitecture, cleanUpPreviewDomain } from './previewDomain';
+import { registerPreviewMermaidDomain } from './previewMermaidDomain';
 import { DomainsViewProvider } from '../providers/domainsViewProvider';
 import { ServicesViewProvider } from '../providers/servicesViewProvider';
 
 export function registerPreviewCommands(context: ExtensionContext, domainsProvider?: DomainsViewProvider, servicesProvider?: ServicesViewProvider) {
+    registerPreviewMermaidDomain(context);
     context.subscriptions.push(
         commands.registerCommand('craft.previewC4', () =>
             handlePreviewC4()

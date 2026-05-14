@@ -111,6 +111,12 @@
                     "type": "string",
                     "default": "",
                     "description": "Path to the craft language server binary. When set, the managed download is skipped and this binary is used directly. Leave empty to use the automatically downloaded binary."
+                },
+                "craft.mermaid.theme": {
+                    "type": "string",
+                    "enum": ["default", "dark", "forest", "neutral"],
+                    "default": "default",
+                    "description": "Mermaid theme for in-editor previews."
                 }
             }
         },
@@ -525,6 +531,11 @@
             {
                 "command": "craft.previewDomainsFromSelection",
                 "title": "Craft: Preview Domain Diagram from selection",
+                "category": "Craft"
+            },
+            {
+                "command": "craft.previewMermaidDomain",
+                "title": "Craft: Preview Mermaid Domain",
                 "category": "Craft"
             },
             {
