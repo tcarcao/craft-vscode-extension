@@ -2,8 +2,8 @@
     "name": "craft-arch-diagrams",
     "displayName": "Craft Arch Diagrams",
     "description": "Syntax highlighting, language server, and visual diagram generation for the Craft architecture modeling language",
-    "version": "0.1.10",
-    "lspVersion": "2.7.0",
+    "version": "0.1.11",
+    "lspVersion": "2.8.1",
     "publisher": "tcarcao",
     "icon": "resources/craft_icon.png",
     "repository": {

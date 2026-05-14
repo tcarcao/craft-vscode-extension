@@ -1,5 +1,15 @@
 # Changelog
 
+## [0.1.11] — 2026-05-14
+
+### Changed
+- Bundled LSP binary updated to `craft v2.8.1`. Brings per-use-case filtering and splitting (`--use-case`, `--split`), Mermaid output format (`--format puml|mermaid|mermaid-md`), `--stdout` piping, `--force` for .md no-clobber, and a wide set of PlantUML/Mermaid diagram-quality fixes. See the craft CHANGELOG for the full list.
+
+### Notes
+- The new craft CLI features are surfaced when users run the bundled binary directly (e.g. via the command palette → "Run Terminal Command" → `craft generate ...`). In-editor preview commands continue to use the PlantUML render path. Mermaid-aware preview / export commands will be added in a follow-up release.
+
+---
+
 ## [0.1.10] — 2026-05-04
 
 ### Changed
