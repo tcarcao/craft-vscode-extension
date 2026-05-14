@@ -25,8 +25,8 @@ describe('runCopyMermaidToClipboard', () => {
 
     it('shells out to craft with the right flags and writes stdout to clipboard', async () => {
         const { runCopyMermaidToClipboard } = await import('./copyMermaidToClipboard');
+        const { execFile } = await import('child_process');
         await runCopyMermaidToClipboard('/path/to/craft-binary', '/tmp/test.craft');
-        const { execFile } = require('child_process');
         expect(execFile).toHaveBeenCalledWith(
             '/path/to/craft-binary',
             ['generate', '/tmp/test.craft', '--format', 'mermaid', '--type', 'domain', '--stdout'],
