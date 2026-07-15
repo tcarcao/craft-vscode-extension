@@ -77,7 +77,7 @@
             }
         },
         "block-keywords": {
-            "match": "\\b(services|domains|actors|arch|exposure)\\b",
+            "match": "\\b(services|domains|actors|arch|exposure|tags)\\b",
             "captures": {
                 "1": { "name": "keyword.other" }
             }
