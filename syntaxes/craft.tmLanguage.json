@@ -12,7 +12,11 @@
         { "include": "#use-case-declaration" },
         { "include": "#block-keywords" },
         { "include": "#flow-keyword" },
+        { "include": "#relationship-edge" },
+        { "include": "#event-ref" },
         { "include": "#action-verbs" },
+        { "include": "#relationship-verbs" },
+        { "include": "#node-slug" },
         { "include": "#connector-keywords" },
         { "include": "#actor-types" },
         { "include": "#property-keywords" },
@@ -24,14 +28,15 @@
     ],
     "repository": {
         "comment": {
+            "comment": "A comment only begins where the lexer says it does: at line start, or immediately after whitespace (internal/lexer/lexer.go, precededByWS). Without that guard a slash inside flexible prose (craft >= 2.9.0) is mis-scoped — `asks Y for http://api` would colour the rest of the line as a comment.",
             "patterns": [
                 {
                     "name": "comment.line.double-slash",
-                    "match": "//.*$"
+                    "match": "(?:^|(?<=[ \\t]))//.*$"
                 },
                 {
                     "name": "comment.block",
-                    "begin": "/\\*",
+                    "begin": "(?:^|(?<=[ \\t]))/\\*",
                     "end": "\\*/"
                 }
             ]
@@ -77,7 +82,7 @@
             }
         },
         "block-keywords": {
-            "match": "\\b(services|domains|actors|arch|exposure|tags)\\b",
+            "match": "\\b(services|domains|actors|arch|exposure|tags|context_map|glossary)\\b",
             "captures": {
                 "1": { "name": "keyword.other" }
             }
@@ -94,6 +99,48 @@
                 "1": { "name": "entity.name.function" }
             }
         },
+        "event-ref": {
+            "comment": "Typed event ref (craft >= 2.9.0): `notifies order.OrderCreated`, `when Payment listens order.OrderCreated`. Qualifier and event name get distinct scopes; an unqualified `notifies OrderCreated` colours just the name. The negative lookahead skips slug-shaped refs (`notifies bc:re/x`) so #node-slug handles those rather than this rule swallowing the kind word. The legacy quoted form never reaches here: #string is earlier in the pattern list. Segment charset mirrors the lexer's identifier rule (letters, digits, _, -, . — internal/lexer/lexer.go isIdentChar).",
+            "match": "\\b(notifies|listens)[ \\t]+(?![A-Za-z_][A-Za-z0-9_-]*:)(?:([A-Za-z_][A-Za-z0-9_-]*(?:\\.[A-Za-z_][A-Za-z0-9_-]*)*)(\\.))?([A-Za-z_][A-Za-z0-9_-]*)",
+            "captures": {
+                "1": { "name": "entity.name.function" },
+                "2": { "name": "entity.name.namespace" },
+                "3": { "name": "punctuation.accessor" },
+                "4": { "name": "support.class" }
+            }
+        },
+        "relationship-edge": {
+            "comment": "A whole context_map or glossary edge line, so bare endpoints get coloured too: `re/billing customer_supplier re/vas`, `Wallet/balance same_as WalletItemPurchase/balance`, `Wallet open_host_service WalletItemPurchase`. The last '/'-segment is the name (the term, for glossary), the rest is its namespace. Each endpoint may carry a kind prefix (`bc:re/x customer_supplier re/y`), so mixed lines colour symmetrically instead of half-falling-through to #node-slug.",
+            "match": "^[ \\t]*(?:(domain|bc|term|service)(:))?((?:[A-Za-z0-9_][A-Za-z0-9_.-]*/)*)([A-Za-z0-9_][A-Za-z0-9_.-]*)[ \\t]+(customer_supplier|conformist|anticorruption_layer|open_host_service|published_language|partnership|shared_kernel|separate_ways|same_as|contrasts|distinct_from)[ \\t]+(?:(domain|bc|term|service)(:))?((?:[A-Za-z0-9_][A-Za-z0-9_.-]*/)*)([A-Za-z0-9_][A-Za-z0-9_.-]*)",
+            "captures": {
+                "1": { "name": "storage.type" },
+                "2": { "name": "punctuation.separator" },
+                "3": { "name": "entity.name.namespace" },
+                "4": { "name": "support.class" },
+                "5": { "name": "entity.name.function" },
+                "6": { "name": "storage.type" },
+                "7": { "name": "punctuation.separator" },
+                "8": { "name": "entity.name.namespace" },
+                "9": { "name": "support.class" }
+            }
+        },
+        "relationship-verbs": {
+            "comment": "context_map DDD patterns (craft >= 2.12.0) and glossary relation verbs (craft >= 2.13.0). Mirrors edgeKeywords in internal/syntax/parser.go plus the glossary verb set; keep in sync when either gains a verb.",
+            "match": "\\b(customer_supplier|conformist|anticorruption_layer|open_host_service|published_language|partnership|shared_kernel|separate_ways|same_as|contrasts|distinct_from)\\b",
+            "captures": {
+                "1": { "name": "entity.name.function" }
+            }
+        },
+        "node-slug": {
+            "comment": "Node slug (craft >= 2.9.0): [kind:][namespace/]name — bc:re/subscriptions, term:billing/dunning, domain:re/renewal, service:subscriptions-api. Kind set mirrors isSlugKind in internal/syntax/parser.go. The colon must be adjacent to the kind word (the parser requires adjacency too), which keeps `contexts: A, B` and other `key: value` fields out of this rule; `domains:` cannot match either, since \\b(domain) fails against the trailing 's'.",
+            "match": "\\b(domain|bc|term|service)(:)((?:[A-Za-z0-9_][A-Za-z0-9_.-]*/)*)([A-Za-z0-9_][A-Za-z0-9_.-]*)",
+            "captures": {
+                "1": { "name": "storage.type" },
+                "2": { "name": "punctuation.separator" },
+                "3": { "name": "entity.name.namespace" },
+                "4": { "name": "support.class" }
+            }
+        },
         "connector-keywords": {
             "match": "\\b(to|through)\\b",
             "captures": {
@@ -107,7 +154,8 @@
             }
         },
         "property-keywords": {
-            "match": "\\b(contexts|language|data-stores|deployment|to|through)\\s*:",
+            "comment": "Service/exposure fields. catalog_ref: and repo: are the service anchors (craft >= 2.9.0; catalog_ref: replaced opslevel: in 2.15.0). Field set mirrors the switch in parseServiceBlock, internal/syntax/parser.go.",
+            "match": "\\b(contexts|language|data-stores|deployment|catalog_ref|repo|to|through)\\s*:",
             "captures": {
                 "1": { "name": "keyword.other" }
             }

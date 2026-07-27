@@ -55,7 +55,7 @@ code --install-extension tcarcao.craft-arch-diagrams
 
 Or install from command line:
 ```bash
-code --install-extension craft-arch-diagrams-0.1.9.vsix
+code --install-extension craft-arch-diagrams-0.2.1.vsix
 ```
 
 ### For Developers - Building from Source

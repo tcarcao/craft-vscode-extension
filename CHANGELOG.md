@@ -1,5 +1,30 @@
 # Changelog
 
+## [0.2.1] — 2026-07-27
+
+### Changed
+- **Bundled LSP binary updated to `craft v2.15.1`** (was `v2.8.2`, six minor versions behind). This is the first release carrying the DSL vNext language features, so the editor now reports them:
+  - Typed refs on `notifies`/`listens`/`asks` — event refs (`notifies order.OrderCreated`) and node slugs (`bc:re/subscriptions`, `term:billing/dunning`, `service:subscriptions-api`).
+  - `craft/lint/deprecated-string-ref` on the legacy quoted event form (`notifies "Order Created"`), pointing at the typed-ref replacement.
+  - `craft/sema/malformed-slug` on badly shaped slugs, plus the `context_map` (v2.12.0) and `glossary` (v2.13.0) blocks with their cross-validation lints.
+  - `catalog_ref:` service anchor (renamed from `opslevel:` in v2.15.0).
+- **Releases now pick their Marketplace channel from the version number.** Odd minor (`0.3.x`) publishes to the pre-release channel; even minor (`0.2.x`) publishes to stable, per [VS Code's pre-release recommendation](https://code.visualstudio.com/api/working-with-extensions/publishing-extension#prerelease-extensions). Every release since `v0.1.0` had gone out with a hardcoded `--pre-release`, so users on the default stable channel never received the LSP-based extension at all. The GitHub release's `prerelease` flag follows the same signal.
+- The VSIX attached to the GitHub release is now the exact artifact published to both registries (`vsce publish --packagePath`), rather than a separately repackaged one. Packaging happens after the channel is resolved, so the pre-release property is baked into the manifest that ships.
+
+### Added
+- **Syntax highlighting for typed refs.** Event refs colour their qualifier and event name separately (`order` vs `OrderCreated`); node slugs colour the kind prefix, namespace, and name separately.
+- **Syntax highlighting for `context_map` and `glossary`.** Both block keywords, all eight DDD relationship patterns, the three glossary relation verbs, and the endpoints on either side of an edge (including bare `re/billing` paths and `Wallet/balance` term nodes).
+- `catalog_ref:` and `repo:` are now highlighted as service fields.
+
+### Fixed
+- **A slash in prose no longer starts a comment.** The TextMate grammar matched `//` anywhere, so `Order asks Y for http://api` coloured the rest of the line as a comment. It now requires the `//` to be at line start or preceded by whitespace, matching the lexer's rule (craft v2.9.0 flexible prose). Genuine trailing comments are unaffected.
+
+### Notes
+- **This is the first release to reach the stable Marketplace channel.** Every release from `v0.1.0` through `v0.2.0` published to the pre-release channel only, so users on the default channel had never received the LSP-based extension. Under the new convention, `0.2.x` (even minor) is stable and `0.3.x` (odd minor) would be pre-release.
+- `craft v2.15.1` fixes diagnostic positions in the `craft` CLI and `pkg/craft`. The LSP path was never affected, so this release's editor behaviour is the same as it would have been on `v2.15.0`; the pin moves to `v2.15.1` to keep the bundled binary current.
+
+---
+
 ## [0.2.0] — 2026-05-14
 
 ### Added
