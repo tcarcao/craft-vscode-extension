@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.2.4] — 2026-08-07
+
+### Changed
+- **Bundled LSP binary updated to `craft v2.17.0`.** Formatting (`textDocument/formatting`, and format-on-save if you have it enabled) is rewritten as a single walk over the language server's token stream. Every non-whitespace token is now written back verbatim, exactly once, in document order, and the only thing the formatter decides is the whitespace between them, so there is no longer any per-construct code path that can silently drop part of your file.
+
+  Visible differences when you format: a comment written after an action stays on that line instead of being lifted above it; a comment between a field and its value no longer splits the field across two lines; line breaks you put inside a wrapped value are kept rather than joined; and a minified block such as `service Foo{contexts: A}` expands into an indented block. Trailing operation annotations still align into a column, and now do so correctly on a line where a block comment closes.
+
+### Fixed
+- **Formatting is idempotent for every document.** Two cases could change a file on each save without ever settling. A file containing an unterminated block comment gained a blank line every time it was formatted, without bound, which under format-on-save meant the file grew as you typed. An empty file and a whitespace-only file alternated between empty and a single newline forever. Both are fixed, and formatting is now verified to reach a fixed point across every `.craft` file in the craft repository.
+- **Formatting no longer rewrites whitespace inside a comment.** A bracket in comment text, as in `Billing asks Gateway to charge /* see [1]`, was mistaken for an operation annotation by the alignment pass and padded out to the surrounding column.
+- **A file that does not parse cleanly keeps its exact bytes.** The language server's syntax tree now reproduces its source file byte for byte, which is asserted rather than assumed. Previously an unterminated string lost its opening quote inside the tree, so anything rebuilt from it lost a character of your file.
+
 ## [0.2.3] — 2026-08-07
 
 ### Changed
