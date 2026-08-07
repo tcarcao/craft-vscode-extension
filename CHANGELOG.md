@@ -1,5 +1,16 @@
 # Changelog
 
+## [0.2.3] — 2026-08-07
+
+### Changed
+- **Bundled LSP binary updated to `craft v2.16.0`.** This is a breaking release for `.craft` files: a `kind:` prefix (`bc:`/`domain:`/`service:`/`term:`) is now rejected in every use_case bounded-context slot -- an asks target, a returns target, an action's subject, and a trigger's subject -- as `craft/syntax/kind-prefix-in-target`. Write the bare name or the qualified `<domain>/<name>` form instead, which is now accepted in all four of those slots (previously only the asks target took it). See the craft CHANGELOG for the full v2.16.0 list, including the new `craft fmt` CLI command and twelve fixed formatter content-loss defects.
+
+### Added
+- **Syntax highlighting for operation annotations.** A trailing `[POST /v1/charges]` on an action line now colours: the recognised protocol verb (`GET`/`POST`/`PUT`/`PATCH`/`DELETE`/`HEAD`/`OPTIONS`/`GRPC`/`TOPIC`/`QUERY`) as a keyword, the rest of the bracket as payload text. Only the last `[...]` on a line whose `]` is the line's final token is recognised as the annotation, matching the parser: an earlier `[` in the phrase, or one that never closes before end of line, stays plain prose. This is a TextMate-grammar rule for before the language server connects (and for whenever semantic highlighting is off); the LSP's own semantic tokens for the annotation take over once connected.
+
+### Fixed
+- **The grammar no longer paints an illegal `kind:` prefix as a valid slug.** A `kind:` prefix in an asks target, a returns target, an action's subject, or a trigger's subject is now a parse error, so those four positions are coloured as invalid instead of falling through to the generic node-slug rule that colours a well-formed slug. `context_map` and `glossary` edge endpoints are unaffected by this change -- they still accept a `kind:` prefix syntactically.
+
 ## [0.2.2] — 2026-08-05
 
 ### Fixed

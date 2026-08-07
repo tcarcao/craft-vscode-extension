@@ -11,12 +11,16 @@
         { "include": "#service-declaration" },
         { "include": "#use-case-declaration" },
         { "include": "#block-keywords" },
+        { "include": "#invalid-kind-prefix-trigger-subject" },
         { "include": "#flow-keyword" },
         { "include": "#relationship-edge" },
+        { "include": "#invalid-kind-prefix-action-subject" },
         { "include": "#event-ref" },
+        { "include": "#invalid-kind-prefix-target" },
         { "include": "#action-verbs" },
         { "include": "#relationship-verbs" },
         { "include": "#node-slug" },
+        { "include": "#operation-annotation" },
         { "include": "#connector-keywords" },
         { "include": "#actor-types" },
         { "include": "#property-keywords" },
@@ -131,14 +135,58 @@
                 "1": { "name": "entity.name.function" }
             }
         },
+        "invalid-kind-prefix-target": {
+            "comment": "craft >= 2.16.0: a kind: prefix in an asks target or a `returns to` target is now craft/syntax/kind-prefix-in-target (internal/syntax/parser.go, parseAsksAction and parseReturnsAction, both call diagKindPrefixInSlot). The bare name and the qualified <domain>/<name> form stay legal and fall through to #action-verbs / #node-slug as before. Listed before #action-verbs and #node-slug so it wins the same-start-position tie at the verb; ordinary targets with no kind: prefix never match this rule at all and are unaffected.",
+            "match": "\\b(?:(asks)|(returns)[ \\t]+(to))\\b[ \\t]+(domain|bc|term|service)(:)((?:[A-Za-z0-9_][A-Za-z0-9_.-]*/)*)([A-Za-z0-9_][A-Za-z0-9_.-]*)",
+            "captures": {
+                "1": { "name": "entity.name.function" },
+                "2": { "name": "entity.name.function" },
+                "3": { "name": "keyword.operator" },
+                "4": { "name": "invalid.illegal" },
+                "5": { "name": "invalid.illegal" },
+                "6": { "name": "invalid.illegal" },
+                "7": { "name": "invalid.illegal" }
+            }
+        },
+        "invalid-kind-prefix-action-subject": {
+            "comment": "craft >= 2.16.0: a kind: prefix as an action's subject (the domain/service performing the action, first token of the statement line) is now craft/syntax/kind-prefix-in-target (internal/syntax/parser.go, parseAction calling parseNameSlot(\"an action subject\")); this fires for all four action forms (sync/async/return/internal) since the subject is read before the verb is known. Anchored to line start so it never fires mid-phrase. #relationship-edge is listed earlier and matches the identical line-start position whenever a complete context_map/glossary edge follows, so a well-formed edge line is unaffected; only an edge line that is still mid-edit (verb not yet typed) can transiently be painted invalid here instead, which self-corrects once the line is completed.",
+            "match": "^[ \\t]*(domain|bc|term|service)(:)((?:[A-Za-z0-9_][A-Za-z0-9_.-]*/)*)([A-Za-z0-9_][A-Za-z0-9_.-]*)",
+            "captures": {
+                "1": { "name": "invalid.illegal" },
+                "2": { "name": "invalid.illegal" },
+                "3": { "name": "invalid.illegal" },
+                "4": { "name": "invalid.illegal" }
+            }
+        },
+        "invalid-kind-prefix-trigger-subject": {
+            "comment": "craft >= 2.16.0: a kind: prefix as a trigger's subject (`when <subject> ...`) is now craft/syntax/kind-prefix-in-target (internal/syntax/parser.go, parseTrigger calling parseNameSlot(\"a trigger subject\")), for both the domain_listen form and the external actor-trigger form alike -- the rejection happens before the verb after the subject is even read. Listed before #flow-keyword so it wins the same-start-position tie at line start; without that ordering #flow-keyword would consume just `when` and leave the kind-prefixed slug to fall through to #node-slug as if it were valid.",
+            "match": "^[ \\t]*(when)\\b[ \\t]+(domain|bc|term|service)(:)((?:[A-Za-z0-9_][A-Za-z0-9_.-]*/)*)([A-Za-z0-9_][A-Za-z0-9_.-]*)",
+            "captures": {
+                "1": { "name": "keyword.control" },
+                "2": { "name": "invalid.illegal" },
+                "3": { "name": "invalid.illegal" },
+                "4": { "name": "invalid.illegal" },
+                "5": { "name": "invalid.illegal" }
+            }
+        },
         "node-slug": {
-            "comment": "Node slug (craft >= 2.9.0): [kind:][namespace/]name — bc:re/subscriptions, term:billing/dunning, domain:re/renewal, service:subscriptions-api. Kind set mirrors isSlugKind in internal/syntax/parser.go. The colon must be adjacent to the kind word (the parser requires adjacency too), which keeps `contexts: A, B` and other `key: value` fields out of this rule; `domains:` cannot match either, since \\b(domain) fails against the trailing 's'.",
+            "comment": "Node slug (craft >= 2.9.0): [kind:][namespace/]name — bc:re/subscriptions, term:billing/dunning, domain:re/renewal, service:subscriptions-api. Kind set mirrors isSlugKind in internal/syntax/parser.go. The colon must be adjacent to the kind word (the parser requires adjacency too), which keeps `contexts: A, B` and other `key: value` fields out of this rule; `domains:` cannot match either, since \\b(domain) fails against the trailing 's'. Since craft 2.16.0 a kind: prefix is a hard error (craft/syntax/kind-prefix-in-target) in four use_case slots: an asks target, a returns target, an action's subject, and a trigger's subject. Those four are matched and painted invalid earlier in the patterns list (#invalid-kind-prefix-target, #invalid-kind-prefix-action-subject, #invalid-kind-prefix-trigger-subject) before this rule ever sees them, so this rule still only ever colours a kind-prefixed slug where it remains legal: context_map/glossary edge endpoints (#relationship-edge, also matched earlier) and other ref slots such as repo: and tag values, which this feature did not touch.",
             "match": "\\b(domain|bc|term|service)(:)((?:[A-Za-z0-9_][A-Za-z0-9_.-]*/)*)([A-Za-z0-9_][A-Za-z0-9_.-]*)",
             "captures": {
                 "1": { "name": "storage.type" },
                 "2": { "name": "punctuation.separator" },
                 "3": { "name": "entity.name.namespace" },
                 "4": { "name": "support.class" }
+            }
+        },
+        "operation-annotation": {
+            "comment": "Trailing operation annotation (craft >= 2.16.0): `[POST /v1/charges]`. Fires before the server connects and whenever semantic highlighting is off; VS Code prefers the LSP's semantic tokens over this scope once the server is up. The boundary mirrors opAnnotationStart in internal/syntax/parser.go: the annotation is the LAST `[` on the line whose `]` is the line's final token, with only trailing whitespace or a // comment allowed after it. The end-of-line lookahead is what makes this pick only the second bracket group in `record [batch] entries [POST /v1/entries]`: the first `[...]` fails the lookahead (more line content follows its `]`) so the match attempt there is rejected and the engine tries again at the next `[`; a `[` that never closes before end of line never matches at all and stays ordinary phrase text, same as the parser leaves it as prose. The verb alternation mirrors protocolVerbs in internal/syntax/op_verbs.go (exported as pkg/craft.ProtocolVerbs()) and only classifies the head word, matching isProtocolVerb's head-only check; an unrecognised head word (`[legacy-mainframe-txn-44]`) is just opaque payload, matching parseOpAnnotation. The payload charset excludes only `[`, `]`, and newline, so a templated path segment like `{id}` colours fine, as does the payload of `[GRPC ledger.Postings/Create]`.",
+            "match": "(\\[)[ \\t]*(?:(GET|POST|PUT|PATCH|DELETE|HEAD|OPTIONS|GRPC|TOPIC|QUERY)\\b)?([^\\[\\]\\n]*)(\\])(?=[ \\t]*(?://.*)?$)",
+            "captures": {
+                "1": { "name": "punctuation.bracket" },
+                "2": { "name": "keyword.other" },
+                "3": { "name": "string.unquoted.craft" },
+                "4": { "name": "punctuation.bracket" }
             }
         },
         "connector-keywords": {
