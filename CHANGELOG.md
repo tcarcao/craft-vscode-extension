@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.2.5] — 2026-08-14
+
+### Fixed
+- **Bundled LSP binary updated to `craft v2.17.1`.** A domain-qualified reference in a `use_case` body, such as `Subscriptions asks re/billing for a fresh charge attempt`, was underlined as an unresolved reference. This affected every bounded-context slot in a use case: any action's subject, the `asks` target, the `returns` target, and the `when ... listens` trigger context. The qualified form has always been valid Craft, and it is the only way to name a bounded context whose name is declared in two domains, so those references had no spelling the editor would accept. On a large model this was the overwhelming majority of the problems reported: across a 193-file architecture repository the count dropped from 940 to 98.
+- **Go-to-definition, and the file a problem is reported against, no longer change between runs.** Several checks pick one place to report a finding when the same name appears in more than one file, and which file won was effectively random on each run of the language server. The visible symptoms were a problem jumping to a different file in the Problems panel after a reload, and go-to-definition on a name declared in two files landing somewhere different than it did a moment ago. Both are now stable, and the Problems panel is sorted by file and position.
+
+  If you have a saved list of Craft problems and their locations from an earlier version, re-derive it: the problems themselves were real, but the file and line next to some of them may not have been.
+
 ## [0.2.4] — 2026-08-07
 
 ### Changed
