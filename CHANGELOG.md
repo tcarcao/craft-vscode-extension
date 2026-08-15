@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.2.6] — 2026-08-16
+
+### Fixed
+- **Bundled LSP binary updated to `craft v2.17.2`.** A `when` block that ends up outside any `use_case`, which in practice means one stray `}` closed a `use_case` earlier than you meant it to, was thrown away in full: no scenario, no actions, no participants. Nothing in the block reached the model, so nothing built on it saw the block either, and the only sign was a single warning squiggle on the word `when`. Diagrams, outlines, and every other view of the file agreed those lines had never been written.
+
+  The block is still not part of the model, because it is not valid Craft, but the loss is now visible. It is reported as an error rather than a warning, the squiggle covers every line that was discarded rather than the four characters of `when`, and the message names the count and the cause: `unexpected "when" at top level: lines 6-8 were skipped and are not part of the model; a "when" block belongs inside a use_case, and "Settle a seller invoice" (opened at line 1) was already closed at line 4, so that "}" may be extra`.
+
+  If you gate anything on a clean Problems panel, expect files that were previously clean to surface this. That is the point: they were losing content.
+
 ## [0.2.5] — 2026-08-14
 
 ### Fixed
