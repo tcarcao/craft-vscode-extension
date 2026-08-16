@@ -1,5 +1,19 @@
 # Changelog
 
+## [0.2.7] — 2026-08-16
+
+### Added
+- **Bundled LSP binary updated to `craft v2.18.0`, which lets a tag value be a list.** `channels: web, mobile` now parses, in the same comma-separated shape a service block's `contexts:` already uses: each item is a bare slug (which may carry slashes and hyphens, so `re/renewal-flow` stays one item) or a quoted string, the two mix freely, and a list may wrap across lines. Previously a comma was an error and the only way to carry more than one thing was a quoted string.
+
+  Quote an item to keep a comma *inside* it: `note: "one, value"` is one value, `channels: web, mobile` is two.
+
+### Fixed
+- **A tag that failed to parse no longer appears in the model.** Writing `channels: web, mobile` used to underline the line and then, separately, hand every consumer of the parsed document a tag called `mobile` with an empty value: the tail of the failed value, read back as a key nobody had typed. The squiggles were right; the model behind them was not, and nothing built on the model had any way to tell.
+
+  A statement that does not parse is now discarded whole. That covers more than the comma case: a key with no `:`, a `:` with no value, and a value that is not a value all now leave nothing behind rather than a tag whose value is a lie.
+
+- **The `tags` block is documented** for the first time, in the language docs under Use Cases. It had no documentation anywhere, so the quoted-value form was discoverable only by reading the parser.
+
 ## [0.2.6] — 2026-08-16
 
 ### Fixed
