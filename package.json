@@ -2,8 +2,8 @@
     "name": "craft-arch-diagrams",
     "displayName": "Craft Arch Diagrams",
     "description": "Syntax highlighting, language server, and visual diagram generation for the Craft architecture modeling language",
-    "version": "0.2.7",
-    "lspVersion": "2.18.0",
+    "version": "0.2.8",
+    "lspVersion": "2.19.0",
     "publisher": "tcarcao",
     "icon": "resources/craft_icon.png",
     "repository": {
@@ -509,7 +509,9 @@
         ],
         "configurationDefaults": {
             "[craft]": {
-                "editor.semanticHighlighting.enabled": true
+                "editor.semanticHighlighting.enabled": true,
+                "editor.tabSize": 4,
+                "editor.detectIndentation": false
             }
         },
         "commands": [

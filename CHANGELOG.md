@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.2.8] — 2026-08-21
+
+### Changed
+- **Bundled LSP binary updated to `craft v2.19.0`.** Craft files now indent at 4 spaces by default, and the editor is told so explicitly: `[craft]` in `configurationDefaults` now sets `editor.tabSize: 4` and `editor.detectIndentation: false`, alongside the existing `editor.semanticHighlighting.enabled`. Previously VS Code's `editor.detectIndentation` inferred `tabSize` per file from that file's own content, so an existing 2-space file would autoindent at 2 forever while `craft fmt` and format-on-save produced 4, with no error. A workspace that wants a different width adds a `.craftfmt` file with `indent = 2` (or another value); the language server reads it, not the editor setting.
+- **Trailing `//` comments are now column-aligned within their block**, and a wrapped `contexts:` list indents its continuation lines.
+
+### Fixed
+- **Editing `.craftfmt` now takes effect immediately, without reloading the window.** The extension's file watcher only matched `**/*.craft`, so the language server's handler for `.craftfmt` changes, which drops its resolved-config cache when the file changes, was never actually notified. The watcher now matches `**/{*.craft,.craftfmt}`.
+
 ## [0.2.7] — 2026-08-16
 
 ### Added

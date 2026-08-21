@@ -50,7 +50,7 @@ async function startLanguageServer(context: ExtensionContext) {
     const clientOptions: LanguageClientOptions = {
         documentSelector: [{ scheme: 'file', language: 'craft' }],
         synchronize: {
-            fileEvents: workspace.createFileSystemWatcher('**/*.craft')
+            fileEvents: workspace.createFileSystemWatcher('**/{*.craft,.craftfmt}')
         },
         initializationOptions: {
             logLevel: workspace.getConfiguration('craft').get('logging.level', 'warn')
