@@ -11,6 +11,7 @@
         { "include": "#service-declaration" },
         { "include": "#use-case-declaration" },
         { "include": "#surface-block" },
+        { "include": "#actors-block" },
         { "include": "#block-keywords" },
         { "include": "#invalid-kind-prefix-trigger-subject" },
         { "include": "#receive-trigger" },
@@ -18,9 +19,11 @@
         { "include": "#step-keyword" },
         { "include": "#relationship-edge" },
         { "include": "#invalid-kind-prefix-action-subject" },
+        { "include": "#event-list" },
         { "include": "#event-ref" },
         { "include": "#schedule-keyword" },
         { "include": "#invalid-kind-prefix-target" },
+        { "include": "#returns-stream" },
         { "include": "#action-verbs" },
         { "include": "#relationship-verbs" },
         { "include": "#node-slug" },
@@ -61,7 +64,7 @@
             ]
         },
         "actor-declaration": {
-            "match": "^\\s*(actor)\\s+(user|system|service)\\s+([A-Z][A-Za-z0-9_]*)",
+            "match": "^\\s*(actor)\\s+(user|system|service|scheduler|tool|infra)\\s+([A-Z][A-Za-z0-9_]*)",
             "captures": {
                 "1": { "name": "storage.type" },
                 "2": { "name": "support.type" },
@@ -246,14 +249,71 @@
             }
         },
         "operation-annotation": {
-            "comment": "Trailing operation annotation (craft >= 2.16.0): `[POST /v1/charges]`. Fires before the server connects and whenever semantic highlighting is off; VS Code prefers the LSP's semantic tokens over this scope once the server is up. The boundary mirrors opAnnotationStart in internal/syntax/parser.go: the annotation is the LAST `[` on the line whose `]` is the line's final token, with only trailing whitespace or a // comment allowed after it. The end-of-line lookahead is what makes this pick only the second bracket group in `record [batch] entries [POST /v1/entries]`: the first `[...]` fails the lookahead (more line content follows its `]`) so the match attempt there is rejected and the engine tries again at the next `[`; a `[` that never closes before end of line never matches at all and stays ordinary phrase text, same as the parser leaves it as prose. The verb alternation mirrors protocolVerbs in internal/syntax/op_verbs.go (exported as pkg/craft.ProtocolVerbs()) and only classifies the head word, matching isProtocolVerb's head-only check; an unrecognised head word (`[legacy-mainframe-txn-44]`) is just opaque payload, matching parseOpAnnotation. The payload charset excludes only `[`, `]`, and newline, so a templated path segment like `{id}` colours fine, as does the payload of `[GRPC ledger.Postings/Create]`.",
-            "match": "(\\[)[ \\t]*(?:(GET|POST|PUT|PATCH|DELETE|HEAD|OPTIONS|GRPC|TOPIC|QUERY)\\b)?([^\\[\\]\\n]*)(\\])(?=[ \\t]*(?://.*)?$)",
+            "comment": "Trailing operation annotation (craft >= 2.16.0): `[POST /v1/charges]`. Fires before the server connects and whenever semantic highlighting is off; VS Code prefers the LSP's semantic tokens over this scope once the server is up. The boundary mirrors opAnnotationStart in internal/syntax/parser.go: the annotation is the LAST `[` on the line whose `]` is the line's final token, with only trailing whitespace or a // comment allowed after it. The end-of-line lookahead is what makes this pick only the second bracket group in `record [batch] entries [POST /v1/entries]`: the first `[...]` fails the lookahead (more line content follows its `]`) so the match attempt there is rejected and the engine tries again at the next `[`; a `[` that never closes before end of line never matches at all and stays ordinary phrase text, same as the parser leaves it as prose. The verb alternation mirrors protocolVerbs in internal/syntax/op_verbs.go (exported as pkg/craft.ProtocolVerbs()) and only classifies the head word, matching isProtocolVerb's head-only check; an unrecognised head word (`[legacy-mainframe-txn-44]`) is just opaque payload, matching parseOpAnnotation. The payload charset excludes only `[`, `]`, and newline, so a templated path segment like `{id}` colours fine, as does the payload of `[GRPC ledger.Postings/Create]`. craft >= 2.24.0: an `inferred` first word is a marker (`[inferred POST /x]`, `[inferred]` alone), ADDR and SQL join the verbs, and a comma list of operations (`[opA, opB]`) colours as one payload.",
+            "match": "(\\[)[ \\t]*(?:(inferred)\\b[ \\t]*)?(?:(GET|POST|PUT|PATCH|DELETE|HEAD|OPTIONS|GRPC|TOPIC|QUERY|ADDR|SQL)\\b)?([^\\[\\]\\n]*)(\\])(?=[ \\t]*(?://.*)?$)",
             "captures": {
                 "1": { "name": "punctuation.bracket" },
-                "2": { "name": "keyword.other" },
-                "3": { "name": "string.unquoted.craft" },
-                "4": { "name": "punctuation.bracket" }
+                "2": { "name": "keyword.control" },
+                "3": { "name": "keyword.other" },
+                "4": { "name": "string.unquoted.craft" },
+                "5": { "name": "punctuation.bracket" }
             }
+        },
+        "event-list": {
+            "comment": "craft >= 2.24.0: the event list of a `listens` trigger (`when x listens a.E, b.F`) and of `notifies one of a.E, b.F`. A trailing comma continues the list on the next line, with comments allowed between continuation lines, so the rule is a begin/end block: it ends after the first item that is not followed by a comma (only a schedule, a bracket, or a comment may follow). The block's own comment pattern also takes the line's newline, so a comment line never looks like the end of an item. `notifies one` alone (an event named one) and `notifies one of.Ended` stay single events for #event-ref.",
+            "begin": "\\b(?:(listens)|(notifies)[ \\t]+(one)[ \\t]+(of))(?=[ \\t])",
+            "beginCaptures": {
+                "1": { "name": "entity.name.function" },
+                "2": { "name": "entity.name.function" },
+                "3": { "name": "keyword.control" },
+                "4": { "name": "keyword.control" }
+            },
+            "end": "(?<=[^,\\s])(?=[ \\t]*(?:(?:cron|every)[ \\t]+\"[^\"]*\"[ \\t]*)?(?:\\[[^\\[\\]\\n]*\\][ \\t]*)?(?://.*)?$)",
+            "patterns": [
+                { "name": "comment.line.double-slash", "match": "(?:^|(?<=[ \\t]))//.*\\n?" },
+                { "include": "#string" },
+                { "include": "#node-slug" },
+                {
+                    "match": "\\b(?![A-Za-z_][A-Za-z0-9_-]*:)(?:([A-Za-z_][A-Za-z0-9_-]*(?:\\.[A-Za-z_][A-Za-z0-9_-]*)*)(\\.))?([A-Za-z_][A-Za-z0-9_-]*)",
+                    "captures": {
+                        "1": { "name": "entity.name.namespace" },
+                        "2": { "name": "punctuation.accessor" },
+                        "3": { "name": "support.class" }
+                    }
+                },
+                { "include": "#punctuation" }
+            ]
+        },
+        "returns-stream": {
+            "comment": "craft >= 2.24.0: `X returns stream ...`, a reply that repeats until it ends. `stream` is a keyword only directly after `returns`; `returns stream.events` is an ordinary identifier, and `stream` in a phrase is a word.",
+            "match": "\\b(returns)[ \\t]+(stream)(?![A-Za-z0-9_.-])",
+            "captures": {
+                "1": { "name": "entity.name.function" },
+                "2": { "name": "keyword.control" }
+            }
+        },
+        "actors-block": {
+            "comment": "`actors { <kind> <Name> ... }`. The kind slot is open; craft >= 2.24.0 knows six kinds (user, system, service, scheduler, tool, infra), coloured at the start of a line inside the block only, so `the tool` or `on infra` in a phrase stay words.",
+            "begin": "\\b(actors)[ \\t]*(\\{)",
+            "beginCaptures": {
+                "1": { "name": "keyword.other" },
+                "2": { "name": "punctuation.definition.block" }
+            },
+            "end": "(\\})",
+            "endCaptures": {
+                "1": { "name": "punctuation.definition.block" }
+            },
+            "patterns": [
+                { "include": "#comment" },
+                {
+                    "match": "(?:^|(?<=\\{))[ \\t]*(user|system|service|scheduler|tool|infra)(?=[ \\t]+[A-Za-z_])",
+                    "captures": {
+                        "1": { "name": "support.type" }
+                    }
+                },
+                { "include": "#entity-name" },
+                { "include": "#punctuation" }
+            ]
         },
         "connector-keywords": {
             "match": "\\b(to|through)\\b",
