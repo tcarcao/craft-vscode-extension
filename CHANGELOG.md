@@ -1,5 +1,15 @@
 # Changelog
 
+## [0.2.10] — 2026-10-14
+
+### Added
+- **Bundled LSP binary updated to `craft v2.24.0`** (from v2.23.0). A `listens` trigger can take a list of events (`when seshat listens sns.a, sns.b,` continues on the next line), and `notifies one of a.E, b.F` publishes one of several events per run. A bracket can list several operations (`[CreateApiKey, CreateUsagePlanKey]`), mark a hop as `[inferred …]`, and use the new `ADDR` (egress to an address) and `SQL` (direct use of another party's tables) verbs. `X returns stream …` is a reply that repeats until it ends. The actor kinds `scheduler`, `tool` and `infra` join `user`, `system` and `service`. The language server gives hover, completion, go-to-definition and semantic tokens for all of them, and `sites`/`envs` tag keys. See the craft CHANGELOG for the full list, including new diagnostics and the diagram changes.
+- **Highlighting before the server starts.** The TextMate grammar colours the new keywords only where craft treats them as keywords: `one of` directly after `notifies`, `stream` directly after `returns`, `inferred` as the first word of a bracket, `ADDR` and `SQL` as bracket verbs, and the new actor kinds in an `actor` line or an `actors` block. Every item of a `listens` or `notifies one of` list, continuation lines included, gets the event colours. `stream`, `one of` and `inferred` in a phrase keep their usual colours.
+
+### Changed
+- **Words after a `notifies` event are now an error** (craft v2.24.0). `sync notifies the owners team` used to read as the event `the` plus a separate step. Write an internal step for the prose.
+- **`returns stream …`, `[inferred …]`, `[ADDR …]` and `[SQL …]` now have a meaning** (craft v2.24.0). Before, `stream`, `inferred`, `ADDR` and `SQL` were ordinary phrase or payload words.
+
 ## [0.2.9] — 2026-10-14
 
 ### Added
