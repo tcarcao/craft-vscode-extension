@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.2.9] — 2026-10-14
+
+### Added
+- **Bundled LSP binary updated to `craft v2.23.0`** (from v2.19.0, so this also brings v2.20 to v2.22). Use cases gain `alt`/`else`/`opt` and `par`/`and`/`loop` blocks, `scenario "<name>"` lines, `note "…"` and `finding "…"` lines, the callee-side trigger `when <ctx> receives <phrase> [op]`, `when cron "…"`/`when every "…"`, and a `cron`/`every` schedule after a `listens` event. A new top-level `surface <boundary> { … }` block lists the operations a boundary offers (`callers:`, `spec:`, `query …  [op]`, `command …  [op]`). The language server gives completion, hover, outline and folding for all of them, and its diagnostics no longer flag the new syntax. See the craft CHANGELOG for the full list, including new diagnostics and the diagram changes.
+- **Highlighting before the server starts.** The TextMate grammar colours the new keywords too, only where craft treats them as keywords: at the start of a step line followed by a quoted label (`par "lookups"`, `note "…"`), as the second word of a `when` line (`receives`), before a quoted schedule (`cron "…"`, `every "…"`), and inside a `surface` block. An ordinary action line such as `and asks loop to run` keeps its usual colours.
+
+### Changed
+- **`when X receives …` is now a callee-side trigger** (craft v2.23.0). It used to be an external trigger with actor `X` and verb `receives`.
+
 ## [0.2.8] — 2026-08-21
 
 ### Changed
