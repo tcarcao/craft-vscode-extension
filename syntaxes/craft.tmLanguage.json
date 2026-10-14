@@ -10,12 +10,16 @@
         { "include": "#domain-declaration" },
         { "include": "#service-declaration" },
         { "include": "#use-case-declaration" },
+        { "include": "#surface-block" },
         { "include": "#block-keywords" },
         { "include": "#invalid-kind-prefix-trigger-subject" },
+        { "include": "#receive-trigger" },
         { "include": "#flow-keyword" },
+        { "include": "#step-keyword" },
         { "include": "#relationship-edge" },
         { "include": "#invalid-kind-prefix-action-subject" },
         { "include": "#event-ref" },
+        { "include": "#schedule-keyword" },
         { "include": "#invalid-kind-prefix-target" },
         { "include": "#action-verbs" },
         { "include": "#relationship-verbs" },
@@ -85,6 +89,45 @@
                 "2": { "name": "string.quoted.double" }
             }
         },
+        "surface-block": {
+            "comment": "craft >= 2.23.0: top-level `surface <name> { ... }`, the operations one boundary offers. Its body keywords (callers:, spec:, query, command, note, finding) are keywords only inside the block, so they are scoped by begin/end rather than matched globally; `query does it` in a use case stays an action line.",
+            "begin": "^(surface)[ \\t]+((?:[A-Za-z0-9_][A-Za-z0-9_.-]*/)*[A-Za-z0-9_][A-Za-z0-9_.-]*)[ \\t]*(\\{)",
+            "beginCaptures": {
+                "1": { "name": "storage.type" },
+                "2": { "name": "entity.name.type" },
+                "3": { "name": "punctuation.definition.block" }
+            },
+            "end": "^[ \\t]*(\\})",
+            "endCaptures": {
+                "1": { "name": "punctuation.definition.block" }
+            },
+            "patterns": [
+                { "include": "#comment" },
+                { "include": "#string" },
+                {
+                    "match": "^[ \\t]*(callers|spec)[ \\t]*(:)",
+                    "captures": {
+                        "1": { "name": "keyword.other" },
+                        "2": { "name": "punctuation.separator" }
+                    }
+                },
+                {
+                    "match": "^[ \\t]*(query|command)\\b",
+                    "captures": {
+                        "1": { "name": "keyword.control" }
+                    }
+                },
+                {
+                    "match": "^[ \\t]*(note|finding)(?=[ \\t]*(?:\"|//|$))",
+                    "captures": {
+                        "1": { "name": "keyword.control" }
+                    }
+                },
+                { "include": "#operation-annotation" },
+                { "include": "#entity-name" },
+                { "include": "#punctuation" }
+            ]
+        },
         "block-keywords": {
             "match": "\\b(services|domains|actors|arch|exposure|tags|context_map|glossary)\\b",
             "captures": {
@@ -93,6 +136,29 @@
         },
         "flow-keyword": {
             "match": "^\\s*(when)\\b",
+            "captures": {
+                "1": { "name": "keyword.control" }
+            }
+        },
+        "receive-trigger": {
+            "comment": "craft >= 2.23.0: `when <ctx> receives [connector] phrase [op]`, the callee-side trigger of an unobserved caller (internal/syntax/parser.go, parseTrigger). `receives` is a keyword only as the second token after the trigger subject, so the rule anchors on the whole `when <subject> receives` prefix. Listed after #invalid-kind-prefix-trigger-subject, which still wins for a kind-prefixed subject, and before #flow-keyword, which would otherwise consume just `when`.",
+            "match": "^[ \\t]*(when)[ \\t]+((?:[A-Za-z0-9_][A-Za-z0-9_.-]*/)*[A-Za-z0-9_][A-Za-z0-9_.-]*)[ \\t]+(receives)\\b",
+            "captures": {
+                "1": { "name": "keyword.control" },
+                "2": { "name": "support.class" },
+                "3": { "name": "keyword.control" }
+            }
+        },
+        "step-keyword": {
+            "comment": "Contextual step keywords: `scenario` and the alt/opt/else branch headers (craft >= 2.21.0), par/and/loop blocks and note/finding lines (craft >= 2.23.0). Each is a keyword only at the start of a line and followed by a quoted label, a comment or nothing (GRAMMAR.md section 11); `and asks loop to run` and `note records it` stay action lines, so the lookahead leaves them to the action rules.",
+            "match": "^[ \\t]*(scenario|alt|opt|else|par|and|loop|note|finding)(?=[ \\t]*(?:\"|//|$))",
+            "captures": {
+                "1": { "name": "keyword.control" }
+            }
+        },
+        "schedule-keyword": {
+            "comment": "Schedules: `when cron \"...\"` / `when every \"...\"` (craft >= 2.22.0) and the polling tail of a listens trigger, `when x listens store.q.inserted cron \"* 10 * * 1-5\"` (craft >= 2.23.0). Only a cron/every followed by one quoted text that ends the line is a keyword.",
+            "match": "\\b(cron|every)(?=[ \\t]+\"[^\"]*\"[ \\t]*(?://.*)?$)",
             "captures": {
                 "1": { "name": "keyword.control" }
             }
