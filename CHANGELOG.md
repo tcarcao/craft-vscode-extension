@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.2.13] — 2026-10-15
+
+### Added
+- Highlighting for display names: the quoted name after a context id in a `domain` body, and after an actor in an `actor` declaration or `actors { }` block, is coloured as a string.
+
+### Changed
+- Bundled craft language server 2.27.0: a context or actor can carry a display name (`nmf_billing "nMF billing"`, `user Seller "the seller"`); hover, completion and diagrams show it, and three new lint warnings cover empty, duplicate and conflicting names.
+
 ## [0.2.12] — 2026-10-15
 
 ### Changed

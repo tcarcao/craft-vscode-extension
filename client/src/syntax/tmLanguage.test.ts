@@ -276,7 +276,7 @@ describe('actor kinds', () => {
         const block = rule('actors-block');
         expect(re(block.begin).exec('actors {')?.[1]).toBe('actors');
         expect(re(block.end).exec('}')).not.toBeNull();
-        const kind = (block.patterns ?? []).find(p => p.match?.includes('scheduler'));
+        const kind = (block.patterns ?? []).find(p => p.match?.includes('scheduler') && p.match.includes('(?='));
         for (const [line, word] of [['    scheduler Ticker', 'scheduler'], ['    tool OperatorTool', 'tool'], ['    infra Platform', 'infra'], ['    user Seller', 'user']]) {
             expect(re(kind?.match).exec(line)?.[1]).toBe(word);
         }
@@ -367,5 +367,36 @@ describe('//@ source cites (craft >= 2.25.0)', () => {
 
     test('ranges are numbers', () => {
         expect(all(part('meta.source-cite-range'), '//@ sqs.tf:3,26, pkg/a.go:5-9, :120', 1)).toEqual(['3,26', '5-9', '120']);
+    });
+});
+
+describe('display names (craft v2.27)', () => {
+    const DISPLAY = 'string.quoted.double.display-name';
+
+    test('actor declaration colours the quoted name as a string', () => {
+        const r = rule('actor-declaration');
+        const m = re(r.match).exec('actor user Seller "the seller"');
+        expect(m?.[4]).toBe('"the seller"');
+        expect((r as { captures: Record<string, { name: string }> }).captures['4'].name).toBe(DISPLAY);
+        expect(re(r.match).exec('actor user Seller')?.[4]).toBeUndefined();
+    });
+
+    test('a domain body line colours the name after a context id', () => {
+        const body = rule('domain-body');
+        expect(re(body.begin).exec('domain Billing {')?.[2]).toBe('Billing');
+        const line = body.patterns?.find(p => p.match?.includes('display') === false && p.match?.includes('"'));
+        const m = re(line?.match).exec('    nmf_billing "nMF billing"');
+        expect(m?.[1]).toBe('nmf_billing');
+        expect(m?.[2]).toBe('"nMF billing"');
+        expect(re(line?.match).exec('    nmf_billing')).toBeNull();
+        expect(topLevel.indexOf('#domain-body')).toBeLessThan(topLevel.indexOf('#domain-declaration'));
+    });
+
+    test('an actors block line colours the name after an actor', () => {
+        const block = rule('actors-block');
+        const line = block.patterns?.find(p => p.match?.includes('"'));
+        expect(re(line?.match).exec('    user Seller "the seller"')?.[3]).toBe('"the seller"');
+        expect(re(line?.match).exec('    user Seller')).toBeNull();
+        expect(block.patterns?.indexOf(line as Rule)).toBe(1);
     });
 });

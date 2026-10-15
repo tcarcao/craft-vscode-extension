@@ -7,6 +7,7 @@
         { "include": "#comment" },
         { "include": "#string" },
         { "include": "#actor-declaration" },
+        { "include": "#domain-body" },
         { "include": "#domain-declaration" },
         { "include": "#service-declaration" },
         { "include": "#use-case-declaration" },
@@ -95,12 +96,39 @@
             ]
         },
         "actor-declaration": {
-            "match": "^\\s*(actor)\\s+(user|system|service|scheduler|tool|infra)\\s+([A-Z][A-Za-z0-9_]*)",
+            "match": "^\\s*(actor)\\s+(user|system|service|scheduler|tool|infra)\\s+([A-Z][A-Za-z0-9_]*)(?:[ \\t]+(\"[^\"\\n]*\"))?",
+            "comment": "craft >= 2.27.0: an optional quoted display name on the same line, `actor user Seller \"the seller\"`.",
             "captures": {
                 "1": { "name": "storage.type" },
                 "2": { "name": "support.type" },
-                "3": { "name": "entity.name.type" }
+                "3": { "name": "entity.name.type" },
+                "4": { "name": "string.quoted.double.display-name" }
             }
+        },
+        "domain-body": {
+            "comment": "craft >= 2.27.0: `domain X { <context> \"display name\" }`. The quoted display name after a bounded context id, on the same line, is a string.",
+            "begin": "^\\s*(domain)\\s+([A-Z][A-Za-z0-9_]*)\\s*(\\{)",
+            "beginCaptures": {
+                "1": { "name": "storage.type" },
+                "2": { "name": "entity.name.type" },
+                "3": { "name": "punctuation.definition.block" }
+            },
+            "end": "(\\})",
+            "endCaptures": {
+                "1": { "name": "punctuation.definition.block" }
+            },
+            "patterns": [
+                { "include": "#comment" },
+                {
+                    "match": "^[ \\t]*([A-Za-z_][A-Za-z0-9_.-]*)[ \\t]+(\"[^\"\\n]*\")",
+                    "captures": {
+                        "1": { "name": "entity.name.type" },
+                        "2": { "name": "string.quoted.double.display-name" }
+                    }
+                },
+                { "include": "#entity-name" },
+                { "include": "#punctuation" }
+            ]
         },
         "domain-declaration": {
             "match": "^\\s*(domain)\\s+([A-Z][A-Za-z0-9_]*)",
@@ -336,6 +364,14 @@
             },
             "patterns": [
                 { "include": "#comment" },
+                {
+                    "match": "(?:^|(?<=\\{))[ \\t]*(user|system|service|scheduler|tool|infra)[ \\t]+([A-Za-z_][A-Za-z0-9_]*)[ \\t]+(\"[^\"\\n]*\")",
+                    "captures": {
+                        "1": { "name": "support.type" },
+                        "2": { "name": "entity.name.type" },
+                        "3": { "name": "string.quoted.double.display-name" }
+                    }
+                },
                 {
                     "match": "(?:^|(?<=\\{))[ \\t]*(user|system|service|scheduler|tool|infra)(?=[ \\t]+[A-Za-z_])",
                     "captures": {
