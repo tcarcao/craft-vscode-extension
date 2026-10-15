@@ -41,6 +41,7 @@
         "comment": {
             "comment": "A comment only begins where the lexer says it does: at line start, or immediately after whitespace (internal/lexer/lexer.go, precededByWS). Without that guard a slash inside flexible prose (craft >= 2.9.0) is mis-scoped — `asks Y for http://api` would colour the rest of the line as a comment.",
             "patterns": [
+                { "include": "#source-cite" },
                 {
                     "name": "comment.line.double-slash",
                     "match": "(?:^|(?<=[ \\t]))//.*$"
@@ -49,6 +50,36 @@
                     "name": "comment.block",
                     "begin": "(?:^|(?<=[ \\t]))/\\*",
                     "end": "\\*/"
+                }
+            ]
+        },
+        "source-cite": {
+            "comment": "craft >= 2.25.0: `//@ [repo] path[:ranges][, …] [-- text]`, a source cite (GRAMMAR.md section 10). To craft it is a comment, so the line keeps a comment scope; the repo, path and ranges get the scopes the language server's semantic tokens use (namespace, string, number) and the text after ` -- ` stays a comment. `// @` with a space is a plain comment.",
+            "name": "comment.line.double-slash.source-cite",
+            "begin": "(?:^|(?<=[ \\t]))(//@)",
+            "beginCaptures": {
+                "1": { "name": "punctuation.definition.comment" }
+            },
+            "end": "$",
+            "patterns": [
+                {
+                    "name": "comment.line.source-cite-text",
+                    "match": "[ \\t]--[ \\t].*$"
+                },
+                {
+                    "name": "entity.name.namespace.source-cite-repo",
+                    "match": "(?<=//@[ \\t]|,[ \\t])[a-z0-9][a-z0-9._-]*(?=[ \\t]+[^\\s:,()-])"
+                },
+                {
+                    "name": "string.unquoted.source-cite-path",
+                    "match": "[^\\s:,()]*[/.][^\\s:,()]*"
+                },
+                {
+                    "name": "meta.source-cite-range",
+                    "match": ":(\\d+(?:-\\d+)?(?:,\\d+(?:-\\d+)?)*)",
+                    "captures": {
+                        "1": { "name": "constant.numeric.source-cite-range" }
+                    }
                 }
             ]
         },
@@ -153,8 +184,8 @@
             }
         },
         "step-keyword": {
-            "comment": "Contextual step keywords: `scenario` and the alt/opt/else branch headers (craft >= 2.21.0), par/and/loop blocks and note/finding lines (craft >= 2.23.0). Each is a keyword only at the start of a line and followed by a quoted label, a comment or nothing (GRAMMAR.md section 11); `and asks loop to run` and `note records it` stay action lines, so the lookahead leaves them to the action rules.",
-            "match": "^[ \\t]*(scenario|alt|opt|else|par|and|loop|note|finding)(?=[ \\t]*(?:\"|//|$))",
+            "comment": "Contextual step keywords: `scenario` and the alt/opt/else branch headers (craft >= 2.21.0), par/and/loop blocks and note/finding lines (craft >= 2.23.0), includes/continues link steps (craft >= 2.25.0). Each is a keyword only at the start of a line and followed by a quoted label, a comment or nothing (GRAMMAR.md section 11); `and asks loop to run` and `note records it` and `includes ships the order` stay action lines, so the lookahead leaves them to the action rules.",
+            "match": "^[ \\t]*(scenario|alt|opt|else|par|and|loop|note|finding|includes|continues)(?=[ \\t]*(?:\"|//|$))",
             "captures": {
                 "1": { "name": "keyword.control" }
             }

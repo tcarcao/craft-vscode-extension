@@ -6,7 +6,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
 
-interface Rule { match?: string; begin?: string; end?: string; patterns?: Rule[]; include?: string }
+interface Rule { name?: string; match?: string; begin?: string; end?: string; patterns?: Rule[]; include?: string }
 
 const grammar = JSON.parse(
     fs.readFileSync(path.join(process.cwd(), 'syntaxes', 'craft.tmLanguage.json'), 'utf8'),
@@ -286,5 +286,86 @@ describe('actor kinds', () => {
     test('tool, infra and scheduler outside the block are words', () => {
         const global = re(rule('actor-types').match);
         expect(global.exec('        x asks the tool to run on infra')).toBeNull();
+    });
+});
+
+describe('includes and continues link steps (craft >= 2.25.0)', () => {
+    const kw = re(rule('step-keyword').match);
+
+    test.each([
+        ['        includes "Site session preamble"', 'includes'],
+        ['        continues "Seller pays at the checkout"', 'continues'],
+        ['            continues "Seller logs in"  // after the redirect', 'continues'],
+        ['        includes', 'includes'],
+    ])('%s is a keyword', (line, word) => {
+        expect(kw.exec(line)?.[1]).toBe(word);
+    });
+
+    test.each([
+        '        includes ships the order',
+        '        continues to run',
+        '        web includes the photos in the draft',
+        '        api continues the upload and includes the receipt',
+        '    when Seller continues the checkout',
+    ])('%s is an ordinary line', line => {
+        expect(kw.exec(line)).toBeNull();
+    });
+});
+
+describe('//@ source cites (craft >= 2.25.0)', () => {
+    const cite = rule('source-cite');
+    const begin = re(cite.begin);
+    // Sub-pattern of the cite by scope name, as a global regex.
+    const part = (scope: string): RegExp => {
+        const p = (cite.patterns ?? []).find(x => x.name?.startsWith(scope));
+        return new RegExp(re(p?.match).source, 'g');
+    };
+    const all = (r: RegExp, line: string, group = 0): string[] =>
+        [...line.matchAll(r)].map(m => m[group]).filter((s): s is string => s !== undefined);
+
+    test('is the first comment pattern, so it wins over the plain comment', () => {
+        expect(rule('comment').patterns?.[0].include).toBe('#source-cite');
+    });
+
+    test('keeps a comment scope for the parts it does not colour', () => {
+        expect(cite.name).toMatch(/^comment\.line\.double-slash\./);
+    });
+
+    test.each([
+        ['//@ re-x pkg/a.go:5-9 -- why', 0],
+        ['        //@ eb_email_sender.go:5-40', 8],
+        ['    //@ pkg/siren/siren.go:63-115, :120 -- a 423 counts as delivered', 4],
+    ])('%s opens a cite', (line, at) => {
+        expect(begin.exec(line)?.index).toBe(at);
+    });
+
+    test.each([
+        '        // @ x is a plain comment',
+        '        // a plain comment',
+        '        /// a doc comment',
+        '        a asks b for http://x//@y',
+    ])('%s is not a cite', line => {
+        expect(begin.exec(line)).toBeNull();
+    });
+
+    test('the text after -- is prose', () => {
+        expect(all(part('comment.line'), '//@ re-x pkg/a.go:5-9 -- why, and a.go:3')).toEqual([' -- why, and a.go:3']);
+    });
+
+    test('the repo is the word before a path', () => {
+        const repo = part('entity.name.namespace');
+        expect(all(repo, '//@ re-monetization-framework functions/eb.go:5, re-x a/b.go:1 -- one rule'))
+            .toEqual(['re-monetization-framework', 're-x']);
+        expect(all(repo, '//@ eb_email_sender.go:5-40')).toEqual([]);
+        expect(all(repo, '//@ a.go -- why')).toEqual([]);
+    });
+
+    test('paths hold a slash or a dot', () => {
+        // The text after the //@ the begin rule consumed.
+        expect(all(part('string.unquoted'), ' re-x pkg/a.go:5-9, b/c.go')).toEqual(['pkg/a.go', 'b/c.go']);
+    });
+
+    test('ranges are numbers', () => {
+        expect(all(part('meta.source-cite-range'), '//@ sqs.tf:3,26, pkg/a.go:5-9, :120', 1)).toEqual(['3,26', '5-9', '120']);
     });
 });
