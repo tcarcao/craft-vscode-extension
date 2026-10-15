@@ -48,6 +48,49 @@ async function fetchMermaid(diagramType: MermaidDiagramType, body: DomainPreview
     throw new Error(response.error || `Failed to fetch Mermaid ${diagramType} source`);
 }
 
+// postJourney posts to a journey endpoint. The server answers a bad request
+// (no files, an unknown slug) with 400 and the reason in `error`; that reason
+// becomes the thrown message. Other failures (connection, timeout) pass
+// through for handlePreviewError.
+async function postJourney(path: string, body: object) {
+    const { serverUrl, timeout } = getCraftConfig();
+    try {
+        const { data } = await axios.post(`${serverUrl}${path}`, body, {
+            headers: { 'Content-Type': 'application/json' },
+            timeout,
+        });
+        return data;
+    } catch (err: unknown) {
+        const reason = (err as { response?: { data?: { error?: unknown } } })?.response?.data?.error;
+        if (typeof reason === 'string' && reason !== '') {
+            throw new Error(reason);
+        }
+        throw err;
+    }
+}
+
+// fetchJourneySlugs posts the files to /journeys (craft >= 2.25.0) and returns
+// the journey slugs they tag, sorted by the server. A journey spans files, so
+// the journey endpoints take {path: text} instead of one dsl string.
+export async function fetchJourneySlugs(files: Record<string, string>): Promise<string[]> {
+    const data = await postJourney('/journeys', { files });
+    const response = data as { success?: boolean; slugs?: string[]; error?: string };
+    if (response.success) {
+        return response.slugs ?? [];
+    }
+    throw new Error(response.error || 'Failed to list the journeys');
+}
+
+// fetchMermaidJourney returns the Mermaid source of one journey's spine
+// (POST /preview/mermaid/journey, craft >= 2.25.0).
+export async function fetchMermaidJourney(files: Record<string, string>, slug: string): Promise<string> {
+    const response: PreviewResponse = await postJourney('/preview/mermaid/journey', { files, slug });
+    if (response.success && response.data) {
+        return response.data;
+    }
+    throw new Error(response.error || `Failed to fetch the Mermaid spine of journey ${slug}`);
+}
+
 // buildMermaidHtml renders a self-contained HTML page that loads mermaid.js
 // from the given webview URI and renders the source. Theme is one of mermaid's
 // supported values (default | dark | forest | neutral).

@@ -1,5 +1,16 @@
 # Changelog
 
+## [0.2.11] — 2026-10-15
+
+### Added
+- **Bundled LSP binary updated to `craft v2.25.0`** (from v2.24.0). A comment that starts with `//@` is a source cite (`//@ re-x pkg/a.go:5-9 -- why`): it attaches to the step above it, and hover on the step lists its cites. `includes "<use case>"` runs another use case at that point and `continues "<use case>"` hands the flow on to it; the language server gives go-to-definition and references for the title, completion of titles, and a quick fix for a link that names a former title. Use cases tagged `journey: <slug>` form a journey: hover and go-to-definition on the slug list its members in spine order, and a code lens counts them. See the craft CHANGELOG for the new diagnostics and the diagram changes.
+- **Craft: Preview Journey.** Pick a journey (the one of the use case under the cursor comes first) and the craft server draws its spine, every member across the workspace in order, in a Mermaid panel. Needs a craft server v2.25.0 or later at `craft.server.url`.
+- **`craft.sources.roots`.** Map repo names to local checkouts (`{"re-x": "/work/re-x"}`, or `{"*": "/work"}` for a directory that holds every repo) and each `//@` cite becomes a link to the cited file and line. Reload the window after a change.
+- **Highlighting before the server starts.** A `//@` line keeps the comment colour, with the repo, path and ranges coloured apart. `includes` and `continues` are keywords only at the start of a step line before a quoted title; `includes ships the order` and the words inside a phrase keep their usual colours.
+
+### Changed
+- **A comment that starts with `//@` is now read as a source cite** (craft v2.25.0). A malformed one is a warning and stays a comment. Write `// @` for a plain comment that starts with an at sign.
+
 ## [0.2.10] — 2026-10-14
 
 ### Added

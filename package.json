@@ -2,8 +2,8 @@
     "name": "craft-arch-diagrams",
     "displayName": "Craft Arch Diagrams",
     "description": "Syntax highlighting, language server, and visual diagram generation for the Craft architecture modeling language",
-    "version": "0.2.10",
-    "lspVersion": "2.24.0",
+    "version": "0.2.11",
+    "lspVersion": "2.25.0",
     "publisher": "tcarcao",
     "icon": "resources/craft_icon.png",
     "repository": {
@@ -111,6 +111,14 @@
                     "type": "string",
                     "default": "",
                     "description": "Path to the craft language server binary. When set, the managed download is skipped and this binary is used directly. Leave empty to use the automatically downloaded binary."
+                },
+                "craft.sources.roots": {
+                    "type": "object",
+                    "default": {},
+                    "additionalProperties": {
+                        "type": "string"
+                    },
+                    "markdownDescription": "Directories that hold the repos `//@` source cites name: `{\"<repo>\": \"<dir>\", \"*\": \"<dir holding every repo>\"}`. When set, the language server makes each cite a link to `<dir>/<path>#L<start>`. Reload the window after a change."
                 },
                 "craft.mermaid.theme": {
                     "type": "string",
@@ -548,6 +556,11 @@
             {
                 "command": "craft.previewMermaidC4",
                 "title": "Craft: Preview Mermaid C4",
+                "category": "Craft"
+            },
+            {
+                "command": "craft.previewJourney",
+                "title": "Craft: Preview Journey",
                 "category": "Craft"
             },
             {

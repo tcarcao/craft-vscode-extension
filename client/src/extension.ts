@@ -16,6 +16,7 @@ import { ServicesViewProvider } from './providers/servicesViewProvider';
 import { DslExtractService } from './services/dslExtractService';
 import { ServicesViewService } from './services/servicesViewService';
 import { Logger } from './utils/Logger';
+import { sourceRootsOption } from './utils/config';
 
 let domainTreeProvider: DomainsViewProvider;
 let serviceTreeProvider: ServicesViewProvider;
@@ -53,7 +54,9 @@ async function startLanguageServer(context: ExtensionContext) {
             fileEvents: workspace.createFileSystemWatcher('**/{*.craft,.craftfmt}')
         },
         initializationOptions: {
-            logLevel: workspace.getConfiguration('craft').get('logging.level', 'warn')
+            logLevel: workspace.getConfiguration('craft').get('logging.level', 'warn'),
+            // craft >= 2.25.0: makes `//@` cites document links into local checkouts.
+            sourceRoots: sourceRootsOption(workspace.getConfiguration('craft').get('sources.roots'))
         }
     };
 
