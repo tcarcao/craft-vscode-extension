@@ -1,5 +1,10 @@
 # Changelog
 
+## [0.2.12] — 2026-10-15
+
+### Changed
+- Bundled craft language server 2.26.0: journey spines order members by calls to a `receives` trigger and by `includes` links.
+
 ## [0.2.11] — 2026-10-15
 
 ### Added
