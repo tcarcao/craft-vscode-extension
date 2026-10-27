@@ -2,8 +2,13 @@
 
 ## [Unreleased]
 
+## [0.3.0] — 2026-10-27
+
 ### Added
 - **Craft: Preview Scenario Board** draws the use case under the cursor (or one you pick) as a Miro-style board, from the craft server's `/preview/board/domain` (craft 2.29.0 or later), and saves it as SVG.
+
+### Changed
+- Bundled craft language server 2.31.0: call labels in diagrams drop their connector word (`asks Payment to get transaction details` is drawn as `get transaction details`), and the board View is available from the server.
 
 ## [0.2.13] — 2026-10-15
 
