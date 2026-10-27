@@ -289,7 +289,7 @@ export async function downloadC4Diagram(
 }
 
 // Helper function to save downloaded file
-async function saveDownloadedFile(
+export async function saveDownloadedFile(
     data: ArrayBuffer,
     format: DiagramFormat,
     diagramType: string,

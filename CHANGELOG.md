@@ -1,5 +1,10 @@
 # Changelog
 
+## [Unreleased]
+
+### Added
+- **Craft: Preview Scenario Board** draws the use case under the cursor (or one you pick) as a Miro-style board, from the craft server's `/preview/board/domain` (craft 2.29.0 or later), and saves it as SVG.
+
 ## [0.2.13] — 2026-10-15
 
 ### Added
