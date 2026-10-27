@@ -58,8 +58,7 @@ export function registerPreviewBoard(context: ExtensionContext) {
 
             if (!boardPanel) {
                 boardPanel = window.createWebviewPanel('craftBoard', `Craft Board: ${useCase}`, ViewColumn.Beside, { enableScripts: true });
-                boardPanel.onDidDispose(() => { boardPanel = undefined; });
-                boardPanel.webview.onDidReceiveMessage(async message => {
+                const listener = boardPanel.webview.onDidReceiveMessage(async message => {
                     if (message.command === 'downloadBoard') {
                         try {
                             await saveDownloadedFile(new TextEncoder().encode(boardSvg).buffer as ArrayBuffer, 'svg', 'board', `${slugify(boardName)}.board.svg`);
@@ -67,7 +66,8 @@ export function registerPreviewBoard(context: ExtensionContext) {
                             handlePreviewError(err);
                         }
                     }
-                }, undefined, context.subscriptions);
+                });
+                boardPanel.onDidDispose(() => { boardPanel = undefined; listener.dispose(); });
             }
             boardPanel.title = `Craft Board: ${useCase}`;
             boardPanel.webview.html = buildBoardHtml(boardSvg);
