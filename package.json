@@ -564,6 +564,11 @@
                 "category": "Craft"
             },
             {
+                "command": "craft.previewBoard",
+                "title": "Craft: Preview Scenario Board",
+                "category": "Craft"
+            },
+            {
                 "command": "craft.copyMermaidToClipboard",
                 "title": "Craft: Copy Diagram as Mermaid",
                 "category": "Craft"
