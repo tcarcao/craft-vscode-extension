@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+### Added
+- Highlighting for actor bodies (craft 2.37): `actor system X "name" { ai: genai  owner: "OLX Data" }`, in a single `actor` declaration or inside `actors { }`; `ai:` and `owner:` are keys and the `ml`/`genai`/`agentic` kinds are constants. The body's `}` no longer closes the `actors { }` block.
+- Highlighting for `alias:` lines (craft 2.38) in page and flow bodies.
+
 ## [0.3.0] — 2026-10-27
 
 ### Added
