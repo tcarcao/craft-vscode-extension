@@ -6,6 +6,7 @@
     "patterns": [
         { "include": "#comment" },
         { "include": "#string" },
+        { "include": "#actor-declaration-body" },
         { "include": "#actor-declaration" },
         { "include": "#domain-body" },
         { "include": "#domain-declaration" },
@@ -13,6 +14,7 @@
         { "include": "#use-case-declaration" },
         { "include": "#surface-block" },
         { "include": "#actors-block" },
+        { "include": "#alias-property" },
         { "include": "#block-keywords" },
         { "include": "#invalid-kind-prefix-trigger-subject" },
         { "include": "#receive-trigger" },
@@ -103,6 +105,71 @@
                 "2": { "name": "support.type" },
                 "3": { "name": "entity.name.type" },
                 "4": { "name": "string.quoted.double.display-name" }
+            }
+        },
+        "actor-declaration-body": {
+            "comment": "craft >= 2.37.0: `actor <kind> <Name> [\"display name\"] { ai: ml|genai|agentic  owner: ... }`, an actor with a body opened on the name's line. Listed before #actor-declaration so the body is scoped (its `}` must not be left to the top level).",
+            "begin": "^\\s*(actor)\\s+(user|system|service|scheduler|tool|infra)\\s+([A-Z][A-Za-z0-9_]*)(?:[ \\t]+(\"[^\"\\n]*\"))?[ \\t]*(\\{)",
+            "beginCaptures": {
+                "1": { "name": "storage.type" },
+                "2": { "name": "support.type" },
+                "3": { "name": "entity.name.type" },
+                "4": { "name": "string.quoted.double.display-name" },
+                "5": { "name": "punctuation.definition.block" }
+            },
+            "end": "(\\})",
+            "endCaptures": {
+                "1": { "name": "punctuation.definition.block" }
+            },
+            "patterns": [
+                { "include": "#actor-body-items" }
+            ]
+        },
+        "actor-body": {
+            "comment": "craft >= 2.37.0: an actor body inside `actors { }`, `system X \"name\" { ... }`. Nested so its `}` does not close the actors block.",
+            "begin": "(\\{)",
+            "beginCaptures": {
+                "1": { "name": "punctuation.definition.block" }
+            },
+            "end": "(\\})",
+            "endCaptures": {
+                "1": { "name": "punctuation.definition.block" }
+            },
+            "patterns": [
+                { "include": "#actor-body-items" }
+            ]
+        },
+        "actor-body-items": {
+            "comment": "craft >= 2.37.0: actor body lines. `ai:` (one of ml, genai, agentic) and `owner:` are keys only at the start of a line or right after the opening brace (`{ ai: ml }`); note/finding lines as elsewhere.",
+            "patterns": [
+                { "include": "#comment" },
+                { "include": "#string" },
+                {
+                    "match": "(?:^|(?<=\\{))[ \\t]*(ai)[ \\t]*(:)(?:[ \\t]*(ml|genai|agentic)\\b)?",
+                    "captures": {
+                        "1": { "name": "keyword.other" },
+                        "2": { "name": "punctuation.separator" },
+                        "3": { "name": "constant.language" }
+                    }
+                },
+                {
+                    "match": "(?:^|(?<=\\{))[ \\t]*(owner)[ \\t]*(:)",
+                    "captures": {
+                        "1": { "name": "keyword.other" },
+                        "2": { "name": "punctuation.separator" }
+                    }
+                },
+                { "include": "#step-keyword" },
+                { "include": "#entity-name" },
+                { "include": "#punctuation" }
+            ]
+        },
+        "alias-property": {
+            "comment": "craft >= 2.38.0: `alias: <word|\"string\">`, a repeatable line in a page or flow body (one alias per line). Anchored at the start of a line; in a use case's tags { } `alias` is a free tag key and colours the same way.",
+            "match": "^[ \\t]*(alias)[ \\t]*(:)",
+            "captures": {
+                "1": { "name": "keyword.other" },
+                "2": { "name": "punctuation.separator" }
             }
         },
         "domain-body": {
@@ -378,6 +445,7 @@
                         "1": { "name": "support.type" }
                     }
                 },
+                { "include": "#actor-body" },
                 { "include": "#entity-name" },
                 { "include": "#punctuation" }
             ]

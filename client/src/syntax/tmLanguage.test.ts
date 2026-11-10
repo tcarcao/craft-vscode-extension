@@ -400,3 +400,58 @@ describe('display names (craft v2.27)', () => {
         expect(block.patterns?.indexOf(line as Rule)).toBe(1);
     });
 });
+
+describe('actor bodies (craft v2.37)', () => {
+    const items = rule('actor-body-items').patterns ?? [];
+    const aiKey = items.find(p => p.match?.includes('(ai)'));
+    const ownerKey = items.find(p => p.match?.includes('(owner)'));
+
+    test('a single actor with a body opens a scoped block', () => {
+        const r = rule('actor-declaration-body');
+        const m = re(r.begin).exec('actor system Dapi "OLX data API" { ai: ml }');
+        expect(m?.[3]).toBe('Dapi');
+        expect(m?.[4]).toBe('"OLX data API"');
+        expect(m?.[5]).toBe('{');
+        expect(re(r.begin).exec('actor system ListingAgent {')?.[3]).toBe('ListingAgent');
+        expect(re(r.begin).exec('actor system ListingAgent')).toBeNull();
+        expect(re(r.end).exec('}')).not.toBeNull();
+        expect(topLevel.indexOf('#actor-declaration-body')).toBeLessThan(topLevel.indexOf('#actor-declaration'));
+    });
+
+    test('an actors block nests the body so its } does not close the block', () => {
+        const block = rule('actors-block');
+        const includes = (block.patterns ?? []).map(p => p.include);
+        expect(includes.indexOf('#actor-body')).toBeGreaterThan(-1);
+        expect(includes.indexOf('#actor-body')).toBeLessThan(includes.indexOf('#punctuation'));
+        expect(re(rule('actor-body').begin).exec('    system Gen "gen" {')?.[1]).toBe('{');
+    });
+
+    test('ai: and owner: are keys at the start of a body line or after {', () => {
+        const ai = re(aiKey?.match);
+        expect(ai.exec('        ai: genai')?.[3]).toBe('genai');
+        expect(ai.exec('        ai: agentic')?.[3]).toBe('agentic');
+        expect(ai.exec('        ai: robot')?.[1]).toBe('ai');
+        expect(ai.exec('        ai: robot')?.[3]).toBeUndefined();
+        expect(re(ownerKey?.match).exec('        owner: "OLX Data"')?.[1]).toBe('owner');
+        const oneLine = 'actor system Dapi { ai: ml }';
+        expect(ai.exec(oneLine.slice(oneLine.indexOf('{')))?.[3]).toBe('ml');
+        expect(ai.exec('        x asks ai: to run')).toBeNull();
+    });
+});
+
+describe('alias lines (craft v2.38)', () => {
+    const alias = re(rule('alias-property').match);
+
+    test('alias: at the start of a line is a key', () => {
+        expect(alias.exec('    alias: promotion')?.[1]).toBe('alias');
+        expect(alias.exec('    alias: "promoted ad"')?.[1]).toBe('alias');
+    });
+
+    test('alias in a phrase is a word', () => {
+        expect(alias.exec('        ads asks alias to resolve')).toBeNull();
+    });
+
+    test('is listed before the generic rules', () => {
+        expect(topLevel.indexOf('#alias-property')).toBeLessThan(topLevel.indexOf('#entity-name'));
+    });
+});
