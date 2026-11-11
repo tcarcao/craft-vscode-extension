@@ -1,12 +1,17 @@
 # Changelog
 
-## [Unreleased]
+## [0.4.0] — 2026-11-11
+
+0.3.0 was never published; its changes ship in this release.
 
 ### Added
 - Highlighting for actor bodies (craft 2.37): `actor system X "name" { ai: genai  owner: "OLX Data" }`, in a single `actor` declaration or inside `actors { }`; `ai:` and `owner:` are keys and the `ml`/`genai`/`agentic` kinds are constants. The body's `}` no longer closes the `actors { }` block.
-- Highlighting for `alias:` lines (craft 2.38) in page and flow bodies.
+- Highlighting for `alias:` lines (craft 2.38) in page and flow bodies, and for the `alias:` tag on a use case.
 
-## [0.3.0] — 2026-10-27
+### Changed
+- Bundled craft language server 2.38.0 (from 2.31.0, so this also brings 2.32 to 2.37). The language server now knows critical flows (`flow <ref> "<name>" { … }` and the `realises:` tag, 2.35), pages (`page <ref> "<name>" { … }` and the `entry:` tag, 2.36), actor bodies with `ai:`, `owner:` and `note` lines (2.37), and repeatable `alias:` lines in page and flow bodies (2.38), with hover, completion, go-to-definition, outline, folding and diagnostics for each. Files that use this syntax no longer show `unknown-*-property` or `unexpected-token` diagnostics. See the craft CHANGELOG for the full list.
+
+## [0.3.0] — 2026-10-27 (not published)
 
 ### Added
 - **Craft: Preview Scenario Board** draws the use case under the cursor (or one you pick) as a Miro-style board, from the craft server's `/preview/board/domain` (craft 2.29.0 or later), and saves it as SVG.
